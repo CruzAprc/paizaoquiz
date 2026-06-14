@@ -1,0 +1,572 @@
+/* ============================================================================
+   QUIZ DO PAIZÃO — identidade visual estilo TikTok / Instagram
+   Dark base · gradientes vibrantes · cards arredondados · mobile-first
+============================================================================ */
+
+:root {
+  /* base — identidade App Paizão: lavanda claro + branco + roxo */
+  --bg:        #f4eeff;
+  --bg-2:      #ece2fb;
+  --card:      #ffffff;
+  --card-2:    #f5f0fe;
+  --line:      rgba(91,46,158,.14);
+  --line-2:    rgba(91,46,158,.26);
+
+  /* texto (tinta roxo-escura, não preto puro) */
+  --tx:        #281e44;
+  --tx-soft:   #6c6488;
+  --tx-mute:   #a39bbb;
+
+  /* ação: roxo da marca (botão "Entrar" do app) */
+  --accent:    #7c3aed;
+  --accent-2:  #8b5cf6;
+  --grad:      linear-gradient(180deg, #a98bf5 0%, #7c46e6 100%);
+  --act:       #7c3aed;
+  --act-tx:    #ffffff;
+
+  /* preenchimentos/detalhes (roxo translúcido) */
+  --hair:      rgba(124,58,237,.07);
+  --hair-2:    rgba(124,58,237,.16);
+  --neutral:   #e6def7;
+  --quote:     rgba(124,58,237,.20);
+
+  --r: 20px;
+  --r-sm: 14px;
+  --shadow: 0 18px 44px -18px rgba(76,29,149,.28);
+
+  /* anel de stories do Instagram (avatar) */
+  --ig-ring: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+
+  /* tipografia do App Paizão (Poppins, geométrica/arredondada) */
+  --display: "Poppins", system-ui, -apple-system, sans-serif;
+  --body: "Poppins", system-ui, -apple-system, sans-serif;
+  --mono: "Poppins", system-ui, sans-serif;
+
+  --maxw: 520px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+/* o atributo hidden tem que vencer os display:flex/block dos componentes */
+[hidden] { display: none !important; }
+
+body {
+  font-family: var(--body);
+  background:
+    radial-gradient(120% 80% at 50% -10%, #e9dcfb, transparent 58%),
+    radial-gradient(110% 70% at 50% 112%, #e4d6fa, transparent 60%),
+    #f6f1ff;
+  background-attachment: fixed;
+  color: var(--tx);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+/* grão monocromático bem sutil (textura de papel/dossiê, sem cor) */
+body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  opacity: .015; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------- TOP BAR */
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  max-width: var(--maxw); margin: 0 auto;
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar__row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px 10px;
+}
+/* linha do cronômetro (urgência: 15 min "para preencher") */
+.timerbar {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 7px 16px 8px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .02em;
+  color: var(--tx-soft);
+}
+.timerbar svg { color: var(--tx-mute); flex: 0 0 auto; }
+.timerbar b { font-weight: 600; color: var(--tx); font-variant-numeric: tabular-nums; }
+.timerbar__label { color: var(--tx-mute); }
+.timerbar.is-urgent b, .timerbar.is-urgent svg { color: var(--tx); }
+.timerbar.is-urgent { font-weight: 600; }
+.topbar__back {
+  display: grid; place-items: center;
+  width: 38px; height: 38px; flex: 0 0 auto;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--card); color: var(--tx);
+  cursor: pointer; transition: .15s;
+}
+.topbar__back:active { transform: scale(.92); }
+.topbar__back[disabled] { opacity: .25; pointer-events: none; }
+.topbar__brand { display: flex; align-items: center; gap: 9px; flex: 1 1 auto; min-width: 0; }
+.topbar__avatar {
+  width: 38px; height: 38px; flex: 0 0 auto;
+  border-radius: 50%; display: grid; place-items: center;
+  font-weight: 800; font-size: 15px; color: #fff;
+  background: var(--neutral);
+  background-size: cover; background-position: center;
+}
+.topbar__name { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.topbar__namerow {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--display); font-weight: 700; font-size: 14.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar__name em { font-style: normal; color: var(--tx-mute); font-weight: 500; font-size: 12px; }
+.verified { flex: 0 0 auto; filter: drop-shadow(0 1px 2px rgba(56,151,240,.5)); }
+
+/* ----------- ANEL DE STORIES DO INSTAGRAM -----------
+   Anel = borda transparente preenchida por gradiente (border-box);
+   miolo = foto/grad (padding-box); gap escuro via box-shadow inset. */
+.igring {
+  border: 3px solid transparent;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  background-image: linear-gradient(var(--neutral),var(--neutral)), var(--ig-ring);
+  background-size: cover, cover;
+  box-shadow: inset 0 0 0 2.5px var(--bg);
+}
+/* foto do perfil (declarativa — sem corrida de onload) */
+.avatar-photo {
+  background-image: url("../img/carlao-avatar.jpg"), var(--ig-ring) !important;
+  background-clip: padding-box, border-box !important;
+  background-origin: border-box !important;
+  background-size: cover, cover !important;
+  background-position: center, center !important;
+  color: transparent !important;
+}
+.topbar__count {
+  flex: 0 0 auto; font-size: 12.5px; font-weight: 700;
+  color: var(--tx-soft); padding: 5px 11px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+}
+
+.progress {
+  position: relative; height: 3px; width: 100%;
+}
+.progress::before {
+  content:""; position:absolute; inset:0;
+  background: var(--hair-2);
+}
+.progress__bar {
+  position: relative; height: 100%; width: 0%;
+  background: var(--act);
+  transition: width .45s cubic-bezier(.4,0,.2,1);
+}
+
+/* ------------------------------------------------------------- STAGE */
+.stage {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 18px 18px calc(28px + env(safe-area-inset-bottom));
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+}
+
+/* animação de entrada de cada tela */
+.screen { animation: rise .42s cubic-bezier(.22,1,.36,1) both; display:flex; flex-direction:column; flex:1; }
+@keyframes rise { from { opacity:0; transform: translateY(16px) scale(.99);} to {opacity:1; transform:none;} }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--tx-soft); padding: 7px 12px; border-radius: 8px;
+  background: var(--card); border: 1px solid var(--line-2);
+  margin-bottom: 18px;
+}
+.eyebrow::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--act);
+}
+
+/* destaque na copy: roxo da marca (como "TREINO / DIETA / PAIZÃO" no app) */
+.hl {
+  color: var(--accent); font-weight: 800;
+}
+
+/* ------------------------------------------------------------- LANDING */
+/* FOLD-SAFE (AULA 03 §6): H1 + imagem + botão + escassez sempre visíveis
+   sem rolar. A imagem é o elemento elástico — encolhe pra não empurrar
+   o botão pra baixo do fold. Testado p/ iPhone pequeno, Android médio e tela grande. */
+.landing {
+  justify-content: space-between;
+  gap: 16px;
+  text-align: center;
+  padding-top: 10px;
+  min-height: 100dvh;
+}
+.landing .media {
+  aspect-ratio: auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  height: clamp(180px, 38dvh, 420px);
+}
+.landing .media img,
+.landing .media .media__placeholder { height: 100%; }
+.landing h1 { flex: 0 0 auto; }
+.landing .btn { flex: 0 0 auto; }
+.landing .scarcity { flex: 0 0 auto; margin-bottom: 4px; }
+/* cabeçalho estilo perfil do Instagram */
+.igprofile {
+  display: flex; align-items: center; gap: 13px;
+  text-align: left; flex: 0 0 auto;
+}
+.igprofile__av {
+  width: 56px; height: 56px; flex: 0 0 auto;
+  border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 22px; color: #fff;
+  background: var(--neutral); background-size: cover; background-position: center;
+}
+.igprofile__meta { min-width: 0; }
+.igprofile__namerow {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--display); font-weight: 800; font-size: 16px; letter-spacing: -.01em;
+}
+.igprofile__sub { font-size: 13px; color: var(--tx-soft); font-weight: 500; }
+.igprofile__sub b { color: var(--tx); font-weight: 700; }
+.landing h1 {
+  font-family: var(--display);
+  font-size: clamp(26px, 7.6vw, 37px); line-height: 1.1; font-weight: 800;
+  letter-spacing: -.025em; margin: 0;
+}
+
+/* FIGURA RECORTADA (PNG sem fundo) — integra Carlão+filhota ao botão.
+   O brilho atrás "puxa" o olho até o CTA logo abaixo. */
+.landing .figure {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: -6px; /* aproxima a base da figura do botão */
+}
+.figure__glow {
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 86%; height: 60%;
+  transform: translateX(-50%);
+  /* halo roxo suave da marca atrás da figura */
+  background: radial-gradient(58% 62% at 50% 72%, rgba(139,92,246,.28), transparent 72%);
+  filter: blur(10px);
+  z-index: 0;
+  pointer-events: none;
+}
+.figure__img {
+  position: relative; z-index: 1;
+  height: 100%;
+  max-height: clamp(220px, 46dvh, 520px);
+  width: auto; max-width: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 16px 22px rgba(0,0,0,.18));
+  animation: figIn .6s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes figIn { from { opacity:0; transform: translateY(14px) scale(.98);} to {opacity:1; transform:none;} }
+.media {
+  position: relative; width: 100%; border-radius: var(--r);
+  overflow: hidden; background: var(--card-2);
+  box-shadow: var(--shadow);
+}
+.media--portrait { aspect-ratio: 4 / 5; }
+.media--wide { aspect-ratio: 16 / 10; }
+.media img { width:100%; height:100%; object-fit: cover; display:block; }
+.media__placeholder {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:8px; text-align:center;
+  padding: 18px; color: var(--tx-mute);
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.03) 0 12px, transparent 12px 24px),
+    var(--card);
+  border: 1.5px dashed var(--line-2); border-radius: var(--r);
+}
+.media__placeholder svg { opacity:.6; }
+.media__placeholder span { font-size: 12.5px; font-weight:600; line-height:1.35; max-width: 80%; }
+.media__placeholder b { display:block; color: var(--tx-soft); font-size:13px; margin-bottom:2px; }
+
+.scarcity {
+  font-family: var(--mono);
+  font-size: 11.5px; font-weight: 500; letter-spacing: .04em; color: var(--tx-soft);
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+
+/* botão primário (CTA) — gradiente roxo da marca (botão "Entrar" do app) */
+.btn {
+  position: relative; width: 100%;
+  border: none; cursor: pointer;
+  font-family: var(--display); font-weight: 800; font-size: 16.5px; letter-spacing: -.01em; color: var(--act-tx);
+  padding: 18px 20px; border-radius: var(--r-sm);
+  background: var(--grad);
+  box-shadow: 0 12px 26px -10px rgba(124,58,237,.6);
+  transition: transform .12s ease, box-shadow .2s, filter .2s;
+}
+.btn:hover { filter: brightness(1.04); }
+.btn:active { transform: scale(.98); }
+.btn--block { margin-top: auto; }
+.btn span.arrow { margin-left: 6px; }
+.btn .arrow svg { color: var(--act-tx); }
+
+/* ----------- CTA FLUTUANTE (acompanha o scroll — AULA 03 §5) -----------
+   Barra fixa no rodapé do viewport pras telas de conteúdo alto.
+   Garante que o botão está SEMPRE alcançável sem precisar rolar até o fim. */
+.ctabar {
+  position: sticky;
+  bottom: 0;
+  margin: 18px -18px calc(-28px - env(safe-area-inset-bottom));
+  padding: 14px 18px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, rgba(244,238,255,.85) 26%, #f1e9ff 74%);
+  z-index: 20;
+}
+.ctabar .btn { margin: 0; }
+
+/* ------------------------------------------------------------- QUESTION */
+/* cabeçalho de campo estilo anamnese: nº da pergunta + seção, em mono */
+.q__head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; align-self: flex-start;
+}
+.q__num {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  color: var(--act-tx); background: var(--act);
+  padding: 3px 8px; border-radius: 6px; letter-spacing: .02em;
+}
+.q__block {
+  font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--tx-mute);
+}
+.q__title {
+  font-family: var(--display);
+  font-size: clamp(22px, 5.8vw, 27px); line-height: 1.22; font-weight: 800;
+  letter-spacing: -.02em; margin: 0 0 24px;
+}
+.opts { display: flex; flex-direction: column; gap: 12px; }
+.opt {
+  display: flex; align-items: center; gap: 14px; text-align: left;
+  width: 100%; cursor: pointer;
+  font-family: inherit; font-size: 16.5px; font-weight: 600; color: var(--tx);
+  padding: 17px 18px; border-radius: var(--r-sm);
+  background: var(--card); border: 1.5px solid var(--line);
+  box-shadow: 0 4px 14px -8px rgba(76,29,149,.22);
+  transition: transform .12s, border-color .15s, background .15s, box-shadow .15s;
+  animation: rise .4s both;
+}
+.opt:nth-child(1){animation-delay:.04s}.opt:nth-child(2){animation-delay:.10s}
+.opt:nth-child(3){animation-delay:.16s}.opt:nth-child(4){animation-delay:.22s}
+.opt:active { transform: scale(.985); }
+.opt:hover { border-color: var(--line-2); background: var(--card-2); }
+.opt__dot {
+  flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--line-2); display: grid; place-items: center;
+  transition: .15s;
+}
+.opt__dot svg { width:13px; height:13px; opacity:0; transform: scale(.4); transition:.18s; color:#fff; }
+.opt.is-selected {
+  border-color: var(--act); color:#fff;
+  background: var(--hair);
+}
+.opt.is-selected .opt__dot { background: var(--act); border-color: var(--act); }
+.opt.is-selected .opt__dot svg { opacity:1; transform:scale(1); color: var(--act-tx); }
+
+/* ------------------------------------------------------------- LETTER */
+.letter { gap: 18px; }
+.letter__card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 24px 22px;
+  box-shadow: var(--shadow); position: relative; overflow:hidden;
+}
+.letter__card::before {
+  content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--act);
+}
+.letter__card p { font-size: 16.5px; line-height: 1.6; color: var(--tx-soft); margin: 0 0 14px; }
+.letter__card p:first-of-type { color: var(--tx); }
+.letter__card p:last-of-type { margin-bottom: 0; }
+.letter__sign { font-weight: 800; font-size: 16px; margin-top: 18px; color: var(--tx); font-family: var(--mono); letter-spacing: .02em; }
+.letter__sign .hl { font-weight:800; box-shadow:none; }
+
+/* ------------------------------------------------------------- STORY (Break 1) */
+/* tela cheia imersiva (rompe o padding do .stage) */
+.story {
+  margin: -18px -18px calc(-1 * (28px + env(safe-area-inset-bottom)));
+}
+.story__frame {
+  position: relative; height: 100dvh; overflow: hidden;
+  background: #0d0d12; color: #fff;
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+/* mídia (vídeo/placeholder) preenche o fundo */
+.story__media { position: absolute; inset: 0; z-index: 0; }
+.story__video, .story__media iframe { width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
+.story__placeholder {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 30px;
+  background:
+    radial-gradient(70% 50% at 50% 42%, rgba(124,58,237,.30), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 14px, transparent 14px 28px),
+    #14101f;
+}
+.story__play {
+  width: 76px; height: 76px; border-radius: 50%; background: var(--grad);
+  display: grid; place-items: center; box-shadow: 0 12px 30px -8px rgba(124,58,237,.7);
+}
+.story__play svg { width: 30px; height: 30px; color: #fff; margin-left: 4px; }
+.story__plabel { font-weight: 700; font-size: 13px; letter-spacing: .04em; color: #fff; }
+.story__pnote { font-size: 12px; color: rgba(255,255,255,.7); line-height: 1.45; max-width: 80%; }
+
+/* barra de stories (enche e passa sozinho) */
+.story__bars {
+  position: relative; z-index: 3;
+  display: flex; gap: 4px; padding: 12px 12px 0;
+}
+.story__bar {
+  flex: 1; height: 3px; border-radius: 999px;
+  background: rgba(255,255,255,.32); overflow: hidden;
+}
+.story__bar i { display: block; height: 100%; width: 0%; background: #fff; }
+
+/* cabeçalho do story */
+.story__top {
+  position: relative; z-index: 3;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 14px 0;
+}
+.story__top::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 120px;
+  background: linear-gradient(180deg, rgba(0,0,0,.55), transparent);
+  z-index: -1; pointer-events: none;
+}
+.story__av { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 50%; }
+.story__id b { display: block; font-size: 14px; font-weight: 700; line-height: 1.1; }
+.story__id small { font-size: 12px; color: rgba(255,255,255,.7); }
+.story__skip { margin-left: auto; color: rgba(255,255,255,.85); display: grid; place-items: center; }
+
+/* legenda (a carta que ele fala) */
+.story__caption {
+  position: absolute; left: 0; right: 0; bottom: 44px; z-index: 3;
+  padding: 60px 22px 0;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.72) 42%);
+}
+.story__kicker {
+  font-weight: 800; font-size: 15px; margin: 0 0 10px;
+  color: #fff;
+}
+.story__caption p { font-size: 14.5px; line-height: 1.5; color: rgba(255,255,255,.92); margin: 0 0 8px; }
+.story__sign { font-weight: 700; margin-top: 4px !important; }
+.story__hint {
+  position: absolute; left: 0; right: 0; bottom: 14px; z-index: 3;
+  text-align: center; font-size: 11px; letter-spacing: .03em; color: rgba(255,255,255,.55);
+}
+
+/* ------------------------------------------------------------- TESTIMONIAL */
+.testi { gap: 20px; }
+.testi__quote {
+  font-family: var(--display);
+  font-size: 22px; line-height: 1.34; font-weight: 700; letter-spacing:-.02em;
+  position: relative; padding-top: 18px;
+}
+.testi__quote::before {
+  content:"\201C"; font-size: 72px; line-height: 0; position:absolute; top:32px; left:-4px;
+  color: var(--quote);
+}
+.testi__author { display:flex; align-items:center; gap:11px; }
+.testi__author .av {
+  width:42px; height:42px; border-radius:50%; background:var(--neutral);
+  border:1px solid var(--line-2);
+  display:grid; place-items:center; font-weight:800; color:var(--tx);
+}
+.testi__author b { font-size:16px; }
+.testi__author small { display:block; color:var(--tx-mute); font-weight:600; }
+
+/* ------------------------------------------------------------- VSL / OFFER */
+.vsl { gap: 18px; }
+.vsl__trigger { font-family: var(--display); font-size: clamp(20px,5.4vw,25px); line-height:1.24; font-weight:800; letter-spacing:-.02em; margin:0; }
+.vslbox {
+  position: relative; width:100%; aspect-ratio: 9/16; max-height: 64dvh;
+  border-radius: var(--r); overflow:hidden; background:#000;
+  box-shadow: var(--shadow); border:1px solid var(--line);
+}
+.vslbox iframe, .vslbox video { width:100%; height:100%; border:0; display:block; }
+.vslbox__placeholder {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px;
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.03) 0 14px, transparent 14px 28px),
+    var(--card);
+}
+.vslbox__play {
+  width:74px; height:74px; border-radius:50%; background:var(--act);
+  display:grid; place-items:center;
+}
+.vslbox__play svg { width:30px; height:30px; color:var(--act-tx); margin-left:4px; }
+.vslbox__label { font-family:var(--mono); font-weight:600; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--tx); }
+.vslbox__note { font-size:12px; color:var(--tx-soft); line-height:1.4; max-width:88%; }
+
+.offer__stack {
+  display:flex; flex-direction:column; gap:10px; margin-top:4px;
+}
+
+/* ------------------------------------------------------------- LOADING */
+.loading { align-items:center; justify-content:center; text-align:center; gap:30px; }
+.loader {
+  width: 72px; height:72px; border-radius:50%;
+  background: conic-gradient(from 0deg, var(--hair), var(--act));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 0);
+          mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 0);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading__text { font-family: var(--display); font-size: 20px; font-weight:800; letter-spacing:-.01em; max-width: 18ch; line-height:1.25; }
+.loading__dots span { animation: blink 1.2s infinite; }
+.loading__dots span:nth-child(2){animation-delay:.2s} .loading__dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink { 0%,100%{opacity:.2} 50%{opacity:1} }
+
+/* ------------------------------------------------------------- MIRROR */
+.mirror { gap: 18px; justify-content:center; }
+.mirror__title { font-family: var(--display); font-size: clamp(22px,5.8vw,28px); font-weight:800; letter-spacing:-.02em; line-height:1.16; margin:0; }
+.mirror__rows { display:flex; flex-direction:column; gap:12px; margin: 6px 0; }
+.mirror__row {
+  display:flex; align-items:center; gap:14px;
+  background: var(--card); border:1px solid var(--line); border-radius: var(--r-sm);
+  padding: 16px 18px; animation: rise .5s both;
+}
+.mirror__row:nth-child(2){animation-delay:.14s}.mirror__row:nth-child(3){animation-delay:.28s}
+.mirror__icon { width:38px;height:38px;border-radius:50%;background:var(--hair); border:1px solid var(--line); display:grid;place-items:center; flex:0 0 auto; }
+.mirror__icon svg{ width:18px;height:18px; color:var(--tx-soft); }
+.mirror__row small { display:block; color:var(--tx-mute); font-size:11px; font-weight:500; font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em; }
+.mirror__row b { font-size:17px; }
+.mirror__footer { font-size:16px; color:var(--tx-soft); line-height:1.45; }
+
+/* ------------------------------------------------------------- CHART */
+.chart { gap: 16px; justify-content:center; }
+.chart__title { font-family: var(--display); font-size: clamp(22px,5.8vw,27px); font-weight:800; letter-spacing:-.02em; margin:0; line-height:1.16; }
+.chart__sub { color: var(--tx-soft); font-size:15px; margin:0; }
+.chart__box {
+  background: var(--card); border:1px solid var(--line); border-radius: var(--r);
+  padding: 22px 18px 14px; box-shadow: var(--shadow);
+}
+.chart__svg { width:100%; height:auto; display:block; }
+.chart__legend { display:flex; justify-content:space-between; margin-top:6px; }
+.chart__legend span { font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.03em; color:var(--tx-soft); }
+
+/* ------------------------------------------------------------- FOOTNOTE / REVIEW FLAG */
+.reviewflag {
+  align-self:flex-start; margin: 14px 0 0;
+  font-size:11.5px; font-weight:700; color:#ffd9a0;
+  background: rgba(255,170,80,.12); border:1px solid rgba(255,170,80,.3);
+  padding:7px 11px; border-radius:10px; line-height:1.4;
+}
+
+/* spacing helper para empurrar CTA pra base */
+.spacer { flex: 1 1 auto; min-height: 18px; }
+
+@media (min-width: 540px){
+  .stage { padding-top: 24px; }
+}

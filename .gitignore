@@ -1,0 +1,12 @@
+# Ambiente Python (ferramenta local de remoção de fundo)
+.venv/
+__pycache__/
+*.pyc
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
