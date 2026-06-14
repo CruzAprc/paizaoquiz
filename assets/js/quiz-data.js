@@ -40,6 +40,7 @@ const QUIZ = [
     block: "Sobre você",
     question: "Filhota, deixa eu começar te conhecendo. Quantos anos você tem?",
     options: [
+      "14 a 17",
       "18 a 21",
       "22 a 24",
       "25 a 29",

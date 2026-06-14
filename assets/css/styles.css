@@ -361,6 +361,7 @@ body::after {
 }
 .opt:nth-child(1){animation-delay:.04s}.opt:nth-child(2){animation-delay:.10s}
 .opt:nth-child(3){animation-delay:.16s}.opt:nth-child(4){animation-delay:.22s}
+.opt:nth-child(5){animation-delay:.28s}
 .opt:active { transform: scale(.985); }
 .opt:hover { border-color: var(--line-2); background: var(--card-2); }
 .opt__dot {
