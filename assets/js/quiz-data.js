@@ -10,9 +10,8 @@
      letter       -> carta da voz do Carlão (break, não é pergunta)
      testimonial  -> depoimento de filhota real (break)
      vsl          -> slot de vídeo (com pergunta-gatilho opcional antes)
-     loading      -> transição automática "montando diagnóstico"
-     mirror       -> tela-espelho (repete respostas reais dela)
-     chart        -> gráfico/diagnóstico (curva hoje -> 4 -> 12 semaninhas)
+     loading      -> transição automática (3 batidas + recap das respostas dela)
+     chart        -> gráfico/diagnóstico personalizado (curva hoje -> 4 -> 12 semaninhas)
      offer        -> slot da oferta (Mini VSL 2)
 
    Imagens: troque os caminhos em /assets/img quando subir as fotos do Carlão.
@@ -132,15 +131,15 @@ const QUIZ = [
     ]
   },
 
-  /* ------------------- BREAK 2 — DEPOIMENTO (filhota real) --------------- */
+  /* ------------------- BREAK 2 — DEPOIMENTO EM VÍDEO (filhota real) ------
+     Só o @ dela no insta em cima + o vídeo dela falando embaixo. Sem copy.
+     Quando tiver o vídeo, é só preencher "video" (caminho do .mp4).         */
   {
     type: "testimonial",
-    quote: "Eu era a filhota que largava tudo na segunda semana. Hoje sou referência. Não foi mágica — foi o paizão cobrando e a galera do meu lado.",
-    author: "Liz",
-    authorTag: "filhota do paizão",
-    image: "assets/img/depoimento-liz.jpg",
-    imageAlt: "Depoimento da Liz",
-    imageNote: "Print/vídeo curto de filhota real (Liz ou Sophia)",
+    handle: "@lizx.macedo",      // <- @ real da Liz Macedo no Instagram (4,1 mi seguidores)
+    author: "Liz Macedo",        // usado só no slot/placeholder enquanto não há vídeo
+    video: null,                 // <- caminho do .mp4 dela falando (ex: assets/img/depoimento-liz.mp4)
+    poster: "assets/img/depoimento-liz.jpg", // frame de capa (opcional) enquanto não há vídeo
     cta: "Continuar"
   },
 
@@ -259,27 +258,28 @@ const QUIZ = [
   /* --------------------------- TRANSIÇÃO -------------------------------- */
   {
     type: "loading",
-    text: "Calma, filhota… o paizão tá montando o teu diagnóstico…",
-    duration: 3600
-  },
-  {
-    type: "mirror",
-    title: "Olha o que você me contou:",
-    // monta a partir das respostas reais dela
+    // 3 batidas de headline em sequência (o recap pipoca durante a batida 2):
+    intro: "Calma, filhota… o paizão tá montando o teu diagnóstico…",  // batida 1 (~1,5s)
+    text:  "Tô guardando tudo que você me contou aqui, filhota…",       // batida 2 (1ª pessoa)
+    done:  "Pronto. Já tô montando o teu plano, filhota…",              // batida 3
+    introHold: 1500,
     rows: [
-      { label: "idade", from: "q1_idade" },
-      { label: "foco em", from: "q2_foco" },
-      { label: "alimentação", from: "q12_alimentacao" }
+      { label: "foco",          from: "q2_foco" },
+      { label: "o que trava",   from: "q5_trava" },
+      { label: "alimentação",   from: "q12_alimentacao" },
+      { label: "quer primeiro", from: "q13_primeiro" }
     ],
-    footer: "É com base nisso que eu montei o teu plano.",
-    cta: "Ver meu diagnóstico"
+    duration: 4800
   },
   {
     type: "chart",
     title: "Teu corpo nas próximas semaninhas",
-    subtitle: "Curva real do que o paizão projeta pra você:",
+    // {foco} é resolvido a partir da resposta real dela (ver PERSONA abaixo)
+    subtitle: "Você me falou que quer <b>{foco}</b>. Olha só onde o paizão vai te colocar, filhota 👇",
+    lead: "{empatia}",          // linha de empatia ligada ao que a trava
+    startFrom: "q3_rotina",     // calibra o ponto "Hoje" pela rotina atual dela
     points: [
-      { label: "Hoje", level: 0.18 },
+      { label: "Hoje", level: 0.18 },   // level vira fallback (recalculado p/ q3)
       { label: "4 semaninhas", level: 0.58 },
       { label: "12 semaninhas", level: 0.95 }
     ],
@@ -297,5 +297,39 @@ const QUIZ = [
 
 ];
 
+/* ============================================================================
+   PERSONA — tabelas de personalização do diagnóstico.
+   O app.js resolve os tokens {foco} e {empatia} (e o nível inicial da curva)
+   a partir das respostas reais dela. Pra editar a copy personalizada, mexe SÓ
+   aqui. `_default` é o fallback quando a resposta não bate / vem vazia.
+============================================================================ */
+const PERSONA = {
+  // {foco} — q2_foco -> palavra curta destacada no subtítulo da curva
+  foco: {
+    "Emagrecer e secar": "secar",
+    "Tonificar e enrijecer o corpo": "tonificar o corpo",
+    "Os dois juntos": "secar e tonificar",
+    "Ganhar massa": "ganhar massa",
+    _default: "mudar de corpo"
+  },
+  // ponto "Hoje" da curva — q3_rotina -> nível inicial (quem já treina arranca mais alto)
+  start: {
+    "Eu treino, mas não vejo resultado": 0.30,
+    "Já parei e voltei várias vezes": 0.22,
+    "Nunca consegui manter constância": 0.16,
+    "Tô começando agora": 0.10,
+    _default: 0.18
+  },
+  // {empatia} — ligada ao que a trava (q5_trava; fallback q6_sozinha) — voz Carlão, sem travessão
+  empatia: {
+    "Falta de motivação e disciplina": "E dessa vez o paizão te cobra todo dia, viu? Você não larga mais sozinha.",
+    "Não sei o que fazer": "E dessa vez você tem um passo a passo feito pra você. O paizão te guia em cada exercício.",
+    "Cansaço, chego sem energia": "E esse plano respeita tua energia, filhota. No teu ritmo, sem te quebrar.",
+    "Falta de tempo": "E ó: esse plano cabe na tua rotina, filhota. Sem desculpa, sem peso.",
+    _default: "E dessa vez você não vai tá sozinha, filhota. O paizão tá contigo. 🧡"
+  }
+};
+
 // expõe global pro app.js
 window.QUIZ = QUIZ;
+window.PERSONA = PERSONA;

@@ -6,9 +6,10 @@ Enquanto não subir, aparece um placeholder estiloso no lugar.
 | Arquivo                | Onde aparece                          | Formato sugerido        |
 |------------------------|---------------------------------------|-------------------------|
 | `carlao-avatar.jpg`    | Avatar IG (topbar + landing) — **já baixado do @oficial_carlaopersonal** | quadrada, rosto |
+| `liz-avatar.jpg`       | Avatar do depoimento (Break 2) — **já baixado do @lizx.macedo** | quadrada, rosto |
 | `carlao-landing.png`   | Landing — figura recortada (s/ fundo) | PNG com transparência   |
 | `antes-depois-1.jpg`   | Break 1 (carta) — antes/depois filhota| paisagem 16:10          |
-| `depoimento-liz.jpg`   | Break 2 — print/foto da Liz ou Sophia | retrato 4:5             |
+| `depoimento-liz.jpg`   | Break 2 — frame de capa do vídeo da Liz (poster) | retrato 4:5    |
 | `antes-depois-2.jpg`   | Q14 (compromisso) — "4 semaninhas"    | paisagem 16:10          |
 
 ## Vídeos (Mini VSL 1 e 2)

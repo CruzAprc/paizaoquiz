@@ -142,6 +142,15 @@ body::after {
   background-position: center, center !important;
   color: transparent !important;
 }
+/* foto da Liz (filhota real) — usada no depoimento */
+.avatar-liz {
+  background-image: url("../img/liz-avatar.jpg"), var(--ig-ring) !important;
+  background-clip: padding-box, border-box !important;
+  background-origin: border-box !important;
+  background-size: cover, cover !important;
+  background-position: center, center !important;
+  color: transparent !important;
+}
 .topbar__count {
   flex: 0 0 auto; font-size: 12.5px; font-weight: 700;
   color: var(--tx-soft); padding: 5px 11px;
@@ -467,24 +476,32 @@ body::after {
 }
 
 /* ------------------------------------------------------------- TESTIMONIAL */
-.testi { gap: 20px; }
-.testi__quote {
-  font-family: var(--display);
-  font-size: 22px; line-height: 1.34; font-weight: 700; letter-spacing:-.02em;
-  position: relative; padding-top: 18px;
+.testi { gap: 14px; }
+/* @ dela no insta — escrito em cima */
+.testi__handle { display:flex; align-items:center; gap:10px; }
+.testi__hav { width:38px; height:38px; flex:0 0 auto; border-radius:50%; }
+.testi__hname {
+  display:flex; align-items:center; gap:5px;
+  font-weight:700; font-size:16px; letter-spacing:-.01em; color:var(--tx);
 }
-.testi__quote::before {
-  content:"\201C"; font-size: 72px; line-height: 0; position:absolute; top:32px; left:-4px;
-  color: var(--quote);
+/* vídeo dela falando — embaixo (formato stories 9/16) */
+.testi__video {
+  position: relative; width:100%; aspect-ratio: 9/16; max-height: 64dvh;
+  border-radius: var(--r); overflow:hidden; background:#000;
 }
-.testi__author { display:flex; align-items:center; gap:11px; }
-.testi__author .av {
-  width:42px; height:42px; border-radius:50%; background:var(--neutral);
-  border:1px solid var(--line-2);
-  display:grid; place-items:center; font-weight:800; color:var(--tx);
+.testi__vid { width:100%; height:100%; object-fit: cover; display:block; border:0; }
+.testi__placeholder {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:12px; text-align:center; padding:18px;
+  background: radial-gradient(120% 100% at 50% 0%, rgba(124,58,237,.18), rgba(0,0,0,.85));
 }
-.testi__author b { font-size:16px; }
-.testi__author small { display:block; color:var(--tx-mute); font-weight:600; }
+.testi__play {
+  width:62px; height:62px; border-radius:50%; display:grid; place-items:center;
+  background: rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25);
+}
+.testi__play svg { width:30px; height:30px; color:#fff; margin-left:4px; }
+.testi__plabel { font-weight:700; font-size:13px; letter-spacing:.04em; color:#fff; }
+.testi__pnote { font-size:12px; color:rgba(255,255,255,.7); line-height:1.45; max-width:80%; }
 
 /* ------------------------------------------------------------- VSL / OFFER */
 .vsl { gap: 18px; }
@@ -529,6 +546,20 @@ body::after {
 .loading__dots span:nth-child(2){animation-delay:.2s} .loading__dots span:nth-child(3){animation-delay:.4s}
 @keyframes blink { 0%,100%{opacity:.2} 50%{opacity:1} }
 
+/* recap das respostas dela pipocando durante o loading */
+.loading__recap { display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px; margin-top:4px; }
+.loading__row {
+  display:flex; align-items:center; gap:10px;
+  opacity:0; transform:translateY(6px);
+  transition: opacity .35s ease, transform .35s ease;
+  font-size:15px; text-align:left;
+}
+.loading__row.is-in { opacity:1; transform:none; }
+.loading__rk { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--tx-mute); min-width:96px; flex:0 0 auto; }
+.loading__rv { font-weight:700; flex:1; }
+.loading__rc { color:#22c55e; display:grid; place-items:center; flex:0 0 auto; }
+.loading__rc svg { width:16px; height:16px; }
+
 /* ------------------------------------------------------------- MIRROR */
 .mirror { gap: 18px; justify-content:center; }
 .mirror__title { font-family: var(--display); font-size: clamp(22px,5.8vw,28px); font-weight:800; letter-spacing:-.02em; line-height:1.16; margin:0; }
@@ -549,6 +580,7 @@ body::after {
 .chart { gap: 16px; justify-content:center; }
 .chart__title { font-family: var(--display); font-size: clamp(22px,5.8vw,27px); font-weight:800; letter-spacing:-.02em; margin:0; line-height:1.16; }
 .chart__sub { color: var(--tx-soft); font-size:15px; margin:0; }
+.chart__lead { color: var(--tx-soft); font-size:15px; line-height:1.45; margin:2px 0 0; }
 .chart__box {
   background: var(--card); border:1px solid var(--line); border-radius: var(--r);
   padding: 22px 18px 14px; box-shadow: var(--shadow);

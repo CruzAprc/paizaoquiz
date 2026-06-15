@@ -39,6 +39,21 @@
     return t.content.firstElementChild;
   }
 
+  /* PERSONALIZAÇÃO — resolve as tabelas de PERSONA a partir das respostas dela */
+  function persoVal(group, key, fallback) {
+    const tbl = (window.PERSONA && window.PERSONA[group]) || {};
+    if (key != null && key in tbl) return tbl[key];
+    return ("_default" in tbl) ? tbl._default : fallback;
+  }
+  // troca {foco}, {empatia} e {qID} genérico dentro de qualquer copy
+  function fillCopy(str) {
+    if (!str) return str;
+    return str
+      .replace("{foco}", persoVal("foco", state.answers.q2_foco, "mudar de corpo"))
+      .replace("{empatia}", persoVal("empatia", state.answers.q5_trava || state.answers.q6_sozinha, ""))
+      .replace(/\{(q\d+_[a-z]+)\}/g, (_, id) => state.answers[id] || "");
+  }
+
   // bloco de imagem: mostra <img> se carregar, senão placeholder estiloso
   function mediaBlock(src, alt, note, variant) {
     const v = variant || "portrait";
@@ -136,10 +151,12 @@
       vsl: renderVsl,
       offer: renderVsl,
       loading: renderLoading,
-      mirror: renderMirror,
       chart: renderChart,
     };
     (map[screen.type] || (() => {}))(root, screen);
+
+    // quiz concluído: ao chegar no diagnóstico, marca o lead como completed
+    if (screen.type === "loading" && window.PaizaoDB) PaizaoDB.complete(state.answers);
 
     stage.appendChild(root);
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
@@ -220,6 +237,8 @@
         </button>`);
       opt.addEventListener("click", () => {
         state.answers[s.id] = text;
+        // grava no Supabase (resiliente — nunca trava o quiz)
+        if (window.PaizaoDB) PaizaoDB.recordAnswer(s.id, text, state.answers);
         // feedback visual e avança
         opts.querySelectorAll(".opt").forEach(o => o.classList.remove("is-selected"));
         opt.classList.add("is-selected");
@@ -332,17 +351,35 @@
     frame.addEventListener("pointercancel", () => { resumeTL(); downAt = 0; });
   }
 
-  /* ---- TESTIMONIAL ---- */
+  /* ---- TESTIMONIAL (depoimento em vídeo: @ no topo + vídeo dela falando) ---- */
   function renderTestimonial(root, s) {
     root.classList.add("testi");
-    root.appendChild(mediaBlock(s.image, s.imageAlt, s.imageNote, "portrait"));
-    root.appendChild(el(`<p class="testi__quote">${s.quote}</p>`));
-    const author = el(`
-      <div class="testi__author">
-        <span class="av">${(s.author||"?")[0]}</span>
-        <div><b>${s.author}</b><small>${s.authorTag||""}</small></div>
-      </div>`);
-    root.appendChild(author);
+
+    // @ dela no insta — escrito em cima
+    if (s.handle) {
+      root.appendChild(el(`
+        <div class="testi__handle">
+          <span class="testi__hav igring avatar-liz"></span>
+          <span class="testi__hname">${s.handle}
+            <svg class="verified" viewBox="0 0 24 24" width="15" height="15" aria-label="verificado"><path fill="#3897f0" d="M12 1.5l2.4 1.8 3 .2 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .2L12 22.5l-2.4-1.8-3-.2-1-2.8L3.3 15.8l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.2z"/><path fill="#fff" d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.3-3.3 1.1 1.1z"/></svg>
+          </span>
+        </div>`));
+    }
+
+    // vídeo dela falando — embaixo
+    const vbox = el('<div class="testi__video"></div>');
+    if (s.video) {
+      vbox.innerHTML = `<video class="testi__vid" src="${s.video}" controls playsinline preload="metadata" ${s.poster ? `poster="${s.poster}"` : ""}></video>`;
+    } else {
+      vbox.appendChild(el(`
+        <div class="testi__placeholder">
+          <div class="testi__play">${ic.play}</div>
+          <div class="testi__plabel">SLOT VÍDEO · depoimento da ${s.author || "filhota"}</div>
+          <div class="testi__pnote">Solte o .mp4 dela falando em <b>video</b> no quiz-data.</div>
+        </div>`));
+    }
+    root.appendChild(vbox);
+
     root.appendChild(ctaBar(s.cta, next));
   }
 
@@ -368,42 +405,77 @@
     root.appendChild(ctaBar(s.cta, isLast ? finish : next));
   }
 
-  /* ---- LOADING (auto-advance) ---- */
+  /* ---- LOADING (auto-advance) — 3 batidas de headline + recap pipocando ---- */
   function renderLoading(root, s) {
     root.classList.add("loading");
-    root.appendChild(el('<div class="loader"></div>'));
-    root.appendChild(el(`<p class="loading__text">${s.text} <span class="loading__dots"><span>.</span><span>.</span><span>.</span></span></p>`));
-    setTimeout(next, s.duration || 3200);
-  }
+    const dots = '<span class="loading__dots"><span>.</span><span>.</span><span>.</span></span>';
+    const head = el(`<p class="loading__text"></p>`);
 
-  /* ---- MIRROR (repete respostas reais) ---- */
-  function renderMirror(root, s) {
-    root.classList.add("mirror");
-    root.appendChild(el(`<h2 class="mirror__title">${s.title}</h2>`));
-    const rowsWrap = el('<div class="mirror__rows"></div>');
-    const icons = { "idade": ic.age, "foco em": ic.target, "alimentação": ic.food };
-    s.rows.forEach(r => {
-      const val = state.answers[r.from] || "—";
-      rowsWrap.appendChild(el(`
-        <div class="mirror__row">
-          <span class="mirror__icon">${icons[r.label] || ic.target}</span>
-          <div><small>${r.label}</small><b>${val}</b></div>
-        </div>`));
-    });
-    root.appendChild(rowsWrap);
-    root.appendChild(el(`<p class="mirror__footer">${s.footer}</p>`));
-    root.appendChild(ctaBar(s.cta, next));
+    root.appendChild(el('<div class="loader"></div>'));
+    root.appendChild(head);
+
+    // headline: começa na batida 1 (intro) se houver, senão já na batida 2 (text)
+    const hasIntro = !!s.intro;
+    head.innerHTML = `${hasIntro ? s.intro : (s.text || "")} ${dots}`;
+
+    const timers = [];
+    const after = (ms, fn) => timers.push(setTimeout(fn, ms));
+    screenAbort = () => { timers.forEach(clearTimeout); timers.length = 0; };
+
+    const rows = s.rows || [];
+    const introHold = hasIntro ? (s.introHold || 1500) : 0;
+    const STEP = 600, FIRST = 350;
+
+    // batida 2: troca a headline e começa a pipocar as linhas do recap
+    let list = null;
+    const startRecap = () => {
+      if (hasIntro && s.text) head.innerHTML = `${s.text} ${dots}`;
+      if (!rows.length) return;
+      list = el('<div class="loading__recap"></div>');
+      root.appendChild(list);
+      rows.forEach((r, i) => {
+        const val = state.answers[r.from] || "—";
+        const row = el(`
+          <div class="loading__row">
+            <span class="loading__rk">${r.label}</span>
+            <span class="loading__rv">${val}</span>
+            <span class="loading__rc">${ic.check}</span>
+          </div>`);
+        list.appendChild(row);
+        after(FIRST + i * STEP, () => row.classList.add("is-in"));
+      });
+    };
+
+    if (hasIntro) after(introHold, startRecap); else startRecap();
+
+    // batida 3: "Pronto. Já tô montando…" depois da última linha entrar
+    if (s.done) {
+      const doneAt = introHold + FIRST + Math.max(0, rows.length - 1) * STEP + 300;
+      after(doneAt, () => { head.innerHTML = `${s.done} ${dots}`; });
+    }
+
+    after(s.duration || 3600, () => { cleanupScreen(); next(); });
   }
 
   /* ---- CHART (curva hoje -> 4 -> 12 semaninhas) ---- */
   function renderChart(root, s) {
     root.classList.add("chart");
     root.appendChild(el(`<h2 class="chart__title">${s.title}</h2>`));
-    if (s.subtitle) root.appendChild(el(`<p class="chart__sub">${s.subtitle}</p>`));
+    if (s.subtitle) root.appendChild(el(`<p class="chart__sub">${fillCopy(s.subtitle)}</p>`));
+    if (s.lead) {
+      const lead = fillCopy(s.lead);
+      if (lead && lead.trim()) root.appendChild(el(`<p class="chart__lead">${lead}</p>`));
+    }
+
+    // clona os pontos e calibra o "Hoje" pela resposta de rotina dela (não muta s.points)
+    const points = s.points.map(p => ({ ...p }));
+    if (s.startFrom) {
+      points[0].level = persoVal("start", state.answers[s.startFrom], points[0].level);
+    }
 
     const W = 320, H = 180, pad = 14;
-    const pts = s.points.map((p, i) => {
-      const x = pad + (i * (W - pad * 2)) / (s.points.length - 1);
+    const pts = points.map((p, i) => {
+      const x = pad + (i * (W - pad * 2)) / (points.length - 1);
       const y = H - pad - p.level * (H - pad * 2);
       return { x, y, ...p };
     });
@@ -422,7 +494,7 @@
         <path d="${linePath}" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="cLine"/>
         ${pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5.5" fill="#fff" stroke="#7c3aed" stroke-width="3"/>`).join("")}
       </svg>
-      <div class="chart__legend">${s.points.map(p => `<span>${p.label}</span>`).join("")}</div>`;
+      <div class="chart__legend">${points.map(p => `<span>${p.label}</span>`).join("")}</div>`;
     root.appendChild(box);
 
     // anima a linha
