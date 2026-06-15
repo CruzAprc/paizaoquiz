@@ -50,7 +50,7 @@ const QUIZ = [
     type: "question",
     id: "q2_foco",
     block: "Sobre você",
-    question: "E qual é o teu foco agora, filhota? O que você mais quer?",
+    question: "E qual é o seu foco agora, filhota? O que você mais quer?",
     options: [
       "Emagrecer e secar",
       "Tonificar e enrijecer o corpo",
@@ -62,7 +62,7 @@ const QUIZ = [
     type: "question",
     id: "q3_rotina",
     block: "Sobre você",
-    question: "Olha só, me conta uma verdade: como tá tua rotina de treino hoje?",
+    question: "Olha só, me conta uma verdade: como tá sua rotina de treino hoje?",
     options: [
       "Eu treino, mas não vejo resultado",
       "Já parei e voltei várias vezes",
@@ -86,8 +86,8 @@ const QUIZ = [
     // a carta vira a legenda/roteiro que ele fala no vídeo:
     eyebrow: "Filhota, presta atenção 10 segundos.",
     paragraphs: [
-      "Se você já tentou de tudo e o corpo não muda, esse diagnóstico foi feito pra você. O problema nunca foi você — foi nunca ter tido um plano feito PRA você, e uma família de filhotas do teu lado pra não te deixar largar.",
-      "Responde até o final que o paizão calibra esse plano pro TEU corpo. Te amo."
+      "Se você já tentou de tudo e o corpo não muda, esse diagnóstico foi feito pra você. O problema nunca foi você — foi nunca ter tido um plano feito PRA você, e uma família de filhotas do seu lado pra não te deixar largar.",
+      "Responde até o final que o paizão calibra esse plano pro SEU corpo. Te amo."
     ],
     sign: "— Carlão"
   },
@@ -116,18 +116,6 @@ const QUIZ = [
       "Não sei o que fazer",
       "Cansaço, chego sem energia",
       "Falta de tempo"
-    ]
-  },
-  {
-    type: "question",
-    id: "q6_sozinha",
-    block: "O que te trava",
-    question: "Quando você começa uma dieta ou um treino sozinha, o que costuma rolar?",
-    options: [
-      "Largo quando não vejo resultado rápido",
-      "Fico perdida sem ninguém me cobrando",
-      "Me sinto sozinha e desanimo",
-      "Faço errado e desisto"
     ]
   },
 
@@ -196,7 +184,7 @@ const QUIZ = [
     type: "question",
     id: "q10_cobrando",
     block: "O que muda o jogo",
-    question: "E o quanto faz diferença ter o paizão te cobrando e ajustando teu plano toda semana?",
+    question: "E o quanto faz diferença ter o paizão te cobrando e ajustando seu plano toda semana?",
     options: [
       "Faz toda diferença",
       "Sozinha eu largo",
@@ -220,7 +208,7 @@ const QUIZ = [
     type: "question",
     id: "q12_alimentacao",
     block: "O que muda o jogo",
-    question: "E como tá tua alimentação hoje, filhota? Sem vergonha, me fala a real.",
+    question: "E como tá sua alimentação hoje, filhota? Sem vergonha, me fala a real.",
     options: [
       "Como de tudo, sem controle",
       "Tento, mas me perco",
@@ -241,6 +229,19 @@ const QUIZ = [
     ]
   },
 
+  /* --------------- MEDIDAS (altura + peso -> IMC no diagnóstico) --------- */
+  {
+    type: "measure",
+    block: "Seu ponto de partida",
+    question: "Quase lá, filhota! Me passa sua altura e seu peso de hoje, pro paizão calcular certinho seu ponto de partida:",
+    note: "Fica só entre você e o paizão 🔒 Sem julgamento — é só pra montar seu plano.",
+    fields: [
+      { id: "altura_cm", label: "Altura", unit: "cm", placeholder: "165", min: 120, max: 230 },
+      { id: "peso_kg",   label: "Peso",   unit: "kg", placeholder: "72",  min: 30,  max: 300 }
+    ],
+    cta: "Continuar"
+  },
+
   /* --------------- PRÉ-PITCH — COMPROMISSO (gancho Cialdini) ------------- */
   {
     type: "question",
@@ -259,31 +260,30 @@ const QUIZ = [
   {
     type: "loading",
     // 3 batidas de headline em sequência (o recap pipoca durante a batida 2):
-    intro: "Calma, filhota… o paizão tá montando o teu diagnóstico…",  // batida 1 (~1,5s)
+    intro: "Calma, filhota… o paizão tá montando o seu diagnóstico…",  // batida 1 (~1,5s)
     text:  "Tô guardando tudo que você me contou aqui, filhota…",       // batida 2 (1ª pessoa)
-    done:  "Pronto. Já tô montando o teu plano, filhota…",              // batida 3
+    done:  "Pronto. Já tô montando o seu plano, filhota…",              // batida 3
     introHold: 1500,
-    rows: [
-      { label: "foco",          from: "q2_foco" },
-      { label: "o que trava",   from: "q5_trava" },
-      { label: "alimentação",   from: "q12_alimentacao" },
-      { label: "quer primeiro", from: "q13_primeiro" }
-    ],
-    duration: 4800
+    // (as respostas NÃO são exibidas pra lead — só as mensagens do paizão.
+    //  Os dados continuam sendo salvos no Supabase em silêncio.)
+    duration: 4200
   },
   {
     type: "chart",
-    title: "Teu corpo nas próximas semaninhas",
-    // {foco} é resolvido a partir da resposta real dela (ver PERSONA abaixo)
-    subtitle: "Você me falou que quer <b>{foco}</b>. Olha só onde o paizão vai te colocar, filhota 👇",
-    lead: "{empatia}",          // linha de empatia ligada ao que a trava
+    // tokens {foco} e {primeiro} são resolvidos a partir das respostas reais dela (ver PERSONA)
+    title: "Seu corpo nas próximas semaninhas",
+    showImc: true,              // calcula e mostra o IMC dela (altura/peso da tela measure)
+    subtitle: "Você me falou que quer <b>{foco}</b> — e ver primeiro <b>{primeiro}</b>. Olha só onde o paizão vai te colocar, filhota 👇",
+    lead: "{empatia}",          // frase de empatia (vira card) ligada ao que a trava
+    markStart: "você tá aqui",  // selo no ponto "Hoje"
+    markGoal: "sua meta 🔥",    // selo no ponto "12 semaninhas"
     startFrom: "q3_rotina",     // calibra o ponto "Hoje" pela rotina atual dela
     points: [
       { label: "Hoje", level: 0.18 },   // level vira fallback (recalculado p/ q3)
       { label: "4 semaninhas", level: 0.58 },
       { label: "12 semaninhas", level: 0.95 }
     ],
-    cta: "Pra receber teu plano, toca aqui, filhota"
+    cta: "Pra receber seu plano, toca aqui, filhota"
   },
 
   /* --------------------------- MINI VSL 2 (oferta 90s) ------------------ */
@@ -312,6 +312,30 @@ const PERSONA = {
     "Ganhar massa": "ganhar massa",
     _default: "mudar de corpo"
   },
+  // {primeiro} — q13_primeiro -> o que ela quer ver primeiro
+  primeiro: {
+    "Barriga mais seca": "a barriga mais seca",
+    "Corpo mais durinho e tonificado": "o corpo mais durinho",
+    "Mais disposição e energia": "mais disposição e energia",
+    "Tudo junto": "tudo de uma vez",
+    _default: "o resultado que você quer"
+  },
+  // IMC no diagnóstico — mensagem por faixa (SEMPRE acolhedora). {foco} é resolvido.
+  imc: {
+    abaixo:   "Seu IMC tá um pouquinho abaixo do ideal — bora construir corpo com saúde, no seu ritmo, filhota.",
+    saudavel: "Seu IMC já tá na faixa saudável! Agora é esculpir e {foco} do jeito certo, sem perder a saúde.",
+    acima:    "Seu IMC tá só um pouquinho acima do ideal — e é exatamente aí que o paizão começa a virar o jogo nas primeiras 4 semaninhas.",
+    alto:     "Seu IMC mostra que dá pra ganhar MUITA saúde e leveza daqui pra frente — e o paizão vai com você passo a passo, sem pressa e sem julgamento.",
+    _default: "Esse é o seu ponto de partida, filhota. A partir daqui é só evolução com o paizão."
+  },
+  // rótulo curto da faixa (chip ao lado do número)
+  imcCat: {
+    abaixo: "abaixo do ideal",
+    saudavel: "faixa saudável",
+    acima: "um pouco acima",
+    alto: "bora cuidar disso",
+    _default: "ponto de partida"
+  },
   // ponto "Hoje" da curva — q3_rotina -> nível inicial (quem já treina arranca mais alto)
   start: {
     "Eu treino, mas não vejo resultado": 0.30,
@@ -324,9 +348,9 @@ const PERSONA = {
   empatia: {
     "Falta de motivação e disciplina": "E dessa vez o paizão te cobra todo dia, viu? Você não larga mais sozinha.",
     "Não sei o que fazer": "E dessa vez você tem um passo a passo feito pra você. O paizão te guia em cada exercício.",
-    "Cansaço, chego sem energia": "E esse plano respeita tua energia, filhota. No teu ritmo, sem te quebrar.",
-    "Falta de tempo": "E ó: esse plano cabe na tua rotina, filhota. Sem desculpa, sem peso.",
-    _default: "E dessa vez você não vai tá sozinha, filhota. O paizão tá contigo. 🧡"
+    "Cansaço, chego sem energia": "E esse plano respeita sua energia, filhota. No seu ritmo, sem te quebrar.",
+    "Falta de tempo": "E ó: esse plano cabe na sua rotina, filhota. Sem desculpa, sem peso.",
+    _default: "E dessa vez você não vai tá sozinha, filhota. O paizão tá com você. 🧡"
   }
 };
 

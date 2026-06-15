@@ -20,10 +20,13 @@
   var SS_KEY = "paizao_quiz_lead_id";
 
   // colunas-resposta válidas (espelham os ids das perguntas no quiz-data.js)
+  // + altura/peso/imc (tela "measure"). Tudo que vier em state.answers e estiver
+  // nesta lista vira coluna; o resto fica no jsonb "answers".
   var ANSWER_COLS = [
     "q1_idade", "q2_foco", "q3_rotina", "q4_porque", "q5_trava", "q6_sozinha",
     "q7_deixou", "q8_um_ano", "q9_plano", "q10_cobrando", "q11_comunidade",
-    "q12_alimentacao", "q13_primeiro", "q14_compromisso"
+    "q12_alimentacao", "q13_primeiro", "q14_compromisso",
+    "altura_cm", "peso_kg", "imc"
   ];
 
   var client = null;
@@ -131,9 +134,13 @@
     }).catch(function (e) { console.warn("[paizao-quiz]", e && e.message); });
   }
 
+  // tela "measure": salva altura/peso/imc (já estão em state.answers + ANSWER_COLS)
+  function recordMeasure(answers) { recordAnswer(null, null, answers); }
+
   window.PaizaoDB = {
     enabled: !!client,
     recordAnswer: recordAnswer,
+    recordMeasure: recordMeasure,
     complete: complete
   };
 })();

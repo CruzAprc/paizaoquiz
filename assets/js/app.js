@@ -50,8 +50,24 @@
     if (!str) return str;
     return str
       .replace("{foco}", persoVal("foco", state.answers.q2_foco, "mudar de corpo"))
+      .replace("{primeiro}", persoVal("primeiro", state.answers.q13_primeiro, "o resultado que você quer"))
       .replace("{empatia}", persoVal("empatia", state.answers.q5_trava || state.answers.q6_sozinha, ""))
       .replace(/\{(q\d+_[a-z]+)\}/g, (_, id) => state.answers[id] || "");
+  }
+
+  // calcula IMC + faixa a partir da altura/peso que ela informou (null se faltar dado)
+  function imcInfo() {
+    const h = parseFloat(state.answers.altura_cm);
+    const w = parseFloat(state.answers.peso_kg);
+    if (!h || !w || h < 80 || w < 20) return null;
+    const m = h / 100;
+    const imc = w / (m * m);
+    let cat = "saudavel";
+    if (imc < 18.5) cat = "abaixo";
+    else if (imc < 25) cat = "saudavel";
+    else if (imc < 30) cat = "acima";
+    else cat = "alto";
+    return { imc: Math.round(imc * 10) / 10, cat };
   }
 
   // bloco de imagem: mostra <img> se carregar, senão placeholder estiloso
@@ -78,20 +94,20 @@
     if (av) av.classList.add("avatar-photo");
   }
 
-  /* --------------------------------------------------------- CRONÔMETRO (15 min) */
+  /* --------------------------------------------------------- CRONÔMETRO (15 min REAIS) */
   function startTimer() {
-    const TOTAL = 15 * 60; // segundos
+    const TOTAL = 15 * 60; // 15 minutos reais
     const valEl = document.getElementById("timerVal");
     const bar = document.getElementById("timerbar");
     if (!valEl) return;
     // persiste o início pra ser um relógio "de verdade" (sobrevive a refresh)
-    let start = parseInt(localStorage.getItem("quizStart"), 10);
-    if (!start || isNaN(start)) { start = Date.now(); localStorage.setItem("quizStart", String(start)); }
+    let start = parseInt(localStorage.getItem("quizStart3"), 10);
+    if (!start || isNaN(start)) { start = Date.now(); localStorage.setItem("quizStart3", String(start)); }
     function tick() {
       const left = Math.max(0, TOTAL - Math.floor((Date.now() - start) / 1000));
       const m = Math.floor(left / 60), s = left % 60;
       valEl.textContent = m + ":" + String(s).padStart(2, "0");
-      if (bar) bar.classList.toggle("is-urgent", left <= 120);
+      if (bar) bar.classList.toggle("is-urgent", left <= 120); // pisca nos últimos 2 min
       if (left <= 0 && window.__qTimer) clearInterval(window.__qTimer);
     }
     tick();
@@ -106,23 +122,15 @@
     topbar.hidden = hideChrome;
     progressWrap.hidden = hideChrome;
 
-    // posição da pergunta atual entre as perguntas
-    let qIndex = 0, seen = 0;
-    for (let i = 0; i <= state.index; i++) {
-      if (QUIZ[i].type === "question") { seen++; if (i === state.index) qIndex = seen; }
-    }
-    if (isQuestion) {
-      qCount.textContent = `${qIndex}/${TOTAL_Q}`;
-      qCount.hidden = false;
-    } else {
-      qCount.hidden = true;
-    }
+    // contador "X/14" REMOVIDO — a lead não deve saber quantas perguntas faltam
+    if (qCount) qCount.hidden = true;
 
-    // barra: progresso baseado em perguntas respondidas até aqui
-    let answeredish = 0;
-    for (let i = 0; i < state.index; i++) if (QUIZ[i].type === "question") answeredish++;
-    if (isQuestion) answeredish += 0.5;
-    const pct = Math.min(100, (answeredish / TOTAL_Q) * 100);
+    // barra de progresso "fake": enche rápido e parece quase cheia boa parte
+    // do tempo (curva front-loaded sobre a posição geral) — NÃO revela 1/14.
+    const lastIdx = Math.max(1, QUIZ.length - 1);
+    const p = Math.min(1, state.index / lastIdx);
+    const eased = 1 - Math.pow(1 - p, 3); // ease-out forte: sensação de progresso veloz
+    const pct = Math.round(eased * 100);
     progressBar.style.width = (screen.type === "landing" ? 0 : pct) + "%";
 
     backBtn.disabled = state.index === 0;
@@ -151,6 +159,7 @@
       vsl: renderVsl,
       offer: renderVsl,
       loading: renderLoading,
+      measure: renderMeasure,
       chart: renderChart,
     };
     (map[screen.type] || (() => {}))(root, screen);
@@ -207,7 +216,9 @@
       root.appendChild(mediaBlock(s.image, s.imageAlt, s.imageNote, "portrait"));
     }
 
-    root.appendChild(ctaButton(s.cta, next));
+    const landingCta = ctaButton(s.cta, next);
+    landingCta.classList.add("btn--pulse"); // pulso pra chamar a ação (velocidade 2)
+    root.appendChild(landingCta);
     root.appendChild(el(`<p class="scarcity">${s.scarcity}</p>`));
   }
 
@@ -405,7 +416,7 @@
     root.appendChild(ctaBar(s.cta, isLast ? finish : next));
   }
 
-  /* ---- LOADING (auto-advance) — 3 batidas de headline + recap pipocando ---- */
+  /* ---- LOADING (auto-advance) — 3 batidas de headline (NÃO expõe as respostas) ---- */
   function renderLoading(root, s) {
     root.classList.add("loading");
     const dots = '<span class="loading__dots"><span>.</span><span>.</span><span>.</span></span>';
@@ -422,39 +433,69 @@
     const after = (ms, fn) => timers.push(setTimeout(fn, ms));
     screenAbort = () => { timers.forEach(clearTimeout); timers.length = 0; };
 
-    const rows = s.rows || [];
     const introHold = hasIntro ? (s.introHold || 1500) : 0;
-    const STEP = 600, FIRST = 350;
 
-    // batida 2: troca a headline e começa a pipocar as linhas do recap
-    let list = null;
-    const startRecap = () => {
-      if (hasIntro && s.text) head.innerHTML = `${s.text} ${dots}`;
-      if (!rows.length) return;
-      list = el('<div class="loading__recap"></div>');
-      root.appendChild(list);
-      rows.forEach((r, i) => {
-        const val = state.answers[r.from] || "—";
-        const row = el(`
-          <div class="loading__row">
-            <span class="loading__rk">${r.label}</span>
-            <span class="loading__rv">${val}</span>
-            <span class="loading__rc">${ic.check}</span>
-          </div>`);
-        list.appendChild(row);
-        after(FIRST + i * STEP, () => row.classList.add("is-in"));
-      });
-    };
-
-    if (hasIntro) after(introHold, startRecap); else startRecap();
-
-    // batida 3: "Pronto. Já tô montando…" depois da última linha entrar
-    if (s.done) {
-      const doneAt = introHold + FIRST + Math.max(0, rows.length - 1) * STEP + 300;
-      after(doneAt, () => { head.innerHTML = `${s.done} ${dots}`; });
-    }
+    // batida 2: troca a headline (sem mostrar as respostas — a lead não vê o que preencheu)
+    if (hasIntro && s.text) after(introHold, () => { head.innerHTML = `${s.text} ${dots}`; });
+    // batida 3: "Pronto. Já tô montando…"
+    if (s.done) after(introHold + 1700, () => { head.innerHTML = `${s.done} ${dots}`; });
 
     after(s.duration || 3600, () => { cleanupScreen(); next(); });
+  }
+
+  /* ---- MEASURE (altura + peso -> IMC) ---- */
+  function renderMeasure(root, s) {
+    root.classList.add("measure");
+    if (s.block) root.appendChild(el(`<div class="q__head"><span class="q__block">${s.block}</span></div>`));
+    root.appendChild(el(`<h2 class="q__title">${s.question}</h2>`));
+
+    const form = el('<div class="measure__fields"></div>');
+    const inputs = {};
+    (s.fields || []).forEach(f => {
+      const wrap = el(`
+        <label class="measure__field">
+          <span class="measure__flabel">${f.label}</span>
+          <span class="measure__inputwrap">
+            <input class="measure__input" type="number" inputmode="numeric" enterkeyhint="next"
+                   placeholder="${f.placeholder || ""}" min="${f.min || 0}" max="${f.max || 999}" />
+            <span class="measure__unit">${f.unit || ""}</span>
+          </span>
+        </label>`);
+      const input = wrap.querySelector("input");
+      if (state.answers[f.id] != null) input.value = state.answers[f.id];
+      inputs[f.id] = input;
+      form.appendChild(wrap);
+    });
+    root.appendChild(form);
+    if (s.note) root.appendChild(el(`<p class="measure__note">${s.note}</p>`));
+
+    const err = el(`<p class="measure__err" hidden>Preenche altura e peso certinho, filhota 🙏</p>`);
+    root.appendChild(err);
+
+    const proceed = () => {
+      let ok = true;
+      (s.fields || []).forEach(f => {
+        const v = parseFloat(inputs[f.id].value);
+        if (isNaN(v) || v < (f.min || 0) || v > (f.max || 999)) {
+          ok = false; inputs[f.id].classList.add("is-bad");
+        } else {
+          inputs[f.id].classList.remove("is-bad"); state.answers[f.id] = v;
+        }
+      });
+      if (!ok) { err.hidden = false; return; }
+      err.hidden = true;
+      const info = imcInfo();
+      if (info) state.answers.imc = info.imc;
+      if (window.PaizaoDB) PaizaoDB.recordMeasure(state.answers);
+      next();
+    };
+
+    // Enter no último campo confirma
+    Object.values(inputs).forEach(inp => inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); proceed(); }
+    }));
+
+    root.appendChild(ctaBar(s.cta || "Continuar", proceed));
   }
 
   /* ---- CHART (curva hoje -> 4 -> 12 semaninhas) ---- */
@@ -462,9 +503,23 @@
     root.classList.add("chart");
     root.appendChild(el(`<h2 class="chart__title">${s.title}</h2>`));
     if (s.subtitle) root.appendChild(el(`<p class="chart__sub">${fillCopy(s.subtitle)}</p>`));
-    if (s.lead) {
-      const lead = fillCopy(s.lead);
-      if (lead && lead.trim()) root.appendChild(el(`<p class="chart__lead">${lead}</p>`));
+
+    // card do IMC (calculado a partir da altura/peso dela)
+    if (s.showImc) {
+      const info = imcInfo();
+      if (info) {
+        const msg = fillCopy(persoVal("imc", info.cat, ""));
+        const catLabel = persoVal("imcCat", info.cat, "ponto de partida");
+        const imcStr = String(info.imc).replace(".", ",");
+        root.appendChild(el(`
+          <div class="imc imc--${info.cat}">
+            <div class="imc__row">
+              <div class="imc__num"><b>${imcStr}</b><small>IMC hoje</small></div>
+              <span class="imc__cat">${catLabel}</span>
+            </div>
+            ${msg ? `<p class="imc__msg">${msg}</p>` : ""}
+          </div>`));
+      }
     }
 
     // clona os pontos e calibra o "Hoje" pela resposta de rotina dela (não muta s.points)
@@ -495,7 +550,18 @@
         ${pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5.5" fill="#fff" stroke="#7c3aed" stroke-width="3"/>`).join("")}
       </svg>
       <div class="chart__legend">${points.map(p => `<span>${p.label}</span>`).join("")}</div>`;
+    // selos personalizados na curva ("você tá aqui" / "sua meta 🔥")
+    if (s.markStart) box.appendChild(el(`<span class="chart__badge chart__badge--start">${fillCopy(s.markStart)}</span>`));
+    if (s.markGoal) box.appendChild(el(`<span class="chart__badge chart__badge--goal">${fillCopy(s.markGoal)}</span>`));
     root.appendChild(box);
+
+    // frase de empatia (card destacado, ligada ao que a trava)
+    if (s.lead) {
+      const lead = fillCopy(s.lead);
+      if (lead && lead.trim()) {
+        root.appendChild(el(`<div class="chart__note"><span class="chart__note-ic">🧡</span><p>${lead}</p></div>`));
+      }
+    }
 
     // anima a linha
     const line = box.querySelector(".cLine");
