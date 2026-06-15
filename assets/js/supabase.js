@@ -74,68 +74,50 @@
     });
   }
 
+  // id do lead gerado no cliente (sobrevive a refresh dentro da mesma aba)
   var leadId = null;
   try { leadId = sessionStorage.getItem(SS_KEY) || null; } catch (e) {}
-  var creating = null; // promessa-guarda p/ não criar 2 linhas em cliques rápidos
+  if (!leadId) { leadId = newId(); try { sessionStorage.setItem(SS_KEY, leadId); } catch (e) {} }
+  var metaSent = false;
 
-  // garante que existe a linha do lead; resolve { id, justCreated }
-  function ensureLead(answers) {
-    if (!client) return Promise.resolve({ id: null, justCreated: false });
-    if (leadId) return Promise.resolve({ id: leadId, justCreated: false });
-    if (creating) return creating;
-
-    var id = newId();
-    var row = Object.assign({ id: id, answers: answers || {} }, pickCols(answers), meta());
-
-    creating = client.from(TABLE).insert(row).then(function (res) {
-      if (res && res.error) {
-        console.warn("[paizao-quiz] insert lead falhou:", res.error.message);
-        creating = null;
-        return { id: null, justCreated: false };
-      }
-      leadId = id;
-      try { sessionStorage.setItem(SS_KEY, id); } catch (e) {}
-      return { id: id, justCreated: true };
-    });
-    return creating;
+  // grava via RPC paizao_quiz_save (roda como dono no servidor -> ignora RLS,
+  // não depende de SELECT, e os leads continuam privados). Patch parcial: o
+  // servidor faz coalesce, então só sobrescreve o que vier preenchido.
+  function save(patch) {
+    if (!client) return;
+    var body = Object.assign({}, patch);
+    if (!metaSent) { Object.assign(body, meta()); metaSent = true; } // utm/origem 1x
+    client.rpc("paizao_quiz_save", { p_id: leadId, p_patch: body })
+      .then(function (res) {
+        if (res && res.error) console.warn("[paizao-quiz] save falhou:", res.error.message);
+      })
+      .catch(function (e) { console.warn("[paizao-quiz]", e && e.message); });
   }
 
   // chamada a cada resposta selecionada
   function recordAnswer(qid, value, answers) {
-    if (!client) return;
-    ensureLead(answers).then(function (r) {
-      if (!r.id || r.justCreated) return; // já entrou no insert
-      var patch = Object.assign({ answers: answers }, pickCols(answers));
-      return client.from(TABLE).update(patch).eq("id", r.id);
-    }).then(function (res) {
-      if (res && res.error) console.warn("[paizao-quiz] update falhou:", res.error.message);
-    }).catch(function (e) { console.warn("[paizao-quiz]", e && e.message); });
+    save(Object.assign({ answers: answers }, pickCols(answers)));
+  }
+
+  // tela "measure": salva altura/peso/imc (já estão em state.answers + ANSWER_COLS)
+  function recordMeasure(answers) {
+    save(Object.assign({ answers: answers }, pickCols(answers)));
   }
 
   // chamada ao chegar no diagnóstico (quiz concluído)
   function complete(answers) {
-    if (!client) return;
-    ensureLead(answers).then(function (r) {
-      if (!r.id) return;
-      var foco = null;
-      try {
-        var t = window.PERSONA && window.PERSONA.foco;
-        if (t) foco = (answers.q2_foco in t) ? t[answers.q2_foco] : t._default;
-      } catch (e) {}
-      var patch = Object.assign({
-        answers: answers,
-        completed: true,
-        completed_at: new Date().toISOString(),
-        foco_resolved: foco
-      }, pickCols(answers));
-      return client.from(TABLE).update(patch).eq("id", r.id);
-    }).then(function (res) {
-      if (res && res.error) console.warn("[paizao-quiz] complete falhou:", res.error.message);
-    }).catch(function (e) { console.warn("[paizao-quiz]", e && e.message); });
+    var foco = null;
+    try {
+      var t = window.PERSONA && window.PERSONA.foco;
+      if (t) foco = (answers.q2_foco in t) ? t[answers.q2_foco] : t._default;
+    } catch (e) {}
+    save(Object.assign({
+      answers: answers,
+      completed: true,
+      completed_at: new Date().toISOString(),
+      foco_resolved: foco
+    }, pickCols(answers)));
   }
-
-  // tela "measure": salva altura/peso/imc (já estão em state.answers + ANSWER_COLS)
-  function recordMeasure(answers) { recordAnswer(null, null, answers); }
 
   window.PaizaoDB = {
     enabled: !!client,

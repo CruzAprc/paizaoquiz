@@ -276,7 +276,7 @@ body::after {
 .figure__img {
   position: relative; z-index: 1;
   height: 100%;
-  max-height: clamp(220px, 46dvh, 520px);
+  max-height: clamp(250px, 54dvh, 580px);
   width: auto; max-width: 100%;
   object-fit: contain;
   object-position: bottom center;
