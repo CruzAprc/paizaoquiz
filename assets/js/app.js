@@ -21,6 +21,76 @@
     answers: {}, // { questionId: optionText }
   };
 
+  /* ========================================================== ROTEADOR (URL limpa)
+     Cada tela do funil tem um slug -> URL. A URL acompanha o passo (analytics/pixel,
+     botão voltar do navegador, drop-off). Mapa por IDENTIDADE da tela (id da pergunta
+     ou type), robusto a reordenação. Hospedagem com SPA fallback (vercel.json). */
+  const ROUTE_BY_QID = {
+    q1_idade: "pergunta-1", q2_foco: "pergunta-2", q3_rotina: "pergunta-3",
+    q4_porque: "pergunta-4", q5_trava: "pergunta-5", q6_sozinha: "pergunta-6",
+    q7_deixou: "pergunta-6", q8_um_ano: "pergunta-7", q9_plano: "pergunta-8",
+    q10_cobrando: "pergunta-9", q11_comunidade: "pergunta-10", q12_alimentacao: "pergunta-11",
+    q13_primeiro: "pergunta-12", q14_compromisso: "pergunta-13",
+  };
+  const ROUTE_BY_TYPE = {
+    landing: "", story: "video-carlao", testimonial: "video-liz", letter: "carta",
+    vsl: "mini-vsl-1", measure: "medidas", loading: "montando",
+    chart: "diagnostico", offer: "mini-vsl-2",
+  };
+  const LABEL_BY_TYPE = {
+    landing: "Landing", story: "Vídeo Carlão", testimonial: "Vídeo Liz", letter: "Carta",
+    vsl: "Mini VSL 1", measure: "Medidas", loading: "Montando plano",
+    chart: "Diagnóstico", offer: "Mini VSL 2 (oferta)",
+  };
+  function slugFor(i) {
+    const s = QUIZ[i]; if (!s) return null;
+    if (s.type === "question") return (s.id && ROUTE_BY_QID[s.id] != null) ? ROUTE_BY_QID[s.id] : ("etapa-" + i);
+    return (ROUTE_BY_TYPE[s.type] != null) ? ROUTE_BY_TYPE[s.type] : ("etapa-" + i);
+  }
+  function labelFor(i) {
+    const s = QUIZ[i]; if (!s) return "";
+    if (s.type === "question") { const sl = slugFor(i); return "Pergunta " + String(sl).replace("pergunta-", ""); }
+    return LABEL_BY_TYPE[s.type] || s.type;
+  }
+  const SLUG_TO_INDEX = {};
+  QUIZ.forEach((_, i) => { SLUG_TO_INDEX[slugFor(i)] = i; });
+  function pathForIndex(i) { return "/" + (slugFor(i) || ""); }
+  function indexForPath(path) {
+    let p = String(path || "/").replace(/^\/+|\/+$/g, "");
+    if (p === "") return 0;
+    return Object.prototype.hasOwnProperty.call(SLUG_TO_INDEX, p) ? SLUG_TO_INDEX[p] : null;
+  }
+
+  // persistência da sessão (refresh retoma a etapa; deep-link não-alcançado reinicia)
+  const STATE_KEY = "paizao_quiz_state";
+  function persist() {
+    try { sessionStorage.setItem(STATE_KEY, JSON.stringify({ index: state.index, answers: state.answers })); } catch (e) {}
+  }
+  function loadPersisted() {
+    try { return JSON.parse(sessionStorage.getItem(STATE_KEY) || "null"); } catch (e) { return null; }
+  }
+
+  // hook de analytics — dispara um "pageview" por etapa (pronto pra pixel/GA)
+  function trackRoute(i) {
+    const path = pathForIndex(i), label = labelFor(i);
+    try { if (window.fbq) window.fbq("trackCustom", "QuizStep", { step: i, slug: slugFor(i), label: label }); } catch (e) {}
+    try { (window.dataLayer = window.dataLayer || []).push({ event: "quiz_step", step: i, path: path, label: label }); } catch (e) {}
+  }
+
+  // navegação central: troca a tela, atualiza URL/histórico e persiste
+  function go(index, opts) {
+    opts = opts || {};
+    if (index < 0 || index >= QUIZ.length) return;
+    state.index = index;
+    persist();
+    const path = pathForIndex(index);
+    try {
+      if (opts.replace) history.replaceState({ i: index }, "", path);
+      else history.pushState({ i: index }, "", path);
+    } catch (e) {}
+    render();
+  }
+
   /* --------------------------------------------------------- ÍCONES (svg) */
   const ic = {
     check: '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -180,6 +250,10 @@
     };
     (map[screen.type] || (() => {}))(root, screen);
 
+    // rastreia a etapa alcançada (drop-off) + dispara o "pageview" da rota
+    if (window.PaizaoDB && PaizaoDB.recordStep) PaizaoDB.recordStep(state.index, slugFor(state.index), labelFor(state.index));
+    trackRoute(state.index);
+
     // quiz concluído: ao chegar no diagnóstico, marca o lead como completed
     if (screen.type === "loading" && window.PaizaoDB) PaizaoDB.complete(state.answers);
 
@@ -269,7 +343,11 @@
         // feedback visual e avança
         opts.querySelectorAll(".opt").forEach(o => o.classList.remove("is-selected"));
         opt.classList.add("is-selected");
-        setTimeout(next, 240);
+        // se a próxima tela for um vídeo, avança JÁ (sem delay) pra o play() com
+        // som acontecer ainda dentro do clique — senão o navegador bloqueia o áudio.
+        const up = QUIZ[state.index + 1];
+        if (up && (up.video || up.embed)) next();
+        else setTimeout(next, 240);
       });
       opts.appendChild(opt);
     });
@@ -288,7 +366,7 @@
     root.appendChild(ctaBar(s.cta, next));
   }
 
-  /* ---- STORY (Break 1 em formato stories: ~10s e passa sozinho) ---- */
+  /* ---- STORY (Break 1 em formato stories: barra enche e passa sozinho) ---- */
   function renderStory(root, s) {
     root.classList.add("story");
     const dur = s.duration || 10000;
@@ -296,7 +374,7 @@
     // mídia: vídeo se houver, senão placeholder pronto
     let mediaInner;
     if (s.video) {
-      mediaInner = `<video class="story__video" src="${s.video}" autoplay muted playsinline ${s.poster ? `poster="${s.poster}"` : ""}></video>`;
+      mediaInner = `<video id="storyVid" class="story__video" src="${s.video}" autoplay playsinline preload="auto" ${s.poster ? `poster="${s.poster}"` : ""}></video>`;
     } else if (s.embed) {
       mediaInner = s.embed;
     } else {
@@ -317,24 +395,60 @@
           <span class="story__skip" aria-hidden="true">${ic.arrow}</span>
         </div>
         <div class="story__media">${mediaInner}</div>
-        <div class="story__caption">
+        ${s.video ? "" : `<div class="story__caption">
           ${s.eyebrow ? `<p class="story__kicker">${s.eyebrow}</p>` : ""}
           ${(s.paragraphs || []).map(p => `<p>${p}</p>`).join("")}
           ${s.sign ? `<p class="story__sign">${s.sign}</p>` : ""}
-        </div>
-        <div class="story__hint">toque pra avançar · segure pra pausar</div>
+        </div>`}
+        ${s.video ? `<button class="story__soundbtn" id="storySound" hidden>
+          <span class="story__soundic">🔊</span>
+          <span class="story__soundtx">Toque para ativar o som</span>
+        </button>` : ""}
+        ${s.video ? "" : `<div class="story__hint">toque pra avançar · segure pra pausar</div>`}
       </div>`);
     root.appendChild(frame);
 
-    // ---- timeline do stories (setTimeout + transição CSS, com pausa) ----
     const fill = frame.querySelector("#storyFill");
-    let remaining = dur, startBase = 0, timer = null, done = false;
+    let done = false;
+    function advance() { if (done) return; done = true; cleanupScreen(); next(); }
 
+    // ============ STORIES COM VÍDEO: toca com SOM, barra segue o vídeo, avança no fim ============
+    if (s.video) {
+      const vid = frame.querySelector("#storyVid");
+      const sound = frame.querySelector("#storySound");
+      if (fill) fill.style.transition = "width .2s linear";
+
+      // toca COM som direto (a lead já interagiu com a página clicando nas respostas);
+      // se o navegador bloquear (iOS), toca mudo e mostra o botão central de som.
+      vid.muted = false;
+      const pp = vid.play();
+      if (pp && pp.catch) pp.catch(() => {
+        vid.muted = true; vid.play().catch(() => {});
+        if (sound) sound.hidden = false;
+      });
+      if (sound) sound.addEventListener("click", (e) => {
+        e.stopPropagation();
+        vid.muted = false; vid.play().catch(() => {});
+        sound.hidden = true;
+      });
+
+      function onTime() {
+        if (!vid.duration || !isFinite(vid.duration) || vid.duration <= 0) return;
+        if (fill) fill.style.width = (Math.min(1, vid.currentTime / vid.duration) * 100) + "%";
+      }
+      vid.addEventListener("timeupdate", onTime);
+      vid.addEventListener("ended", advance); // 100% automático: acabou -> próxima
+
+      screenAbort = () => { done = true; try { vid.pause(); } catch (e) {} };
+      return;
+    }
+
+    // ============ SEM VÍDEO: timeline por tempo (comportamento original) ============
+    let remaining = dur, startBase = 0, timer = null;
     function schedule(ms) {
       startBase = performance.now();
       if (fill) {
         fill.style.transition = "none";
-        // largura atual já está aplicada; agora anima até 100% no tempo restante
         requestAnimationFrame(() => {
           fill.style.transition = "width " + ms + "ms linear";
           fill.style.width = "100%";
@@ -342,7 +456,6 @@
       }
       timer = setTimeout(advance, ms);
     }
-    function advance() { if (done) return; done = true; cleanupScreen(); next(); }
     function pauseTL() {
       if (done || timer == null) return;
       clearTimeout(timer); timer = null;
@@ -352,10 +465,8 @@
     function resumeTL() { if (!done && timer == null) schedule(remaining); }
 
     schedule(remaining);
-    // cancela ao sair da tela
     screenAbort = () => { if (timer) { clearTimeout(timer); timer = null; } };
 
-    // ---- interação estilo stories: tap avança/volta, segurar pausa ----
     let downAt = 0;
     frame.addEventListener("pointerdown", () => { downAt = performance.now(); pauseTL(); });
     frame.addEventListener("pointerup", (e) => {
@@ -701,19 +812,22 @@
 
   /* --------------------------------------------------------- NAVEGAÇÃO */
   function next() {
-    if (state.index < QUIZ.length - 1) {
-      state.index++;
-      render();
-    }
+    if (state.index < QUIZ.length - 1) go(state.index + 1);
   }
+  // voltar delega pro histórico do navegador (popstate sincroniza a tela pela URL)
   function back() {
-    if (state.index > 0) {
-      state.index--;
-      // pula loading ao voltar (não faz sentido re-rodar)
-      if (QUIZ[state.index] && QUIZ[state.index].type === "loading" && state.index > 0) state.index--;
-      render();
-    }
+    if (state.index > 0) history.back();
   }
+  // botão voltar/avançar do navegador -> sincroniza a tela a partir da URL
+  window.addEventListener("popstate", function () {
+    let i = indexForPath(location.pathname);
+    if (i == null) i = 0;
+    // loading é transitório: ao cair nele pelo histórico, pula pro diagnóstico
+    if (QUIZ[i] && QUIZ[i].type === "loading") i = Math.min(QUIZ.length - 1, i + 1);
+    state.index = i;
+    persist();
+    render();
+  });
   function finish() {
     // ponto de integração: enviar respostas / redirecionar pro checkout
     console.log("RESPOSTAS DO QUIZ:", state.answers);
@@ -722,10 +836,27 @@
 
   backBtn.addEventListener("click", back);
 
-  // boot
-  // preview: abrir ?s=N pula direto pra etapa N (só pra conferência de design)
-  const startAt = parseInt(new URLSearchParams(location.search).get("s"), 10);
-  if (!isNaN(startAt) && startAt >= 0 && startAt < QUIZ.length) state.index = startAt;
+  // boot — resolve a etapa a partir da URL
+  (function bootIndex() {
+    // preview: ?s=N pula direto pra etapa N (só pra conferência de design)
+    const startAt = parseInt(new URLSearchParams(location.search).get("s"), 10);
+    if (!isNaN(startAt) && startAt >= 0 && startAt < QUIZ.length) { state.index = startAt; return; }
+
+    const parsed = indexForPath(location.pathname); // null = rota desconhecida
+    const saved = loadPersisted();
+    if (parsed == null || parsed === 0) {
+      state.index = 0; // raiz ou rota inválida -> começa do início
+    } else if (saved && typeof saved.index === "number" && saved.index >= parsed) {
+      // refresh no meio do funil: retoma a etapa e as respostas
+      state.answers = saved.answers || {};
+      state.index = parsed;
+    } else {
+      state.index = 0; // deep-link sem ter chegado lá -> reinicia (integridade do funil)
+    }
+  })();
+
+  // normaliza a URL pra refletir a etapa real (sem criar entrada no histórico)
+  try { history.replaceState({ i: state.index }, "", pathForIndex(state.index)); } catch (e) {}
   topbarAvatarFromImage();
   startTimer();
   render();

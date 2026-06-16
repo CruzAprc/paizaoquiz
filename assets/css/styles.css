@@ -484,6 +484,27 @@ body::after {
   position: absolute; left: 0; right: 0; bottom: 14px; z-index: 3;
   text-align: center; font-size: 11px; letter-spacing: .03em; color: rgba(255,255,255,.55);
 }
+/* botão central pra ativar o som (só aparece se o navegador bloquear o autoplay c/ áudio) */
+.story__soundbtn {
+  position: absolute; left: 50%; top: 50%; z-index: 6;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  background: none; border: none; cursor: pointer; padding: 8px;
+  color: #fff; font-family: var(--display);
+}
+.story__soundbtn[hidden] { display: none; }
+.story__soundic {
+  width: 88px; height: 88px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 38px;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
+  border: 1.5px solid rgba(255,255,255,.35);
+  box-shadow: 0 10px 34px -6px rgba(0,0,0,.6);
+  animation: btnPulse 1.5s ease-in-out infinite;
+}
+.story__soundtx {
+  font-size: 15px; font-weight: 800; letter-spacing: -.01em;
+  text-shadow: 0 2px 10px rgba(0,0,0,.6);
+}
 
 /* ------------------------------------------------------------- TESTIMONIAL */
 .testi { gap: 14px; }

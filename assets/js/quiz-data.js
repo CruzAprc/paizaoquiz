@@ -77,18 +77,14 @@ const QUIZ = [
      "video" (caminho do .mp4, autoplay mudo) OU "embed".                    */
   {
     type: "story",
-    duration: 10000,            // ~10s e avança no automático (igual stories)
+    duration: 10000,            // fallback caso o vídeo não carregue
     author: "Carlão Personal das Estrelas",
     handle: "agora",
-    video: null,                // <- caminho do .mp4 do stories (ex: assets/img/story-carta.mp4)
+    video: "assets/img/story-carlao.mp4", // vídeo do Carlão (autoplay, barra segue o vídeo, avança no fim)
     embed: null,                // <- ou cole um embed de vídeo aqui
-    poster: "assets/img/carlao-story.jpg", // frame de capa (opcional) enquanto não há vídeo
-    // a carta vira a legenda/roteiro que ele fala no vídeo:
-    eyebrow: "Filhota, presta atenção 10 segundos.",
-    paragraphs: [
-      "Se você já tentou de tudo e o corpo não muda, esse diagnóstico foi feito pra você. O problema nunca foi você — foi nunca ter tido um plano feito PRA você, e uma família de filhotas do seu lado pra não te deixar largar.",
-      "Responde até o final que o paizão calibra esse plano pro SEU corpo. Te amo."
-    ],
+    poster: "assets/img/story-carlao.jpg", // frame de capa enquanto o vídeo carrega
+    // com vídeo, a barra enche pelo tempo do vídeo e avança sozinho ao terminar
+    eyebrow: "Filhota, presta atenção.",
     sign: "— Carlão"
   },
 

@@ -1,0 +1,186 @@
+/* ============================================================================
+   PAINEL DO PEDRO — /pedro
+   Login via Supabase Auth (email/senha). Lê paizao_quiz_leads (RLS: só autenticado).
+   KPIs, funil de drop-off (last_step), distribuição de respostas e tabela de leads.
+============================================================================ */
+(function () {
+  "use strict";
+
+  var SUPABASE_URL = "https://ewnsttmmbcdzchzpxqjb.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_mIb6RJkWqC5QESdczkFWng_Oo5O17hi";
+  var QUIZ = window.QUIZ || [];
+
+  // ---- mapa de etapas (espelha o roteador do app.js) p/ rotular o funil ----
+  var ROUTE_BY_QID = {
+    q1_idade: "pergunta-1", q2_foco: "pergunta-2", q3_rotina: "pergunta-3",
+    q4_porque: "pergunta-4", q5_trava: "pergunta-5", q6_sozinha: "pergunta-6",
+    q7_deixou: "pergunta-6", q8_um_ano: "pergunta-7", q9_plano: "pergunta-8",
+    q10_cobrando: "pergunta-9", q11_comunidade: "pergunta-10", q12_alimentacao: "pergunta-11",
+    q13_primeiro: "pergunta-12", q14_compromisso: "pergunta-13"
+  };
+  var LABEL_BY_TYPE = {
+    landing: "Landing", story: "Vídeo Carlão", testimonial: "Vídeo Liz", letter: "Carta",
+    vsl: "Mini VSL 1", measure: "Medidas", loading: "Montando plano",
+    chart: "Diagnóstico", offer: "Mini VSL 2 (oferta)"
+  };
+  function labelFor(i) {
+    var s = QUIZ[i]; if (!s) return "etapa " + i;
+    if (s.type === "question") { var sl = ROUTE_BY_QID[s.id] || ("etapa-" + i); return "Pergunta " + String(sl).replace("pergunta-", ""); }
+    return LABEL_BY_TYPE[s.type] || s.type;
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var pct = function (n, d) { return d > 0 ? Math.round((n / d) * 100) : 0; };
+
+  var client = null;
+  try {
+    client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, storageKey: "paizao_admin_auth" }
+    });
+  } catch (e) { console.error(e); }
+
+  var allLeads = [];
+
+  /* ----------------------------------------------------------- AUTH */
+  function showLogin() { $("login").hidden = false; $("dash").hidden = true; }
+  function showDash() { $("login").hidden = true; $("dash").hidden = false; }
+
+  async function boot() {
+    if (!client) { document.body.innerHTML = "<p style='padding:24px;font:16px sans-serif'>Falha ao carregar o Supabase.</p>"; return; }
+    var s = await client.auth.getSession();
+    if (s && s.data && s.data.session) { showDash(); load(); } else { showLogin(); }
+  }
+
+  $("loginForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var btn = $("loginBtn"), err = $("loginErr");
+    err.hidden = true; btn.disabled = true; btn.textContent = "Entrando…";
+    var res = await client.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+    btn.disabled = false; btn.textContent = "Entrar";
+    if (res.error) { err.textContent = "Login inválido: " + res.error.message; err.hidden = false; return; }
+    showDash(); load();
+  });
+
+  $("logoutBtn").addEventListener("click", async function () { await client.auth.signOut(); showLogin(); });
+  $("reloadBtn").addEventListener("click", function () { load(); });
+
+  /* ----------------------------------------------------------- DADOS */
+  async function load() {
+    $("dashSub").textContent = "carregando…";
+    var res = await client.from("paizao_quiz_leads").select("*").order("created_at", { ascending: false }).limit(5000);
+    if (res.error) { $("dashSub").textContent = "Erro ao ler leads: " + res.error.message; return; }
+    allLeads = res.data || [];
+    buildUtmOptions();
+    render();
+  }
+
+  function buildUtmOptions() {
+    var sel = $("utmFilter"), seen = {};
+    sel.querySelectorAll("option:not([value=''])").forEach(function (o) { o.remove(); });
+    allLeads.forEach(function (l) { if (l.utm_source) seen[l.utm_source] = 1; });
+    Object.keys(seen).sort().forEach(function (u) {
+      var o = document.createElement("option"); o.value = u; o.textContent = u; sel.appendChild(o);
+    });
+  }
+
+  function applyFilters() {
+    var from = $("fromDate").value ? new Date($("fromDate").value + "T00:00:00") : null;
+    var to = $("toDate").value ? new Date($("toDate").value + "T23:59:59") : null;
+    var utm = $("utmFilter").value;
+    return allLeads.filter(function (l) {
+      var t = l.created_at ? new Date(l.created_at) : null;
+      if (from && t && t < from) return false;
+      if (to && t && t > to) return false;
+      if (utm && l.utm_source !== utm) return false;
+      return true;
+    });
+  }
+
+  ["fromDate", "toDate", "utmFilter"].forEach(function (id) { $(id).addEventListener("change", render); });
+  $("clearFilters").addEventListener("click", function () { $("fromDate").value = ""; $("toDate").value = ""; $("utmFilter").value = ""; render(); });
+
+  /* ----------------------------------------------------------- RENDER */
+  function render() {
+    var leads = applyFilters();
+    var total = leads.length;
+    var started = leads.filter(function (l) { return (l.last_step != null ? l.last_step : 0) >= 1; }).length;
+    var completed = leads.filter(function (l) { return l.completed === true; }).length;
+
+    $("dashSub").textContent = total + " sessões · atualizado agora";
+
+    // KPIs
+    $("kpis").innerHTML = [
+      kpi("Sessões", total, "abriram a landing"),
+      kpi("Começaram", started, "passaram da 1ª pergunta"),
+      kpi("Completaram", completed, "chegaram no diagnóstico"),
+      kpi("Conclusão", pct(completed, started) + "%", "dos que começaram")
+    ].join("");
+
+    renderFunnel(leads, total);
+    renderAnswers(leads);
+    renderTable(leads);
+  }
+
+  function kpi(label, value, sub) {
+    return '<div class="kpi"><div class="kpi__v">' + esc(value) + '</div><div class="kpi__l">' + esc(label) + '</div><div class="kpi__s">' + esc(sub) + '</div></div>';
+  }
+
+  function renderFunnel(leads, total) {
+    var base = total || 1;
+    var rows = [];
+    for (var i = 0; i < QUIZ.length; i++) {
+      var reached = leads.filter(function (l) { return (l.last_step != null ? l.last_step : 0) >= i; }).length;
+      var prev = i > 0 ? leads.filter(function (l) { return (l.last_step != null ? l.last_step : 0) >= i - 1; }).length : reached;
+      var dropped = Math.max(0, prev - reached);
+      var w = pct(reached, base);
+      rows.push(
+        '<div class="fn"><div class="fn__lbl">' + esc(labelFor(i)) + '</div>' +
+        '<div class="fn__barwrap"><div class="fn__bar" style="width:' + w + '%"></div></div>' +
+        '<div class="fn__num">' + reached + ' <span class="muted">(' + w + '%)</span>' +
+        (i > 0 && dropped > 0 ? ' <span class="fn__drop">−' + dropped + '</span>' : '') + '</div></div>'
+      );
+    }
+    $("funnel").innerHTML = rows.join("");
+  }
+
+  function renderAnswers(leads) {
+    var out = [];
+    QUIZ.forEach(function (s, i) {
+      if (s.type !== "question" || !s.id) return;
+      var counts = {}, answered = 0;
+      leads.forEach(function (l) { var v = l[s.id]; if (v != null && v !== "") { counts[v] = (counts[v] || 0) + 1; answered++; } });
+      if (answered === 0) return;
+      var opts = (s.options || []).slice();
+      Object.keys(counts).forEach(function (k) { if (opts.indexOf(k) < 0) opts.push(k); });
+      var bars = opts.map(function (opt) {
+        var c = counts[opt] || 0, w = pct(c, answered);
+        return '<div class="ans__row"><div class="ans__opt">' + esc(opt) + '</div>' +
+          '<div class="ans__barwrap"><div class="ans__bar" style="width:' + w + '%"></div></div>' +
+          '<div class="ans__num">' + c + ' <span class="muted">' + w + '%</span></div></div>';
+      }).join("");
+      out.push('<div class="ans"><div class="ans__q">' + esc(labelFor(i) + " · " + s.question) + '</div>' + bars + '</div>');
+    });
+    $("answers").innerHTML = out.join("") || '<p class="muted">Sem respostas no filtro atual.</p>';
+  }
+
+  function renderTable(leads) {
+    $("leadsCount").textContent = "(" + leads.length + ")";
+    var rows = leads.slice(0, 200).map(function (l) {
+      var when = l.created_at ? new Date(l.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+      var etapa = l.last_step_label || (l.last_step != null ? labelFor(l.last_step) : "—");
+      return "<tr>" +
+        "<td>" + esc(when) + "</td>" +
+        "<td>" + esc(l.q1_idade || "—") + "</td>" +
+        "<td>" + esc(l.q2_foco || "—") + "</td>" +
+        "<td>" + esc(l.imc != null ? l.imc : "—") + "</td>" +
+        "<td>" + esc(etapa) + "</td>" +
+        "<td>" + (l.completed ? '<span class="ok">✓</span>' : '<span class="muted">—</span>') + "</td>" +
+        "<td>" + esc(l.utm_source || "—") + "</td>" +
+        "</tr>";
+    }).join("");
+    $("leadsBody").innerHTML = rows || '<tr><td colspan="7" class="muted">Nenhum lead no filtro.</td></tr>';
+  }
+
+  boot();
+})();

@@ -104,6 +104,17 @@
     save(Object.assign({ answers: answers }, pickCols(answers)));
   }
 
+  // chamada a cada tela renderizada — registra a etapa máxima alcançada (drop-off).
+  // O servidor guarda o MAIOR last_step (GREATEST), então o "voltar" não regride.
+  function recordStep(index, slug, label) {
+    save({
+      last_step: index,
+      last_step_slug: slug || null,
+      last_step_label: label || null,
+      last_step_at: new Date().toISOString()
+    });
+  }
+
   // chamada ao chegar no diagnóstico (quiz concluído)
   function complete(answers) {
     var foco = null;
@@ -123,6 +134,7 @@
     enabled: !!client,
     recordAnswer: recordAnswer,
     recordMeasure: recordMeasure,
+    recordStep: recordStep,
     complete: complete
   };
 })();

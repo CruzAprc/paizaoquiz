@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <base href="/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Painel do Pedro · Quiz do Paizão</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=31" />
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="login" class="login" hidden>
+    <form class="login__card" id="loginForm">
+      <h1 class="login__title">Painel do Paizão</h1>
+      <p class="login__sub">Acesso restrito · entra com seu login</p>
+      <label class="login__field"><span>Email</span><input type="email" id="email" autocomplete="username" required /></label>
+      <label class="login__field"><span>Senha</span><input type="password" id="password" autocomplete="current-password" required /></label>
+      <button type="submit" class="login__btn" id="loginBtn">Entrar</button>
+      <p class="login__err" id="loginErr" hidden></p>
+    </form>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" class="dash" hidden>
+    <header class="dash__top">
+      <div>
+        <h1 class="dash__title">Quiz do Paizão · Leads</h1>
+        <p class="dash__sub" id="dashSub">carregando…</p>
+      </div>
+      <div class="dash__actions">
+        <button class="btn-ghost" id="reloadBtn">Atualizar</button>
+        <button class="btn-ghost" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+
+    <section class="filters">
+      <label>De <input type="date" id="fromDate" /></label>
+      <label>Até <input type="date" id="toDate" /></label>
+      <label>Origem (utm_source)
+        <select id="utmFilter"><option value="">todas</option></select>
+      </label>
+      <button class="btn-ghost" id="clearFilters">Limpar</button>
+    </section>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="panel">
+      <h2 class="panel__h">Funil — onde as filhotas param</h2>
+      <div id="funnel" class="funnel"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__h">Respostas por pergunta</h2>
+      <div id="answers" class="answers"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__h">Leads recentes <span id="leadsCount" class="muted"></span></h2>
+      <div class="tablewrap">
+        <table class="leads">
+          <thead><tr>
+            <th>Quando</th><th>Idade</th><th>Foco</th><th>IMC</th><th>Etapa atingida</th><th>Completou?</th><th>Origem</th>
+          </tr></thead>
+          <tbody id="leadsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/quiz-data.js?v=31"></script>
+  <script src="assets/js/admin.js?v=31"></script>
+</body>
+</html>

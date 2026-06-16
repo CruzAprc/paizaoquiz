@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/pedro", "destination": "/pedro.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
