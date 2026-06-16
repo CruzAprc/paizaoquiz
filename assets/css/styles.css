@@ -513,6 +513,27 @@ body::after {
 .testi__plabel { font-weight:700; font-size:13px; letter-spacing:.04em; color:#fff; }
 .testi__pnote { font-size:12px; color:rgba(255,255,255,.7); line-height:1.45; max-width:80%; }
 
+/* depoimento em formato STORIES do instagram (player VSL embed) */
+.testi--story {
+  margin: -18px -18px calc(-1 * (28px + env(safe-area-inset-bottom)));
+}
+.testi__frame {
+  position: relative; min-height: 100dvh;
+  display: flex; flex-direction: column; gap: 0;
+  background: #0d0d12; color: #fff;
+  padding: 0 0 calc(8px + env(safe-area-inset-bottom));
+}
+.testi__frame .story__bars,
+.testi__frame .story__top { flex: 0 0 auto; }
+/* barrinha de stories enche suave conforme o vídeo toca */
+.testi__frame .story__bar i { transition: width .25s linear; }
+.testi__player {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 0;
+}
+.testi__player vturb-smartplayer { width: 100% !important; display: block; }
+
 /* ------------------------------------------------------------- VSL / OFFER */
 .vsl { gap: 18px; }
 .vsl__trigger { font-family: var(--display); font-size: clamp(20px,5.4vw,25px); line-height:1.24; font-weight:800; letter-spacing:-.02em; margin:0; }
