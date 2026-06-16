@@ -19,6 +19,12 @@
   var TABLE = "paizao_quiz_leads";
   var SS_KEY = "paizao_quiz_lead_id";
 
+  // SNAPSHOT da URL de entrada — capturado AGORA, no load do script, ANTES do
+  // app.js "limpar" a URL com o roteador (replaceState). Garante que os UTMs do
+  // anúncio (?utm_source=facebook&...) sejam gravados mesmo com a URL limpa depois.
+  var ENTRY_SEARCH = location.search || "";
+  var ENTRY_PATH = location.pathname || "/";
+
   // colunas-resposta válidas (espelham os ids das perguntas no quiz-data.js)
   // + altura/peso/imc (tela "measure"). Tudo que vier em state.answers e estiver
   // nesta lista vira coluna; o resto fica no jsonb "answers".
@@ -41,8 +47,9 @@
   }
 
   // ---- metadados de origem (capturados 1x na criação do lead) ----
+  // Usa o SNAPSHOT da entrada (ENTRY_SEARCH) p/ não perder UTM quando a rota limpa a URL.
   function meta() {
-    var p = new URLSearchParams(location.search);
+    var p = new URLSearchParams(ENTRY_SEARCH);
     var g = function (k) { return p.get(k) || null; };
     return {
       utm_source: g("utm_source"),
@@ -51,7 +58,7 @@
       utm_content: g("utm_content"),
       utm_term: g("utm_term"),
       referrer: document.referrer || null,
-      landing_path: (location.pathname + location.search) || null,
+      landing_path: (ENTRY_PATH + ENTRY_SEARCH) || null,
       user_agent: navigator.userAgent || null
     };
   }

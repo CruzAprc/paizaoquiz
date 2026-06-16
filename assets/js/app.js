@@ -16,6 +16,12 @@
   // total de perguntas (só conta type === "question") p/ a barra de progresso
   const TOTAL_Q = QUIZ.filter(s => s.type === "question").length;
 
+  // snapshot dos parâmetros de entrada (fbclid/utm) — capturado ANTES do roteador
+  // limpar a URL, pra encaminhar a atribuição da Meta até o checkout.
+  const ENTRY_PARAMS = new URLSearchParams(location.search);
+  // link do checkout (Hotmart/Kiwify). Vazio = mantém o placeholder no final.
+  const CHECKOUT_URL = "";
+
   const state = {
     index: 0,
     answers: {}, // { questionId: optionText }
@@ -72,8 +78,15 @@
 
   // hook de analytics — dispara um "pageview" por etapa (pronto pra pixel/GA)
   function trackRoute(i) {
-    const path = pathForIndex(i), label = labelFor(i);
-    try { if (window.fbq) window.fbq("trackCustom", "QuizStep", { step: i, slug: slugFor(i), label: label }); } catch (e) {}
+    const path = pathForIndex(i), label = labelFor(i), s = QUIZ[i];
+    try {
+      if (window.fbq) {
+        window.fbq("trackCustom", "QuizStep", { step: i, slug: slugFor(i), label: label });
+        // eventos padrão do funil (browser): completou o quiz e chegou na oferta
+        if (s && s.type === "loading") window.fbq("track", "Lead", { content_name: "quiz_completo" });
+        else if (s && s.type === "offer") window.fbq("track", "ViewContent", { content_name: "oferta" });
+      }
+    } catch (e) {}
     try { (window.dataLayer = window.dataLayer || []).push({ event: "quiz_step", step: i, path: path, label: label }); } catch (e) {}
   }
 
@@ -203,7 +216,7 @@
   function updateChrome(screen) {
     const isQuestion = screen.type === "question";
     const hideChrome = screen.type === "landing" || screen.type === "loading" || screen.type === "story"
-      || (screen.type === "testimonial" && !!screen.embed);
+      || (screen.type === "testimonial" && (!!screen.embed || !!screen.video));
 
     topbar.hidden = hideChrome;
     progressWrap.hidden = hideChrome;
@@ -485,17 +498,20 @@
     frame.addEventListener("pointercancel", () => { resumeTL(); downAt = 0; });
   }
 
-  /* ---- TESTIMONIAL (depoimento em vídeo: @ no topo + vídeo dela falando) ---- */
+  /* ---- TESTIMONIAL (depoimento da filhota em formato STORIES, vídeo nativo) ---- */
   function renderTestimonial(root, s) {
     root.classList.add("testi");
 
-    // formato STORIES do instagram: frame escuro full + @ no topo + player embed.
-    // A barrinha de cima enche conforme o vídeo toca e, ao ACABAR, avança sozinho.
-    if (s.embed) {
+    // formato STORIES: frame escuro full + @ no topo + vídeo nativo da filhota.
+    // A barra de cima enche com o vídeo, toca com som e, ao ACABAR, avança sozinho.
+    if (s.video) {
       root.classList.add("testi--story");
       const verified = `<svg class="verified" viewBox="0 0 24 24" width="15" height="15" aria-label="verificado"><path fill="#3897f0" d="M12 1.5l2.4 1.8 3 .2 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .2L12 22.5l-2.4-1.8-3-.2-1-2.8L3.3 15.8l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.2z"/><path fill="#fff" d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.3-3.3 1.1 1.1z"/></svg>`;
       const frame = el(`
-        <div class="testi__frame">
+        <div class="story__frame testi__frame">
+          <div class="story__media">
+            <video id="testiVid" class="story__video" src="${s.video}" autoplay playsinline preload="auto" ${s.poster ? `poster="${s.poster}"` : ""}></video>
+          </div>
           <div class="story__bars"><span class="story__bar"><i id="testiFill"></i></span></div>
           <div class="story__top">
             <span class="story__av igring avatar-liz"></span>
@@ -504,102 +520,47 @@
               <small>filhota do paizão</small>
             </div>
           </div>
-          <div class="testi__player"></div>
+          <button class="story__soundbtn" id="testiSound" hidden>
+            <span class="story__soundic">🔊</span>
+            <span class="story__soundtx">Toque para ativar o som</span>
+          </button>
         </div>`);
-      const playerBox = frame.querySelector(".testi__player");
-      injectEmbed(playerBox, s.embed);
       root.appendChild(frame);
 
-      // ---- sincroniza a barrinha com o vídeo + avança quando ACABA ----
-      // O player vturb expõe o global `smartplayer` com `smartplayer.instances[]`,
-      // e cada instância tem `.video` (o <video> real). Em vez de depender de
-      // evento (que VSL players costumam não disparar), fazemos POLL do tempo:
-      // a barra enche com currentTime/duration e, ao chegar no fim, avança.
       const fill = frame.querySelector("#testiFill");
-      const wantId = (s.embed.match(/id="(vid-[^"]+)"/) || [])[1];
-      let done = false, poll = null, inst = null;
-
+      const vid = frame.querySelector("#testiVid");
+      const sound = frame.querySelector("#testiSound");
+      let done = false;
       function advance() { if (done) return; done = true; cleanupScreen(); next(); }
+      if (fill) fill.style.transition = "width .2s linear";
 
-      function pickInstance() {
-        const sp = window.smartplayer;
-        if (!sp || !sp.instances || !sp.instances.length) return null;
-        const list = sp.instances;
-        return list.find(i => i && (i.id === wantId || i.elementId === wantId || i.playerId === wantId)) || list[0];
+      // toca COM som direto (a lead já interagiu clicando nas respostas); se o
+      // navegador bloquear (iOS), toca mudo e mostra o botão central de som.
+      vid.muted = false;
+      const pp = vid.play();
+      if (pp && pp.catch) pp.catch(() => {
+        vid.muted = true; vid.play().catch(() => {});
+        if (sound) sound.hidden = false;
+      });
+      if (sound) sound.addEventListener("click", (e) => {
+        e.stopPropagation();
+        vid.muted = false; vid.play().catch(() => {});
+        sound.hidden = true;
+      });
+
+      function onTime() {
+        if (!vid.duration || !isFinite(vid.duration) || vid.duration <= 0) return;
+        if (fill) fill.style.width = (Math.min(1, vid.currentTime / vid.duration) * 100) + "%";
+        if (vid.currentTime > 0 && vid.currentTime >= vid.duration - 0.4) advance();
       }
-      // fallback: acha o <video> no DOM (light ou shadow) caso a API não exponha
-      function deepFindVideo(node) {
-        if (!node) return null;
-        if (node.tagName === "VIDEO") return node;
-        const direct = node.querySelector && node.querySelector("video");
-        if (direct) return direct;
-        const kids = node.querySelectorAll ? node.querySelectorAll("*") : [];
-        for (const k of kids) { if (k.shadowRoot) { const v = deepFindVideo(k.shadowRoot); if (v) return v; } }
-        return null;
-      }
-      function tNum(x) { return (typeof x === "number" && isFinite(x) && x > 0) ? x : null; }
-      // o tempo atual vem do wrapper inst.video.currentTime (confirmado que anda)
-      function getCurrent() {
-        if (!inst) inst = pickInstance();
-        if (inst && inst.video && tNum(inst.video.currentTime) != null) return inst.video.currentTime;
-        if (inst && inst.video && typeof inst.video.currentTime === "number") return inst.video.currentTime;
-        return null;
-      }
-      // procura a duração total em vários lugares possíveis do player
-      function getDuration() {
-        if (!inst) return null;
-        const cands = [
-          inst.duration, inst.video && inst.video.duration,
-          inst.instance && inst.instance.duration,
-          inst.instance && inst.instance.video && inst.instance.video.duration,
-        ];
-        for (const c of cands) { const n = tNum(c); if (n != null) return n; }
-        try { if (inst.instance && typeof inst.instance.getDuration === "function") return tNum(inst.instance.getDuration()); } catch (e) {}
-        return null;
-      }
+      vid.addEventListener("timeupdate", onTime);
+      vid.addEventListener("ended", advance); // acabou -> próxima pergunta
 
-      // ===== detecção de FIM por "currentTime travado" (não depende de duração) =====
-      let maxT = 0, stuck = 0;
-      const STUCK_TICKS = 7; // ~1.75s parado (250ms*7) = vídeo acabou
-
-      function tick() {
-        if (done) return;
-        const cur = getCurrent();
-        const dur = getDuration();
-        if (cur == null) return;
-
-        // barra: usa a duração se achou; senão fica indeterminada
-        if (dur && fill) fill.style.width = (Math.min(1, cur / dur) * 100) + "%";
-
-        // fim por duração conhecida
-        if (dur && cur > 0 && cur >= dur - 0.4) { advance(); return; }
-
-        // fim por "travou": currentTime parou de crescer depois de ter andado
-        if (cur > maxT + 0.05) { maxT = cur; stuck = 0; }
-        else if (maxT > 1) { stuck++; if (stuck >= STUCK_TICKS) advance(); }
-      }
-
-      poll = setInterval(tick, 250);
-      // bônus: assina vários nomes de evento de "fim" na API do vturb
-      let subscribed = false;
-      const trySubscribe = setInterval(() => {
-        if (done) { clearInterval(trySubscribe); return; }
-        if (!inst) inst = pickInstance();
-        if (inst && inst.on && !subscribed) {
-          subscribed = true;
-          ["ended", "end", "complete", "completed", "finish", "finished", "video_complete"].forEach(ev => {
-            try { inst.on(ev, advance); } catch (e) {}
-          });
-          clearInterval(trySubscribe);
-        }
-      }, 300);
-
-      // cancela tudo ao sair da tela (done=true evita avanço por evento atrasado)
-      screenAbort = () => { done = true; if (poll) { clearInterval(poll); poll = null; } clearInterval(trySubscribe); };
+      screenAbort = () => { done = true; try { vid.pause(); } catch (e) {} };
       return;
     }
 
-    // @ dela no insta — escrito em cima
+    // sem vídeo: slot/placeholder
     if (s.handle) {
       root.appendChild(el(`
         <div class="testi__handle">
@@ -609,21 +570,14 @@
           </span>
         </div>`));
     }
-
-    // vídeo dela falando — embaixo
     const vbox = el('<div class="testi__video"></div>');
-    if (s.video) {
-      vbox.innerHTML = `<video class="testi__vid" src="${s.video}" controls playsinline preload="metadata" ${s.poster ? `poster="${s.poster}"` : ""}></video>`;
-    } else {
-      vbox.appendChild(el(`
-        <div class="testi__placeholder">
-          <div class="testi__play">${ic.play}</div>
-          <div class="testi__plabel">SLOT VÍDEO · depoimento da ${s.author || "filhota"}</div>
-          <div class="testi__pnote">Solte o .mp4 dela falando em <b>video</b> no quiz-data.</div>
-        </div>`));
-    }
+    vbox.appendChild(el(`
+      <div class="testi__placeholder">
+        <div class="testi__play">${ic.play}</div>
+        <div class="testi__plabel">SLOT VÍDEO · depoimento da ${s.author || "filhota"}</div>
+        <div class="testi__pnote">Solte o .mp4 dela falando em <b>video</b> no quiz-data.</div>
+      </div>`));
     root.appendChild(vbox);
-
     root.appendChild(ctaBar(s.cta, next));
   }
 
@@ -829,9 +783,25 @@
     render();
   });
   function finish() {
-    // ponto de integração: enviar respostas / redirecionar pro checkout
+    // dispara InitiateCheckout (browser pixel) — o checkout dispara o Purchase
+    try { if (window.fbq) window.fbq("track", "InitiateCheckout"); } catch (e) {}
+
+    if (CHECKOUT_URL) {
+      // encaminha fbclid + UTM pro checkout pra Meta casar a COMPRA com o anúncio
+      let url;
+      try {
+        url = new URL(CHECKOUT_URL);
+        ["fbclid", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].forEach(function (k) {
+          const v = ENTRY_PARAMS.get(k); if (v) url.searchParams.set(k, v);
+        });
+      } catch (e) { url = null; }
+      window.location.href = url ? url.toString() : CHECKOUT_URL;
+      return;
+    }
+
+    // checkout ainda não configurado
     console.log("RESPOSTAS DO QUIZ:", state.answers);
-    alert("✅ Diagnóstico concluído!\n\n(Aqui entra o redirecionamento pro checkout / app do paizão.)\n\nRespostas capturadas no console.");
+    alert("✅ Diagnóstico concluído!\n\n(Falta plugar o link do checkout em CHECKOUT_URL no app.js.)");
   }
 
   backBtn.addEventListener("click", back);

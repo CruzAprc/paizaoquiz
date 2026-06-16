@@ -120,11 +120,10 @@ const QUIZ = [
   {
     type: "testimonial",
     handle: "@lizx.macedo",      // <- @ real da Liz Macedo no Instagram (4,1 mi seguidores)
-    author: "Liz Macedo",        // usado só no slot/placeholder enquanto não há vídeo
-    video: null,                 // <- caminho do .mp4 dela falando (ex: assets/img/depoimento-liz.mp4)
-    poster: "assets/img/depoimento-liz.jpg", // frame de capa (opcional) enquanto não há vídeo
-    // player VSL (vturb) renderizado em formato STORIES do instagram:
-    embed: `<vturb-smartplayer id="vid-6a313a5eb2d74681824e0933" style="display: block; margin: 0 auto; width: 100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    author: "Liz Macedo",
+    // vídeo nativo da Liz em formato STORIES (barra segue o vídeo, avança no fim, som automático)
+    video: "assets/img/depoimento-liz.mp4",
+    poster: "assets/img/depoimento-liz.jpg",
     cta: "Continuar"
   },
 
