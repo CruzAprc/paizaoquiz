@@ -153,14 +153,21 @@ const QUIZ = [
     ]
   },
 
-  /* --------------------------- MINI VSL 1 (~3min) ----------------------- */
+  /* --------------------------- MINI VSL 1 (~1min40) --------------------- */
   {
     type: "vsl",
-    trigger: "Você já ouviu falar do <span class=\"hl\">Método do Paizão</span>? Então olha esse vídeo, filhota.",
-    slotLabel: "SLOT MINI VSL 1 · ~3 min",
-    slotNote: "Autoridade do Carlão + mecanismo \"plano feito pra VOCÊ\" + a FAMÍLIA de filhotas + filhotas reais. Sem oferta.",
-    embed: null, // <- cole o iframe/embed do vídeo aqui quando tiver
-    cta: "Já assisti, continuar"
+    story: true,            // renderiza em STORIES full-screen (igual Carlão/Liz)
+    videoLen: 100,          // duração (s) p/ auto-avançar no fim — SEM botão
+    author: "Carlão Personal das Estrelas",
+    handle: "Método do Paizão",
+    // player vturb (streaming) — carregado só nesta tela; warm-up algumas telas antes
+    embed: `<vturb-smartplayer id="vid-6a31dddf6c302b45d80f7443" style="display: block; margin: 0 auto; width: 100%; height: 100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dddf6c302b45d80f7443/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    // assets pra aquecer ANTES da tela (sem pesar na landing)
+    preload: [
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dddf6c302b45d80f7443/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a31dcf439cf80d3ff09dccd/main.m3u8", as: "fetch" }
+    ]
   },
 
   /* ====== N — NECESSIDADE + QUALIFICAÇÃO + COMUNIDADE =================== */

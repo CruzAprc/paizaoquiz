@@ -102,10 +102,22 @@
       document.head.appendChild(l);
     } catch (e) {}
   }
-  // olha as próximas ~4 telas e adianta o download do vídeo que vier
+  function prefetchUrl(url, as) {
+    if (!url || _prefetched[url]) return;
+    _prefetched[url] = true;
+    try {
+      const l = document.createElement("link");
+      l.rel = "prefetch"; l.href = url; if (as) l.as = as;
+      document.head.appendChild(l);
+    } catch (e) {}
+  }
+  // olha as próximas ~4 telas e adianta o download do vídeo nativo OU dos assets
+  // do player (vturb) que vierem — sem pesar na landing/perguntas iniciais.
   function prefetchUpcomingVideo(fromIndex) {
     for (let i = fromIndex + 1; i <= fromIndex + 4 && i < QUIZ.length; i++) {
-      if (QUIZ[i] && QUIZ[i].video) { prefetch(QUIZ[i].video); break; }
+      const s = QUIZ[i]; if (!s) continue;
+      if (s.video) { prefetch(s.video); break; }
+      if (s.preload && s.preload.length) { s.preload.forEach(p => prefetchUrl(p.href, p.as)); break; }
     }
   }
 
@@ -235,6 +247,7 @@
   function updateChrome(screen) {
     const isQuestion = screen.type === "question";
     const hideChrome = screen.type === "landing" || screen.type === "loading" || screen.type === "story"
+      || screen.story === true
       || (screen.type === "testimonial" && (!!screen.embed || !!screen.video));
 
     topbar.hidden = hideChrome;
@@ -604,6 +617,9 @@
 
   /* ---- VSL / OFFER ---- */
   function renderVsl(root, s) {
+    // formato STORIES full-screen (player vturb), SEM botão: avança no fim do vídeo.
+    if (s.story && s.embed) { renderVslStory(root, s); return; }
+
     root.classList.add("vsl");
     if (s.trigger) root.appendChild(el(`<p class="vsl__trigger">${s.trigger}</p>`));
 
@@ -622,6 +638,57 @@
 
     const isLast = state.index === QUIZ.length - 1;
     root.appendChild(ctaBar(s.cta, isLast ? finish : next));
+  }
+
+  /* ---- VSL em STORIES full-screen (player vturb), SEM botão: avança no fim ---- */
+  function renderVslStory(root, s) {
+    root.classList.add("testi", "testi--story"); // reusa o frame full-screen dos stories
+    const frame = el(`
+      <div class="story__frame testi__frame">
+        <div class="story__media" id="vslPlayer"></div>
+        <div class="story__bars"><span class="story__bar"><i id="vslFill"></i></span></div>
+        <div class="story__top">
+          <span class="story__av igring avatar-photo"></span>
+          <div class="story__id"><b>${s.author || "Carlão Personal das Estrelas"}</b><small>${s.handle || "agora"}</small></div>
+        </div>
+      </div>`);
+    injectEmbed(frame.querySelector("#vslPlayer"), s.embed);
+    root.appendChild(frame);
+
+    const fill = frame.querySelector("#vslFill");
+    if (fill) fill.style.transition = "width .25s linear";
+    const wantId = (s.embed.match(/id="(vid-[^"]+)"/) || [])[1];
+    const LEN = (typeof s.videoLen === "number" && s.videoLen > 0) ? s.videoLen : null;
+    const TARGET = LEN ? Math.max(1, LEN - 2) : null; // avança ~2s antes do fim
+    let done = false, poll = null, inst = null, maxT = 0, stuck = 0, subscribed = false;
+
+    function advance() { if (done) return; done = true; cleanupScreen(); next(); }
+    function pickInstance() {
+      const sp = window.smartplayer;
+      if (!sp || !sp.instances || !sp.instances.length) return null;
+      return sp.instances.find(i => i && (i.id === wantId || i.elementId === wantId || i.playerId === wantId)) || sp.instances[0];
+    }
+    function getCurrent() {
+      if (!inst) inst = pickInstance();
+      return (inst && inst.video && typeof inst.video.currentTime === "number") ? inst.video.currentTime : null;
+    }
+    function tick() {
+      if (done) return;
+      if (!inst) inst = pickInstance();
+      // bônus: assina eventos de fim da API quando a instância existir
+      if (inst && inst.on && !subscribed) {
+        subscribed = true;
+        ["ended", "end", "complete", "completed", "finish", "finished", "video_complete"].forEach(ev => { try { inst.on(ev, advance); } catch (e) {} });
+      }
+      const cur = getCurrent();
+      if (cur == null) return;
+      if (fill && LEN) fill.style.width = (Math.min(1, cur / LEN) * 100) + "%";
+      if (TARGET && cur > 0 && cur >= TARGET) { advance(); return; }
+      // sem duração conhecida: avança quando o tempo trava perto do fim
+      if (!TARGET) { if (cur > maxT + 0.05) { maxT = cur; stuck = 0; } else if (maxT > 1) { stuck++; if (stuck >= 8) advance(); } }
+    }
+    poll = setInterval(tick, 250);
+    screenAbort = () => { done = true; if (poll) { clearInterval(poll); poll = null; } };
   }
 
   /* ---- LOADING (auto-advance) — 3 batidas de headline (NÃO expõe as respostas) ---- */
