@@ -41,6 +41,9 @@
   } catch (e) { console.error(e); }
 
   var allLeads = [];
+  var allPurchases = [];
+  function isApproved(p) { return /approv|aprovad|paid|pago|complete|SALE_APPROVED/i.test(String(p.event || "") + " " + String(p.status || "")); }
+  function money(n) { n = parseFloat(n) || 0; return "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
   /* ----------------------------------------------------------- AUTH */
   function showLogin() { $("login").hidden = false; $("dash").hidden = true; }
@@ -71,6 +74,8 @@
     var res = await client.from("paizao_quiz_leads").select("*").order("created_at", { ascending: false }).limit(5000);
     if (res.error) { $("dashSub").textContent = "Erro ao ler leads: " + res.error.message; return; }
     allLeads = res.data || [];
+    var pres = await client.from("paizao_purchases").select("*").order("created_at", { ascending: false }).limit(5000);
+    allPurchases = (pres && !pres.error && pres.data) ? pres.data : [];
     buildUtmOptions();
     render();
   }
@@ -117,9 +122,49 @@
       kpi("Conclusão", pct(completed, started) + "%", "dos que começaram")
     ].join("");
 
+    renderSales(started);
     renderFunnel(leads, total);
     renderAnswers(leads);
     renderTable(leads);
+  }
+
+  function renderSales(startedLeads) {
+    var from = $("fromDate").value ? new Date($("fromDate").value + "T00:00:00") : null;
+    var to = $("toDate").value ? new Date($("toDate").value + "T23:59:59") : null;
+    var utm = $("utmFilter").value;
+    var ps = allPurchases.filter(function (p) {
+      var t = p.created_at ? new Date(p.created_at) : null;
+      if (from && t && t < from) return false;
+      if (to && t && t > to) return false;
+      if (utm && p.utm_source !== utm) return false;
+      return true;
+    });
+    var approved = ps.filter(isApproved);
+    var receita = approved.reduce(function (a, p) { return a + (parseFloat(p.value) || 0); }, 0);
+    var ticket = approved.length ? receita / approved.length : 0;
+
+    $("salesSub").textContent = ps.length + " eventos · " + approved.length + " aprovadas";
+    $("salesKpis").innerHTML = [
+      kpi("Compras", approved.length, "vendas aprovadas"),
+      kpi("Receita", money(receita), "soma das aprovadas"),
+      kpi("Ticket médio", money(ticket), "por venda"),
+      kpi("Conv. de leads", pct(approved.length, startedLeads || 0) + "%", "compras / começaram")
+    ].join("");
+
+    var byUtm = {};
+    approved.forEach(function (p) { var k = p.utm_source || "(sem origem)"; byUtm[k] = (byUtm[k] || 0) + (parseFloat(p.value) || 0); });
+    var keys = Object.keys(byUtm).sort(function (a, b) { return byUtm[b] - byUtm[a]; });
+    var max = keys.length ? byUtm[keys[0]] : 1;
+    $("salesByUtm").innerHTML = keys.map(function (k) {
+      var w = Math.round((byUtm[k] / (max || 1)) * 100);
+      return '<div class="fn"><div class="fn__lbl">' + esc(k) + '</div><div class="fn__barwrap"><div class="fn__bar" style="width:' + w + '%"></div></div><div class="fn__num">' + money(byUtm[k]) + '</div></div>';
+    }).join("") || '<p class="muted">Sem vendas no filtro atual.</p>';
+
+    $("salesBody").innerHTML = ps.slice(0, 100).map(function (p) {
+      var when = p.created_at ? new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+      var st = isApproved(p) ? '<span class="ok">aprovada</span>' : esc(p.status || p.event || "—");
+      return "<tr><td>" + esc(when) + "</td><td>" + st + "</td><td>" + money(parseFloat(p.value) || 0) + "</td><td>" + esc(p.utm_source || "—") + "</td><td>" + esc(p.utm_campaign || "—") + "</td><td>" + esc(p.email || "—") + "</td></tr>";
+    }).join("") || '<tr><td colspan="6" class="muted">Nenhuma venda ainda.</td></tr>';
   }
 
   function kpi(label, value, sub) {

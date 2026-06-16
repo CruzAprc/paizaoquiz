@@ -71,6 +71,7 @@ body {
 /* Painéis */
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-bottom: 20px; }
 .panel__h { margin: 0 0 14px; font-size: 16px; font-weight: 700; }
+.panel__sub { margin: 16px 0 10px; font-size: 13px; font-weight: 700; color: var(--tx-soft); }
 
 /* Funil */
 .fn { display: grid; grid-template-columns: 160px 1fr 130px; align-items: center; gap: 12px; padding: 4px 0; }
