@@ -24,7 +24,7 @@ const QUIZ = [
   {
     type: "landing",
     h1: "Filhota, responde rapidinho que o paizão monta um plano só pra você e em <span class=\"hl\">4 semaninhas</span> você já se vê diferente no espelho.",
-    image: "assets/img/carlao-landing.png",
+    image: "assets/img/carlao-landing.webp",
     transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
     imageAlt: "Carlão e filhota",
     imageNote: "Carlão apontando pro botão (autoridade do paizão)",

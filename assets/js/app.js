@@ -90,6 +90,25 @@
     try { (window.dataLayer = window.dataLayer || []).push({ event: "quiz_step", step: i, path: path, label: label }); } catch (e) {}
   }
 
+  // prefetch de assets (vídeo da próxima tela) — baixa em baixa prioridade e cacheia,
+  // pra o vídeo já estar pronto quando a filhota chegar na tela dele.
+  const _prefetched = {};
+  function prefetch(url) {
+    if (!url || _prefetched[url]) return;
+    _prefetched[url] = true;
+    try {
+      const l = document.createElement("link");
+      l.rel = "prefetch"; l.href = url; l.as = "video";
+      document.head.appendChild(l);
+    } catch (e) {}
+  }
+  // olha as próximas ~4 telas e adianta o download do vídeo que vier
+  function prefetchUpcomingVideo(fromIndex) {
+    for (let i = fromIndex + 1; i <= fromIndex + 4 && i < QUIZ.length; i++) {
+      if (QUIZ[i] && QUIZ[i].video) { prefetch(QUIZ[i].video); break; }
+    }
+  }
+
   // navegação central: troca a tela, atualiza URL/histórico e persiste
   function go(index, opts) {
     opts = opts || {};
@@ -266,6 +285,8 @@
     // rastreia a etapa alcançada (drop-off) + dispara o "pageview" da rota
     if (window.PaizaoDB && PaizaoDB.recordStep) PaizaoDB.recordStep(state.index, slugFor(state.index), labelFor(state.index));
     trackRoute(state.index);
+    // adianta o download do próximo vídeo (Carlão/Liz) pra não travar na hora
+    prefetchUpcomingVideo(state.index);
 
     // quiz concluído: ao chegar no diagnóstico, marca o lead como completed
     if (screen.type === "loading" && window.PaizaoDB) PaizaoDB.complete(state.answers);
@@ -312,7 +333,7 @@
       const fig = el(`
         <div class="figure">
           <div class="figure__glow"></div>
-          <img class="figure__img" src="${s.image}" alt="${s.imageAlt || ""}" />
+          <img class="figure__img" src="${s.image}" alt="${s.imageAlt || ""}" width="750" height="1141" fetchpriority="high" decoding="async" />
         </div>`);
       root.appendChild(fig);
     } else {
