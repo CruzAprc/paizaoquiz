@@ -258,10 +258,6 @@
       opts.appendChild(opt);
     });
     root.appendChild(opts);
-
-    if (s.needsReview) {
-      root.appendChild(el(`<p class="reviewflag">⚠️ Q4: a copy original veio truncada — estas 4 opções foram reconstruídas conforme o dado plantado. Me confirma o texto certo.</p>`));
-    }
   }
 
   /* ---- LETTER ---- */

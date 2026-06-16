@@ -211,16 +211,16 @@ body::after {
    o botão pra baixo do fold. Testado p/ iPhone pequeno, Android médio e tela grande. */
 .landing {
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
   text-align: center;
-  padding-top: 10px;
+  padding-top: 8px;
   min-height: 100dvh;
 }
 .landing .media {
   aspect-ratio: auto;
   flex: 0 1 auto;
   min-height: 0;
-  height: clamp(180px, 38dvh, 420px);
+  height: clamp(140px, 34dvh, 420px);
 }
 .landing .media img,
 .landing .media .media__placeholder { height: 100%; }
@@ -247,7 +247,7 @@ body::after {
 .igprofile__sub b { color: var(--tx); font-weight: 700; }
 .landing h1 {
   font-family: var(--display);
-  font-size: clamp(26px, 7.6vw, 37px); line-height: 1.1; font-weight: 800;
+  font-size: clamp(19px, 5.4vw, 30px); line-height: 1.14; font-weight: 800;
   letter-spacing: -.025em; margin: 0;
 }
 
@@ -258,17 +258,17 @@ body::after {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;        /* figura centralizada na vertical */
   justify-content: center;
   margin-bottom: -6px; /* aproxima a base da figura do botão */
 }
 .figure__glow {
   position: absolute;
-  left: 50%; bottom: 0;
-  width: 86%; height: 60%;
-  transform: translateX(-50%);
+  left: 50%; top: 50%;
+  width: 86%; height: 80%;
+  transform: translate(-50%, -50%);
   /* halo roxo suave da marca atrás da figura */
-  background: radial-gradient(58% 62% at 50% 72%, rgba(139,92,246,.28), transparent 72%);
+  background: radial-gradient(58% 62% at 50% 50%, rgba(139,92,246,.28), transparent 72%);
   filter: blur(10px);
   z-index: 0;
   pointer-events: none;
@@ -276,10 +276,10 @@ body::after {
 .figure__img {
   position: relative; z-index: 1;
   height: 100%;
-  max-height: clamp(250px, 54dvh, 580px);
+  max-height: clamp(230px, 56dvh, 640px);
   width: auto; max-width: 100%;
   object-fit: contain;
-  object-position: bottom center;
+  object-position: center;
   filter: drop-shadow(0 16px 22px rgba(0,0,0,.18));
   animation: figIn .6s cubic-bezier(.22,1,.36,1) both;
 }

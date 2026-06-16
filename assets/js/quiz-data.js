@@ -23,7 +23,7 @@ const QUIZ = [
   /* ---------------------------------------------------------------- LANDING */
   {
     type: "landing",
-    h1: "Filhota, responde rapidinho e o paizão te mostra como secar em <span class=\"hl\">4 semaninhas</span>",
+    h1: "Filhota, responde rapidinho que o paizão monta um plano só pra você e em <span class=\"hl\">4 semaninhas</span> você já se vê diferente no espelho.",
     image: "assets/img/carlao-landing.png",
     transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
     imageAlt: "Carlão e filhota",
@@ -97,7 +97,6 @@ const QUIZ = [
     type: "question",
     id: "q4_porque",
     block: "O que te trava",
-    needsReview: true, // <- copy original veio truncada/garbled; opções reconstruídas conforme o dado plantado. CONFIRMAR.
     question: "Agora me fala de coração, filhota: por que você acha que ainda não conseguiu o corpo que quer?",
     options: [
       "Nunca soube treinar do jeito certo",
