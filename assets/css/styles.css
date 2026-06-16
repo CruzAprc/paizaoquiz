@@ -542,6 +542,21 @@ body::after {
 /* barrinha de stories enche suave conforme o vídeo toca */
 .testi__frame .story__bar i { transition: width .2s linear; }
 
+/* VSL da vturb em stories: força o player a COBRIR a tela inteira (igual aos
+   vídeos nativos). O player é responsivo por largura e deixaria barras pretas;
+   com aspect-ratio 9/16 + min-w/min-h ele preenche e o excedente é cortado. */
+#vslPlayer { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: #000; }
+#vslPlayer vturb-smartplayer {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 100% !important; height: auto !important;
+  aspect-ratio: 9 / 16; min-width: 100%; min-height: 100%;
+  max-width: none !important; margin: 0 !important; display: block;
+}
+#vslPlayer vturb-smartplayer video,
+#vslPlayer vturb-smartplayer iframe {
+  width: 100% !important; height: 100% !important; object-fit: cover !important;
+}
+
 /* ------------------------------------------------------------- VSL / OFFER */
 .vsl { gap: 18px; }
 .vsl__trigger { font-family: var(--display); font-size: clamp(20px,5.4vw,25px); line-height:1.24; font-weight:800; letter-spacing:-.02em; margin:0; }
