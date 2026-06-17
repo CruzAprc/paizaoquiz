@@ -289,13 +289,24 @@ const QUIZ = [
     cta: "Pra receber seu plano, toca aqui, filhota"
   },
 
-  /* --------------------------- MINI VSL 2 (oferta 90s) ------------------ */
+  /* --------------------------- MINI VSL 2 (oferta) — POST DE REELS -------
+     Formato de post do Instagram/Reels: header + vídeo + ações + legenda (H1).
+     O BOTÃO/CTA é da própria vturb (dentro do vídeo) — não colocamos botão nosso. */
   {
     type: "offer",
-    slotLabel: "SLOT MINI VSL 2 · 90 s · OFERTA",
-    slotNote: "Oferta pura (App do Paizão R$288 / 12× R$24 · treino + dieta + feed exclusivo + 1 ano de acompanhamento + desafio top-5) + garantia palavra de pai (4 semaninhas) + urgência (10min). Fecha com \"Bora, filhota. Te amo.\"",
-    embed: null, // <- cole o iframe/embed da VSL de oferta aqui
-    cta: "QUERO MEU PLANO COM O PAIZÃO"
+    reels: true,
+    author: "Carlão Personal das Estrelas",
+    handle: "@oficial_carlaopersonal",
+    likes: "12.4 mil",
+    // H1 = legenda do post (EDITE este texto à vontade)
+    h1: "Filhota, teu plano já tá pronto 💛 dá o play que o paizão te conta tudo — é só seguir o passo a passo e em 4 semaninhas você se vê diferente no espelho.",
+    // player vturb (a VSL já tem o botão de oferta dentro dela)
+    embed: `<vturb-smartplayer id="vid-6a31dcf23f5844587f036b0d" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    preload: [
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a31dc326c302b45d80f7367/main.m3u8", as: "fetch" }
+    ]
   }
 
 ];

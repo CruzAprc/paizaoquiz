@@ -557,6 +557,40 @@ body::after {
   width: 100% !important; height: 100% !important; object-fit: cover !important;
 }
 
+/* ---------------------------------------------- POST DE REELS (oferta / VSL 2) */
+.reels { justify-content: center; }
+.reelspost {
+  width: 100%; max-width: 440px; margin: 0 auto;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r-sm); overflow: hidden; box-shadow: var(--shadow);
+}
+.reelspost__top { display: flex; align-items: center; gap: 10px; padding: 11px 12px; }
+.reelspost__av { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 50%; }
+.reelspost__id { min-width: 0; }
+.reelspost__id b { display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 700; color: var(--tx); }
+.reelspost__id small { display: block; font-size: 12px; color: var(--tx-mute); line-height: 1.2; }
+.reelspost__more { margin-left: auto; color: var(--tx-soft); font-weight: 800; letter-spacing: 1px; }
+.reelspost__media {
+  position: relative; width: 100%; aspect-ratio: 9 / 16;
+  background: #000; overflow: hidden;
+}
+#reelsPlayer vturb-smartplayer {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 100% !important; height: auto !important; aspect-ratio: 9 / 16;
+  min-width: 100%; min-height: 100%; max-width: none !important; margin: 0 !important; display: block;
+}
+#reelsPlayer vturb-smartplayer video,
+#reelsPlayer vturb-smartplayer iframe {
+  width: 100% !important; height: 100% !important; object-fit: cover !important;
+}
+.reelspost__actions { display: flex; align-items: center; gap: 16px; padding: 11px 12px 4px; color: var(--tx); }
+.reelspost__act { display: grid; place-items: center; cursor: default; }
+.reelspost__act svg { width: 25px; height: 25px; }
+.reelspost__save { margin-left: auto; }
+.reelspost__likes { padding: 2px 12px; font-size: 13.5px; font-weight: 700; color: var(--tx); }
+.reelspost__cap { padding: 4px 12px 14px; font-size: 14px; line-height: 1.5; color: var(--tx); margin: 0; }
+.reelspost__cap b { font-weight: 700; margin-right: 5px; }
+
 /* ------------------------------------------------------------- VSL / OFFER */
 .vsl { gap: 18px; }
 .vsl__trigger { font-family: var(--display); font-size: clamp(20px,5.4vw,25px); line-height:1.24; font-weight:800; letter-spacing:-.02em; margin:0; }
