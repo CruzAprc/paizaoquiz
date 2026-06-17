@@ -276,9 +276,10 @@ const QUIZ = [
     // tokens {foco} e {primeiro} são resolvidos a partir das respostas reais dela (ver PERSONA)
     title: "Seu corpo nas próximas semaninhas",
     showImc: true,              // calcula e mostra o IMC dela (altura/peso da tela measure)
-    subtitle: "Você me falou que quer <b>{foco}</b> — e ver primeiro <b>{primeiro}</b>. Olha só onde o paizão vai te colocar, filhota 👇",
+    subtitle: "Você me falou que quer <b>{foco}</b> e ver primeiro <b>{primeiro}</b>. Então olha só onde o paizão vai te colocar, filhota 👇",
     lead: "{empatia}",          // frase de empatia (vira card) ligada ao que a trava
     markStart: "você tá aqui",  // selo no ponto "Hoje"
+    markMid: "já se vê diferente", // micro-rótulo no ponto "4 semaninhas"
     markGoal: "sua meta 🔥",    // selo no ponto "12 semaninhas"
     startFrom: "q3_rotina",     // calibra o ponto "Hoje" pela rotina atual dela
     points: [
@@ -334,21 +335,21 @@ const PERSONA = {
     "Tudo junto": "tudo de uma vez",
     _default: "o resultado que você quer"
   },
-  // IMC no diagnóstico — mensagem por faixa (SEMPRE acolhedora). {foco} é resolvido.
+  // Termômetro do Paizão — mensagem por faixa (SEMPRE positiva, sem medo). {foco} é resolvido.
   imc: {
-    abaixo:   "Seu IMC tá um pouquinho abaixo do ideal — bora construir corpo com saúde, no seu ritmo, filhota.",
-    saudavel: "Seu IMC já tá na faixa saudável! Agora é esculpir e {foco} do jeito certo, sem perder a saúde.",
-    acima:    "Seu IMC tá só um pouquinho acima do ideal — e é exatamente aí que o paizão começa a virar o jogo nas primeiras 4 semaninhas.",
-    alto:     "Seu IMC mostra que dá pra ganhar MUITA saúde e leveza daqui pra frente — e o paizão vai com você passo a passo, sem pressa e sem julgamento.",
+    abaixo:   "Tá tudo certo, filhota! Teu corpo tem espaço pra construir com saúde, no seu ritmo. O paizão vai te deixar tudo no lugar e durinha.",
+    saudavel: "Olha que beleza, filhota! Teu corpo já tá na faixa saudável. Agora é o paizão te deixar tudo durinho e no lugar.",
+    acima:    "Tá tudo certo, filhota! Teu corpo já tá pertinho da faixa ideal — e é exatamente aí que o paizão vira o jogo nas primeiras 4 semaninhas.",
+    alto:     "Tá tudo certo, filhota! Daqui pra frente é só ganho de saúde e leveza — e o paizão vai com você passo a passo, sem pressa e sem julgamento.",
     _default: "Esse é o seu ponto de partida, filhota. A partir daqui é só evolução com o paizão."
   },
-  // rótulo curto da faixa (chip ao lado do número)
+  // rótulo curto da faixa (chip ao lado do número) — com selo de incentivo
   imcCat: {
-    abaixo: "abaixo do ideal",
-    saudavel: "faixa saudável",
-    acima: "um pouco acima",
-    alto: "bora cuidar disso",
-    _default: "ponto de partida"
+    abaixo: "🌱 com saúde",
+    saudavel: "✅ faixa saudável",
+    acima: "🔥 bora virar o jogo",
+    alto: "💪 cuidando de você",
+    _default: "✨ ponto de partida"
   },
   // ponto "Hoje" da curva — q3_rotina -> nível inicial (quem já treina arranca mais alto)
   start: {

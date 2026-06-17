@@ -646,12 +646,6 @@
   function renderReelsPost(root, s) {
     root.classList.add("reels");
     const verified = `<svg class="verified" viewBox="0 0 24 24" width="14" height="14" aria-label="verificado"><path fill="#3897f0" d="M12 1.5l2.4 1.8 3 .2 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .2L12 22.5l-2.4-1.8-3-.2-1-2.8L3.3 15.8l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.2z"/><path fill="#fff" d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.3-3.3 1.1 1.1z"/></svg>`;
-    const ico = {
-      heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 21s-7.5-4.6-9.6-9C1 8.6 2.6 5.5 6 5.5c2 0 3.2 1.2 4 2.4.8-1.2 2-2.4 4-2.4 3.4 0 5 3.1 3.6 6.5C19.5 16.4 12 21 12 21z"/></svg>',
-      comment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z" stroke-linejoin="round"/></svg>',
-      share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linejoin="round"/></svg>',
-      save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 3h12v18l-6-4-6 4V3z" stroke-linejoin="round"/></svg>'
-    };
     const post = el(`
       <article class="reelspost">
         <header class="reelspost__top">
@@ -659,19 +653,13 @@
           <div class="reelspost__id"><b>${s.handle || "@oficial_carlaopersonal"} ${verified}</b><small>Patrocinado</small></div>
           <span class="reelspost__more">•••</span>
         </header>
+        ${s.h1 ? `<h1 class="reelspost__h1">${s.h1}</h1>` : ""}
         <div class="reelspost__media" id="reelsPlayer"></div>
-        <div class="reelspost__actions">
-          <span class="reelspost__act">${ico.heart}</span>
-          <span class="reelspost__act">${ico.comment}</span>
-          <span class="reelspost__act">${ico.share}</span>
-          <span class="reelspost__act reelspost__save">${ico.save}</span>
-        </div>
-        ${s.likes ? `<div class="reelspost__likes">${s.likes} curtidas</div>` : ""}
-        ${s.h1 ? `<p class="reelspost__cap"><b>${(s.handle || "").replace(/^@/, "")}</b> ${s.h1}</p>` : ""}
       </article>`);
     injectEmbed(post.querySelector("#reelsPlayer"), s.embed);
     root.appendChild(post);
-    // sem CTA nosso e sem auto-avanço: o botão/conversão é da própria vturb.
+    // H1 visível acima; ABAIXO do vídeo fica livre pro botão/CTA da própria vturb.
+    // Sem CTA nosso e sem auto-avanço.
   }
 
   /* ---- VSL em STORIES full-screen (player vturb), SEM botão: avança no fim ---- */
@@ -823,7 +811,7 @@
         root.appendChild(el(`
           <div class="imc imc--${info.cat}">
             <div class="imc__row">
-              <div class="imc__num"><b>${imcStr}</b><small>IMC hoje</small></div>
+              <div class="imc__num"><b>${imcStr}</b><small>Termômetro do Paizão</small></div>
               <span class="imc__cat">${catLabel}</span>
             </div>
             ${msg ? `<p class="imc__msg">${msg}</p>` : ""}
@@ -861,6 +849,7 @@
       <div class="chart__legend">${points.map(p => `<span>${p.label}</span>`).join("")}</div>`;
     // selos personalizados na curva ("você tá aqui" / "sua meta 🔥")
     if (s.markStart) box.appendChild(el(`<span class="chart__badge chart__badge--start">${fillCopy(s.markStart)}</span>`));
+    if (s.markMid) box.appendChild(el(`<span class="chart__badge chart__badge--mid">${fillCopy(s.markMid)}</span>`));
     if (s.markGoal) box.appendChild(el(`<span class="chart__badge chart__badge--goal">${fillCopy(s.markGoal)}</span>`));
     root.appendChild(box);
 
