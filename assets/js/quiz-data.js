@@ -77,15 +77,17 @@ const QUIZ = [
      "video" (caminho do .mp4, autoplay mudo) OU "embed".                    */
   {
     type: "story",
-    duration: 10000,            // fallback caso o vídeo não carregue
-    author: "Carlão Personal das Estrelas",
-    handle: "agora",
-    video: "assets/img/story-carlao.mp4", // vídeo do Carlão (autoplay, barra segue o vídeo, avança no fim)
-    embed: null,                // <- ou cole um embed de vídeo aqui
-    poster: "assets/img/story-carlao.jpg", // frame de capa enquanto o vídeo carrega
-    // com vídeo, a barra enche pelo tempo do vídeo e avança sozinho ao terminar
-    eyebrow: "Filhota, presta atenção.",
-    sign: "— Carlão"
+    topName: "Carlão Personal das Estrelas",
+    topSub: "agora",
+    avatar: "avatar-photo",
+    videoLen: 16,               // duração (s) p/ avançar no fim — AJUSTAR à duração real da vturb
+    // player vturb (streaming) em stories full-screen
+    embed: `<vturb-smartplayer id="vid-6a31eee31d8db4c8e4a5cc39" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31eee31d8db4c8e4a5cc39/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    preload: [
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31eee31d8db4c8e4a5cc39/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a31eeca1d57eb0be905e65d/main.m3u8", as: "fetch" }
+    ]
   },
 
   /* ============================ P — PROBLEMA (toca a dor) ================= */

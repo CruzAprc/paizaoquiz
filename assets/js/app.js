@@ -415,6 +415,9 @@
 
   /* ---- STORY (Break 1 em formato stories: barra enche e passa sozinho) ---- */
   function renderStory(root, s) {
+    // player vturb (streaming) em stories full-screen, com auto-avanço no fim
+    if (s.embed) { renderEmbedStory(root, s); return; }
+
     root.classList.add("story");
     const dur = s.duration || 10000;
 
