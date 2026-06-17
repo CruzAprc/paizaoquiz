@@ -532,8 +532,11 @@
     frame.addEventListener("pointercancel", () => { resumeTL(); downAt = 0; });
   }
 
-  /* ---- TESTIMONIAL (depoimento da filhota em formato STORIES, vídeo nativo) ---- */
+  /* ---- TESTIMONIAL (depoimento da filhota em formato STORIES) ---- */
   function renderTestimonial(root, s) {
+    // player vturb (streaming) em stories full-screen, com auto-avanço no fim
+    if (s.embed) { renderEmbedStory(root, s); return; }
+
     root.classList.add("testi");
 
     // formato STORIES: frame escuro full + @ no topo + vídeo nativo da filhota.
@@ -620,7 +623,7 @@
     // formato POST DE REELS (oferta) — CTA é da própria vturb, sem botão nosso.
     if (s.reels && s.embed) { renderReelsPost(root, s); return; }
     // formato STORIES full-screen (player vturb), SEM botão: avança no fim do vídeo.
-    if (s.story && s.embed) { renderVslStory(root, s); return; }
+    if (s.story && s.embed) { renderEmbedStory(root, s); return; }
 
     root.classList.add("vsl");
     if (s.trigger) root.appendChild(el(`<p class="vsl__trigger">${s.trigger}</p>`));
@@ -662,16 +665,24 @@
     // Sem CTA nosso e sem auto-avanço.
   }
 
-  /* ---- VSL em STORIES full-screen (player vturb), SEM botão: avança no fim ---- */
-  function renderVslStory(root, s) {
-    root.classList.add("testi", "testi--story"); // reusa o frame full-screen dos stories
+  /* ---- STORIES full-screen com player vturb (Liz, Mini VSL 1…), SEM botão.
+     Avança NO FIM DE VERDADE do vídeo (sem corte seco):
+       1) no TARGET = duração-0.4s (quando a duração é conhecida)
+       2) OU quando o currentTime estaciona (vídeo acabou) — fallback que cobre
+          duração levemente diferente e nunca deixa travar. ---- */
+  function renderEmbedStory(root, s) {
+    root.classList.add("testi", "testi--story");
+    const avatar = s.avatar || "avatar-photo";
+    const topName = s.topName || s.handle || s.author || "Carlão Personal das Estrelas";
+    const topSub = s.topSub || (s.handle ? "filhota do paizão" : "agora");
+    const verified = s.verified ? `<svg class="verified" viewBox="0 0 24 24" width="14" height="14" aria-label="verificado"><path fill="#3897f0" d="M12 1.5l2.4 1.8 3 .2 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .2L12 22.5l-2.4-1.8-3-.2-1-2.8L3.3 15.8l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.2z"/><path fill="#fff" d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.3-3.3 1.1 1.1z"/></svg>` : "";
     const frame = el(`
       <div class="story__frame testi__frame">
         <div class="story__media" id="vslPlayer"></div>
         <div class="story__bars"><span class="story__bar"><i id="vslFill"></i></span></div>
         <div class="story__top">
-          <span class="story__av igring avatar-photo"></span>
-          <div class="story__id"><b>${s.author || "Carlão Personal das Estrelas"}</b><small>${s.handle || "agora"}</small></div>
+          <span class="story__av igring ${avatar}"></span>
+          <div class="story__id"><b>${topName}${verified}</b><small>${topSub}</small></div>
         </div>
       </div>`);
     injectEmbed(frame.querySelector("#vslPlayer"), s.embed);
@@ -681,7 +692,7 @@
     if (fill) fill.style.transition = "width .25s linear";
     const wantId = (s.embed.match(/id="(vid-[^"]+)"/) || [])[1];
     const LEN = (typeof s.videoLen === "number" && s.videoLen > 0) ? s.videoLen : null;
-    const TARGET = LEN ? Math.max(1, LEN - 2) : null; // avança ~2s antes do fim
+    const TARGET = LEN ? Math.max(1, LEN - 0.4) : null; // avança no FIM (sem corte seco)
     let done = false, poll = null, inst = null, maxT = 0, stuck = 0, subscribed = false;
 
     function advance() { if (done) return; done = true; cleanupScreen(); next(); }
@@ -697,7 +708,6 @@
     function tick() {
       if (done) return;
       if (!inst) inst = pickInstance();
-      // bônus: assina eventos de fim da API quando a instância existir
       if (inst && inst.on && !subscribed) {
         subscribed = true;
         ["ended", "end", "complete", "completed", "finish", "finished", "video_complete"].forEach(ev => { try { inst.on(ev, advance); } catch (e) {} });
@@ -705,9 +715,10 @@
       const cur = getCurrent();
       if (cur == null) return;
       if (fill && LEN) fill.style.width = (Math.min(1, cur / LEN) * 100) + "%";
-      if (TARGET && cur > 0 && cur >= TARGET) { advance(); return; }
-      // sem duração conhecida: avança quando o tempo trava perto do fim
-      if (!TARGET) { if (cur > maxT + 0.05) { maxT = cur; stuck = 0; } else if (maxT > 1) { stuck++; if (stuck >= 8) advance(); } }
+      if (TARGET && cur >= TARGET) { advance(); return; }
+      // fim real por "estacionou" (cobre duração um tico diferente OU desconhecida)
+      if (cur > maxT + 0.05) { maxT = cur; stuck = 0; }
+      else if (maxT > 5) { stuck++; if (stuck >= 7) advance(); }
     }
     poll = setInterval(tick, 250);
     screenAbort = () => { done = true; if (poll) { clearInterval(poll); poll = null; } };

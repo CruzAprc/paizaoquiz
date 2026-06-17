@@ -45,6 +45,45 @@
   function isApproved(p) { return /approv|aprovad|paid|pago|complete|SALE_APPROVED/i.test(String(p.event || "") + " " + String(p.status || "")); }
   function money(n) { n = parseFloat(n) || 0; return "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
+  /* ----------------------------------------------------------- ORIGEM (cascata)
+     Sem UTM, o navegador não entrega de onde veio o tráfego — mas o referrer e o
+     user_agent (já salvos pelo quiz) recuperam a maioria dos casos. Cascata:
+     utm_source → domínio do referrer → app do user_agent → "Direto". */
+  var REF_DOMAINS = [
+    { m: "instagram", l: "Instagram" }, { m: "facebook", l: "Facebook" },
+    { m: "fb.", l: "Facebook" }, { m: "l.facebook", l: "Facebook" },
+    { m: "google", l: "Google (orgânico)" }, { m: "youtube", l: "YouTube" },
+    { m: "youtu.be", l: "YouTube" }, { m: "bing", l: "Bing" },
+    { m: "tiktok", l: "TikTok" }, { m: "t.co", l: "Twitter/X" },
+    { m: "twitter", l: "Twitter/X" }, { m: "x.com", l: "Twitter/X" },
+    { m: "pinterest", l: "Pinterest" }, { m: "linkedin", l: "LinkedIn" },
+    { m: "whatsapp", l: "WhatsApp" }, { m: "wa.me", l: "WhatsApp" }
+  ];
+  var UA_APPS = [
+    { m: "instagram", l: "Instagram (app)" }, { m: "fban", l: "Facebook (app)" },
+    { m: "fbav", l: "Facebook (app)" }, { m: "fb_iab", l: "Facebook (app)" },
+    { m: "tiktok", l: "TikTok (app)" }, { m: "musical_ly", l: "TikTok (app)" },
+    { m: "pinterest", l: "Pinterest (app)" }, { m: "line/", l: "LINE (app)" }
+  ];
+  function refDomain(ref) {
+    try {
+      var host = new URL(ref).hostname.toLowerCase().replace(/^www\./, "");
+      for (var i = 0; i < REF_DOMAINS.length; i++) if (host.indexOf(REF_DOMAINS[i].m) >= 0) return REF_DOMAINS[i].l;
+      return host || "";
+    } catch (e) { return ""; }
+  }
+  function uaApp(ua) {
+    var s = String(ua || "").toLowerCase();
+    for (var i = 0; i < UA_APPS.length; i++) if (s.indexOf(UA_APPS[i].m) >= 0) return UA_APPS[i].l;
+    return "";
+  }
+  function origem(l) {
+    if (l.utm_source) return l.utm_source;
+    var d = l.referrer ? refDomain(l.referrer) : ""; if (d) return d;
+    var a = uaApp(l.user_agent); if (a) return a;
+    return "Direto / sem origem";
+  }
+
   /* ----------------------------------------------------------- AUTH */
   function showLogin() { $("login").hidden = false; $("dash").hidden = true; }
   function showDash() { $("login").hidden = true; $("dash").hidden = false; }
@@ -83,7 +122,7 @@
   function buildUtmOptions() {
     var sel = $("utmFilter"), seen = {};
     sel.querySelectorAll("option:not([value=''])").forEach(function (o) { o.remove(); });
-    allLeads.forEach(function (l) { if (l.utm_source) seen[l.utm_source] = 1; });
+    allLeads.forEach(function (l) { var o = origem(l); if (o) seen[o] = 1; });
     Object.keys(seen).sort().forEach(function (u) {
       var o = document.createElement("option"); o.value = u; o.textContent = u; sel.appendChild(o);
     });
@@ -97,7 +136,7 @@
       var t = l.created_at ? new Date(l.created_at) : null;
       if (from && t && t < from) return false;
       if (to && t && t > to) return false;
-      if (utm && l.utm_source !== utm) return false;
+      if (utm && origem(l) !== utm) return false;
       return true;
     });
   }
@@ -221,7 +260,7 @@
         "<td>" + esc(l.imc != null ? l.imc : "—") + "</td>" +
         "<td>" + esc(etapa) + "</td>" +
         "<td>" + (l.completed ? '<span class="ok">✓</span>' : '<span class="muted">—</span>') + "</td>" +
-        "<td>" + esc(l.utm_source || "—") + "</td>" +
+        "<td>" + esc(origem(l)) + "</td>" +
         "</tr>";
     }).join("");
     $("leadsBody").innerHTML = rows || '<tr><td colspan="7" class="muted">Nenhum lead no filtro.</td></tr>';

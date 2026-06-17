@@ -119,12 +119,18 @@ const QUIZ = [
      Quando tiver o vídeo, é só preencher "video" (caminho do .mp4).         */
   {
     type: "testimonial",
-    handle: "@lizx.macedo",      // <- @ real da Liz Macedo no Instagram (4,1 mi seguidores)
-    author: "Liz Macedo",
-    // vídeo nativo da Liz em formato STORIES (barra segue o vídeo, avança no fim, som automático)
-    video: "assets/img/depoimento-liz.mp4",
-    poster: "assets/img/depoimento-liz.jpg",
-    cta: "Continuar"
+    topName: "@lizx.macedo",     // @ real da Liz no topo do stories
+    topSub: "filhota do paizão",
+    avatar: "avatar-liz",
+    verified: true,
+    videoLen: 58,                // duração (s) p/ avançar no fim — AJUSTAR à duração real da vturb
+    // player vturb (streaming) em stories full-screen
+    embed: `<vturb-smartplayer id="vid-6a313a5eb2d74681824e0933" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    preload: [
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a313a0ab33864477f837845/main.m3u8", as: "fetch" }
+    ]
   },
 
   /* ============================ I — IMPLICAÇÃO (o custo) ================= */
