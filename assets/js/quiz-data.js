@@ -300,7 +300,7 @@ const QUIZ = [
     handle: "@oficial_carlaopersonal",
     likes: "12.4 mil",
     // H1 = legenda do post (EDITE este texto à vontade)
-    h1: "Filhota, teu plano já tá pronto 💛 dá o play que o paizão te conta tudo — é só seguir o passo a passo e em 4 semaninhas você se vê diferente no espelho.",
+    h1: "Filhota, teu plano já tá pronto 💛 dá o play que o paizão te conta tudo",
     // player vturb (a VSL já tem o botão de oferta dentro dela)
     embed: `<vturb-smartplayer id="vid-6a31dcf23f5844587f036b0d" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
