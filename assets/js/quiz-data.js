@@ -259,8 +259,6 @@ const QUIZ = [
     id: "q14_compromisso",
     block: "O compromisso",
     question: "Última pergunta e é a mais séria, filhota. Você tá realmente comprometida a seguir o plano do paizão por 4 semaninhas?",
-    image: "assets/img/antes-depois-2.jpg",
-    imageNote: "Antes/depois + \"resultado em 4 semaninhas\"",
     options: [
       "Tô pronta, paizão 🙏",
       "Sim, mas tenho medo de não conseguir"
