@@ -688,21 +688,24 @@
           <div class="story__id"><b>${topName}${verified}</b><small>${topSub}</small></div>
         </div>
       </div>`);
+    // snapshot do nº de players ANTES de injetar: o NOSSO é o que será criado agora.
+    // (as instâncias da vturb não têm id, então não dá pra casar por id — pegamos a NOVA.)
+    const baseCount = (window.smartplayer && window.smartplayer.instances) ? window.smartplayer.instances.length : 0;
     injectEmbed(frame.querySelector("#vslPlayer"), s.embed);
     root.appendChild(frame);
 
     const fill = frame.querySelector("#vslFill");
     if (fill) fill.style.transition = "width .25s linear";
-    const wantId = (s.embed.match(/id="(vid-[^"]+)"/) || [])[1];
     const LEN = (typeof s.videoLen === "number" && s.videoLen > 0) ? s.videoLen : null;
     const TARGET = LEN ? Math.max(1, LEN - 0.4) : null; // avança no FIM (sem corte seco)
-    let done = false, poll = null, inst = null, maxT = 0, stuck = 0, subscribed = false;
+    let done = false, poll = null, inst = null, maxT = 0, stuck = 0, subscribed = false, seenStart = false;
 
     function advance() { if (done) return; done = true; cleanupScreen(); next(); }
+    // a instância DESTE screen é a recém-adicionada (a última, depois do baseCount)
     function pickInstance() {
       const sp = window.smartplayer;
-      if (!sp || !sp.instances || !sp.instances.length) return null;
-      return sp.instances.find(i => i && (i.id === wantId || i.elementId === wantId || i.playerId === wantId)) || sp.instances[0];
+      if (!sp || !sp.instances || sp.instances.length <= baseCount) return null;
+      return sp.instances[sp.instances.length - 1];
     }
     function getCurrent() {
       if (!inst) inst = pickInstance();
@@ -718,6 +721,8 @@
       const cur = getCurrent();
       if (cur == null) return;
       if (fill && LEN) fill.style.width = (Math.min(1, cur / LEN) * 100) + "%";
+      // só confia na lógica de avanço DEPOIS que o vídeo começou do início (anti-skip)
+      if (!seenStart) { if (cur < 2) seenStart = true; else return; }
       if (TARGET && cur >= TARGET) { advance(); return; }
       // fim real por "estacionou" (cobre duração um tico diferente OU desconhecida)
       if (cur > maxT + 0.05) { maxT = cur; stuck = 0; }
