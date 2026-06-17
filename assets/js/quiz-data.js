@@ -80,7 +80,7 @@ const QUIZ = [
     topName: "Carlão Personal das Estrelas",
     topSub: "agora",
     avatar: "avatar-photo",
-    videoLen: 16,               // duração (s) p/ avançar no fim — AJUSTAR à duração real da vturb
+    videoLen: 16.3,             // duração real (vturb HLS): 16.28s
     // player vturb (streaming) em stories full-screen
     embed: `<vturb-smartplayer id="vid-6a31eee31d8db4c8e4a5cc39" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31eee31d8db4c8e4a5cc39/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
@@ -125,7 +125,7 @@ const QUIZ = [
     topSub: "filhota do paizão",
     avatar: "avatar-liz",
     verified: true,
-    videoLen: 58,                // duração (s) p/ avançar no fim — AJUSTAR à duração real da vturb
+    videoLen: 58,                // duração real (vturb HLS): 57.99s
     // player vturb (streaming) em stories full-screen
     embed: `<vturb-smartplayer id="vid-6a313a5eb2d74681824e0933" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
@@ -165,7 +165,7 @@ const QUIZ = [
   {
     type: "vsl",
     story: true,            // renderiza em STORIES full-screen (igual Carlão/Liz)
-    videoLen: 100,          // duração (s) p/ auto-avançar no fim — SEM botão
+    videoLen: 100.2,        // duração real (vturb HLS): 100.17s — auto-avança no fim, SEM botão
     author: "Carlão Personal das Estrelas",
     handle: "Método do Paizão",
     // player vturb (streaming) — carregado só nesta tela; warm-up algumas telas antes
