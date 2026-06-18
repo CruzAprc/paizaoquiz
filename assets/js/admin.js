@@ -107,13 +107,32 @@
   $("logoutBtn").addEventListener("click", async function () { await client.auth.signOut(); showLogin(); });
   $("reloadBtn").addEventListener("click", function () { load(); });
 
-  /* ----------------------------------------------------------- DADOS */
+  /* ----------------------------------------------------------- DADOS
+     Pagina via .range() porque o PostgREST corta cada resposta em 1000 linhas
+     (config "Max Rows" do projeto). Sem isso, o painel travava em 1000 sessões. */
+  var PAGE = 1000, SAFETY_MAX = 100000;
+  async function fetchAll(table, onProgress) {
+    var rows = [], offset = 0;
+    while (offset < SAFETY_MAX) {
+      var res = await client.from(table).select("*")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + PAGE - 1);
+      if (res.error) return { data: rows, error: res.error };
+      var batch = res.data || [];
+      rows = rows.concat(batch);
+      if (onProgress) onProgress(rows.length);
+      if (batch.length < PAGE) break; // última página
+      offset += PAGE;
+    }
+    return { data: rows, error: null };
+  }
+
   async function load() {
     $("dashSub").textContent = "carregando…";
-    var res = await client.from("paizao_quiz_leads").select("*").order("created_at", { ascending: false }).limit(5000);
+    var res = await fetchAll("paizao_quiz_leads", function (n) { $("dashSub").textContent = "carregando… " + n; });
     if (res.error) { $("dashSub").textContent = "Erro ao ler leads: " + res.error.message; return; }
     allLeads = res.data || [];
-    var pres = await client.from("paizao_purchases").select("*").order("created_at", { ascending: false }).limit(5000);
+    var pres = await fetchAll("paizao_purchases");
     allPurchases = (pres && !pres.error && pres.data) ? pres.data : [];
     buildUtmOptions();
     render();

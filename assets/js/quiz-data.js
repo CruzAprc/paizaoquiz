@@ -28,7 +28,7 @@ const QUIZ = [
     transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
     imageAlt: "Carlão e filhota",
     imageNote: "Carlão apontando pro botão (autoridade do paizão)",
-    cta: "Iniciar meu diagnóstico",
+    cta: "Iniciar minha avaliação",
     scarcity: "⏳ Disponível só hoje · você responde uma vez só"
   },
 

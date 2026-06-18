@@ -1,23 +1,20 @@
 /* ============================================================================
    EDGE FUNCTION — kirvano-webhook
-   Recebe o webhook de venda da Kirvano e:
-     1) grava a venda em public.paizao_purchases (aparece no painel /pedro)
-     2) dispara o evento Purchase pra Meta via Conversions API (server-side)
+   Recebe o webhook de venda da Kirvano e grava a venda em
+   public.paizao_purchases (aparece no painel /pedro).
+
+   OBS: a Conversions API (Purchase server-side pra Meta) foi REMOVIDA porque
+   estava duplicando o evento no Gerenciador (o Purchase já é disparado pelo
+   pixel no navegador / integração da Kirvano). Este webhook só persiste a venda.
+
    Segredos vêm de variáveis de ambiente (nunca no código):
-     META_PIXEL_ID, META_CAPI_TOKEN, KIRVANO_WEBHOOK_TOKEN
+     KIRVANO_WEBHOOK_TOKEN
    + injetados pelo Supabase: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 ============================================================================ */
-const PIXEL = Deno.env.get("META_PIXEL_ID");
-const CAPI = Deno.env.get("META_CAPI_TOKEN");
 const HOOK = Deno.env.get("KIRVANO_WEBHOOK_TOKEN");
 const SB_URL = Deno.env.get("SUPABASE_URL");
 const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-async function sha256(s) {
-  const data = new TextEncoder().encode(String(s).trim().toLowerCase());
-  const buf = await crypto.subtle.digest("SHA-256", data);
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 function pick(o, keys) {
   for (const k of keys) {
     const v = k.split(".").reduce((a, c) => (a && a[c] != null ? a[c] : undefined), o);
@@ -60,7 +57,8 @@ Deno.serve(async (req) => {
   const utm_term = pick(body, ["utm_term", "utm.utm_term"]);
   const fbclid = pick(body, ["fbclid", "fbc", "utm.fbclid", "tracking.fbclid"]);
 
-  // 1) grava no banco (service role -> ignora RLS)
+  // grava a venda no banco (service role -> ignora RLS). NÃO dispara Purchase
+  // pra Meta — a CAPI foi removida pra não duplicar o evento no Gerenciador.
   try {
     await fetch(`${SB_URL}/rest/v1/paizao_purchases`, {
       method: "POST",
@@ -69,21 +67,5 @@ Deno.serve(async (req) => {
     });
   } catch (e) { console.error("db insert fail", e); }
 
-  // 2) só dispara Purchase pra Meta se a venda foi aprovada
-  const approved = /approv|aprovad|paid|pago|complete|SALE_APPROVED/i.test(String(event || "") + " " + String(status || ""));
-  if (approved && PIXEL && CAPI) {
-    try {
-      const user_data = {};
-      if (email) user_data.em = [await sha256(email)];
-      const ev = { event_name: "Purchase", event_time: Math.floor(Date.now() / 1000), action_source: "website", user_data, custom_data: { currency } };
-      if (transaction_id) ev.event_id = String(transaction_id);
-      if (value != null) ev.custom_data.value = value;
-      const r = await fetch(`https://graph.facebook.com/v19.0/${PIXEL}/events?access_token=${CAPI}`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data: [ev] }),
-      });
-      console.log("capi", r.status, await r.text());
-    } catch (e) { console.error("capi fail", e); }
-  }
-
-  return new Response(JSON.stringify({ ok: true, approved }), { status: 200, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
 });
