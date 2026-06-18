@@ -81,6 +81,27 @@ body {
 .fn__num { font-size: 13px; font-weight: 700; text-align: right; }
 .fn__drop { color: var(--drop); font-weight: 700; }
 
+/* Retenção por etapa (rfn) — rótulo | % step-a-step | barra (acumulado) | nº */
+.rfn { display: grid; grid-template-columns: 150px 52px 1fr 150px; align-items: center; gap: 10px; padding: 4px 0; }
+.rfn .fn__lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fn__ret { font-size: 12.5px; font-weight: 800; text-align: right; color: var(--tx); }
+.rfn--top { border-bottom: 1px dashed var(--line); padding-bottom: 8px; margin-bottom: 4px; }
+.rfn--top .fn__bar { background: var(--tx-mute); }
+.rfn--vid .fn__bar { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.rfn.fn--bottleneck .fn__ret { color: var(--drop); }
+.rfn.fn--bottleneck .fn__lbl { color: var(--drop); font-weight: 700; }
+
+/* Gráfico de COLUNAS de retenção (cada etapa = 1 barra, % em cima, nome embaixo) */
+.retcurve { margin-bottom: 16px; }
+.retbars { display: flex; align-items: flex-end; gap: 5px; overflow-x: auto; padding: 6px 0 0; }
+.rb { flex: 1 0 30px; min-width: 30px; display: flex; flex-direction: column; align-items: center; }
+.rb__pct { font-size: 10px; font-weight: 800; color: var(--tx); margin-bottom: 4px; white-space: nowrap; }
+.rb__col { width: 100%; height: 150px; display: flex; align-items: flex-end; background: linear-gradient(var(--card2), transparent 85%); border-radius: 5px 5px 0 0; }
+.rb__fill { width: 100%; background: var(--grad); border-radius: 5px 5px 0 0; min-height: 2px; transition: height .4s ease; }
+.rb--vid .rb__fill { background: linear-gradient(180deg, #f59e0b, #ef4444); }
+.rb--first .rb__fill { background: var(--tx-mute); }
+.rb__name { font-size: 10px; line-height: 1.1; color: var(--tx-soft); margin-top: 6px; height: 80px; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* Respostas */
 .ans { padding: 12px 0; border-top: 1px solid var(--line); }
 .ans:first-child { border-top: none; }
@@ -104,4 +125,7 @@ body {
   .fn { grid-template-columns: 110px 1fr 92px; gap: 8px; }
   .fn__lbl { font-size: 11.5px; }
   .ans__row { grid-template-columns: 1fr 1.4fr 70px; }
+  .rfn { grid-template-columns: 1fr 44px; gap: 4px 8px; }
+  .rfn .fn__barwrap { grid-column: 1 / -1; }
+  .rfn .fn__num { grid-column: 1 / -1; text-align: right; font-size: 12px; }
 }

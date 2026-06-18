@@ -339,6 +339,7 @@
     root.querySelector("#landingAv").classList.add("avatar-photo");
 
     root.appendChild(el(`<h1>${s.h1}</h1>`));
+    if (s.h2) root.appendChild(el(`<h2 class="landing__h2">${s.h2}</h2>`));
 
     if (s.transparent) {
       // figura recortada (PNG sem fundo): sem moldura, com brilho atrás,
@@ -356,6 +357,7 @@
     const landingCta = ctaButton(s.cta, next);
     landingCta.classList.add("btn--pulse"); // pulso pra chamar a ação (velocidade 2)
     root.appendChild(landingCta);
+    if (s.subcta) root.appendChild(el(`<p class="subcta">${s.subcta}</p>`));
     root.appendChild(el(`<p class="scarcity">${s.scarcity}</p>`));
   }
 

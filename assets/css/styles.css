@@ -203,6 +203,7 @@ body::after {
 /* destaque na copy: roxo da marca (como "TREINO / DIETA / PAIZÃO" no app) */
 .hl {
   color: var(--accent); font-weight: 800;
+  white-space: nowrap; /* mantém o prazo ("4 semaninhas") junto, sem quebrar entre linhas */
 }
 
 /* ------------------------------------------------------------- LANDING */
@@ -249,6 +250,12 @@ body::after {
   font-family: var(--display);
   font-size: clamp(19px, 5.4vw, 30px); line-height: 1.14; font-weight: 800;
   letter-spacing: -.025em; margin: 0;
+}
+.landing__h2 {
+  flex: 0 0 auto;
+  font-family: var(--display);
+  font-size: clamp(14px, 3.8vw, 17px); line-height: 1.3; font-weight: 500;
+  color: var(--tx-soft); margin: 8px 0 0;
 }
 
 /* FIGURA RECORTADA (PNG sem fundo) — integra Carlão+filhota ao botão.
@@ -309,6 +316,12 @@ body::after {
   font-family: var(--mono);
   font-size: 11.5px; font-weight: 500; letter-spacing: .04em; color: var(--tx-soft);
   display:flex; align-items:center; justify-content:center; gap:6px;
+}
+/* microcopy logo abaixo do botão (reforço rápido) */
+.subcta {
+  flex: 0 0 auto;
+  text-align: center; margin: 8px 0 0;
+  font-size: 13px; font-weight: 700; color: var(--tx);
 }
 
 /* botão primário (CTA) — gradiente roxo da marca (botão "Entrar" do app) */

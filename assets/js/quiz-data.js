@@ -23,12 +23,14 @@ const QUIZ = [
   /* ---------------------------------------------------------------- LANDING */
   {
     type: "landing",
-    h1: "Filhota, responde rapidinho que o paizão monta um plano só pra você e em <span class=\"hl\">4 semaninhas</span> você já se vê diferente no espelho.",
+    h1: "Filhota, descubra por que seu corpo não sai do lugar e como eu vou mudar isso em <span class=\"hl\">4 semaninhas</span>.",
+    h2: "Me conta 3 coisinhas e o paizão já acha o que tá te travando e monta seu plano sob medida.",
     image: "assets/img/carlao-landing.webp",
     transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
     imageAlt: "Carlão e filhota",
     imageNote: "Carlão apontando pro botão (autoridade do paizão)",
     cta: "Iniciar minha avaliação",
+    subcta: "⏱️ Leva 1 minutinho",
     scarcity: "⏳ Disponível só hoje · você responde uma vez só"
   },
 

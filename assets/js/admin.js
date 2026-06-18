@@ -167,21 +167,25 @@
   function render() {
     var leads = applyFilters();
     var total = leads.length;
-    var started = leads.filter(function (l) { return (l.last_step != null ? l.last_step : 0) >= 1; }).length;
+    var reached = reachedCounts(leads);     // reached[i] = nº com last_step >= i (cumulativo)
+    var iOffer = offerIdx();
+    var pageviews = total;                   // todos abriram a landing (last_step >= 0)
+    var started = reached[1] || 0;           // passaram da landing -> 1ª pergunta
+    var reachedOffer = reached[iOffer] || 0; // chegaram na oferta (fundo de funil confiável)
     var completed = leads.filter(function (l) { return l.completed === true; }).length;
 
-    $("dashSub").textContent = total + " sessões · atualizado agora";
+    $("dashSub").textContent = pageviews + " pageviews · atualizado agora";
 
-    // KPIs
+    // KPIs — PageView x Inicialização explícitos
     $("kpis").innerHTML = [
-      kpi("Sessões", total, "abriram a landing"),
-      kpi("Começaram", started, "passaram da 1ª pergunta"),
-      kpi("Completaram", completed, "chegaram no diagnóstico"),
-      kpi("Conclusão", pct(completed, started) + "%", "dos que começaram")
+      kpi("PageViews", pageviews, "abriram a landing"),
+      kpi("Inicializaram", started, pct(started, pageviews) + "% dos pageviews"),
+      kpi("Chegaram na oferta", reachedOffer, pct(reachedOffer, started) + "% dos que iniciaram"),
+      kpi("Completaram (flag)", completed, "⚠️ subconta — ver retenção")
     ].join("");
 
     renderSales(started);
-    renderFunnel(leads, total);
+    renderFunnel(reached);
     renderAnswers(leads);
     renderTable(leads);
   }
@@ -229,22 +233,83 @@
     return '<div class="kpi"><div class="kpi__v">' + esc(value) + '</div><div class="kpi__l">' + esc(label) + '</div><div class="kpi__s">' + esc(sub) + '</div></div>';
   }
 
-  function renderFunnel(leads, total) {
-    var base = total || 1;
+  // índice da tela de oferta (fim do funil)
+  var _iOffer = null;
+  function offerIdx() {
+    if (_iOffer == null) { _iOffer = QUIZ.findIndex(function (s) { return s.type === "offer"; }); if (_iOffer < 0) _iOffer = QUIZ.length - 1; }
+    return _iOffer;
+  }
+  // reached[i] = quantos leads alcançaram pelo menos a etapa i (cumulativo, monotônico)
+  function reachedCounts(leads) {
+    var n = QUIZ.length, byStep = [], i;
+    for (i = 0; i <= n; i++) byStep[i] = 0;
+    leads.forEach(function (l) {
+      var s = parseInt(l.last_step, 10); if (isNaN(s) || s < 0) s = 0; if (s >= n) s = n - 1;
+      byStep[s]++;
+    });
+    var reached = [], acc = 0;
+    for (i = n - 1; i >= 0; i--) { acc += byStep[i]; reached[i] = acc; }
+    return reached;
+  }
+  function isVideoStep(label) { return /Vídeo|VSL|Mini/.test(label); }
+
+  function renderFunnel(reached) {
+    var iOffer = offerIdx();
+    var pv = reached[0] || 1;                // PageView = 100%
+    renderRetBars(reached);
+
+    // gargalo = pior retenção step-a-step DENTRO do quiz (ignora a queda da landing)
+    var minRet = 2, minIdx = -1, j;
+    for (j = 2; j <= iOffer; j++) {
+      var pr = reached[j - 1] || 0, r = pr > 0 ? reached[j] / pr : 1;
+      if (r < minRet) { minRet = r; minIdx = j; }
+    }
+
+    // detalhe por etapa: % step-a-step (chip) + % acumulado vs pageview (barra)
     var rows = [];
-    for (var i = 0; i < QUIZ.length; i++) {
-      var reached = leads.filter(function (l) { return (l.last_step != null ? l.last_step : 0) >= i; }).length;
-      var prev = i > 0 ? leads.filter(function (l) { return (l.last_step != null ? l.last_step : 0) >= i - 1; }).length : reached;
-      var dropped = Math.max(0, prev - reached);
-      var w = pct(reached, base);
+    for (var i = 0; i <= iOffer; i++) {
+      var cum = pct(reached[i], pv);
+      var step = i > 0 ? pct(reached[i], reached[i - 1] || 1) : 100;
+      var drop = i > 0 ? Math.max(0, (reached[i - 1] || 0) - reached[i]) : 0;
+      var vid = isVideoStep(labelFor(i));
+      var name = i === 0 ? "PageView" : labelFor(i);
+      var cls = "rfn" + (i === minIdx ? " fn--bottleneck" : "") + (vid ? " rfn--vid" : "") + (i === 0 ? " rfn--top" : "");
       rows.push(
-        '<div class="fn"><div class="fn__lbl">' + esc(labelFor(i)) + '</div>' +
-        '<div class="fn__barwrap"><div class="fn__bar" style="width:' + w + '%"></div></div>' +
-        '<div class="fn__num">' + reached + ' <span class="muted">(' + w + '%)</span>' +
-        (i > 0 && dropped > 0 ? ' <span class="fn__drop">−' + dropped + '</span>' : '') + '</div></div>'
+        '<div class="' + cls + '">' +
+          '<div class="fn__lbl">' + (vid ? "🎬 " : "") + esc(name) + '</div>' +
+          '<div class="fn__ret">' + step + '%</div>' +
+          '<div class="fn__barwrap"><div class="fn__bar" style="width:' + cum + '%"></div></div>' +
+          '<div class="fn__num">' + reached[i] + ' <span class="muted">(' + cum + '%)</span>' +
+          (drop > 0 ? ' <span class="fn__drop">−' + drop + '</span>' : '') + '</div>' +
+        '</div>'
       );
     }
     $("funnel").innerHTML = rows.join("");
+  }
+
+  // GRÁFICO DE COLUNAS de retenção — cada etapa uma barra (PageView=100%),
+  // com o % em cima e o NOME da etapa embaixo.
+  function renderRetBars(reached) {
+    var el = $("retCurve"); if (!el) return;
+    var iOffer = offerIdx();
+    var pv = reached[0] || 1;                 // PageView = 100%
+    var bars = [];
+    for (var i = 0; i <= iOffer; i++) {
+      var frac = (reached[i] || 0) / pv;
+      var pctv = Math.round(frac * 1000) / 10;       // 1 casa decimal
+      var h = Math.max(2, Math.round(frac * 100));   // altura da coluna (%)
+      var vid = isVideoStep(labelFor(i));
+      var name = i === 0 ? "PageView" : labelFor(i);
+      var cls = "rb" + (vid ? " rb--vid" : "") + (i === 0 ? " rb--first" : "");
+      bars.push(
+        '<div class="' + cls + '" title="' + esc(name) + ' · ' + reached[i] + ' (' + pctv + '%)">' +
+          '<div class="rb__pct">' + pctv + '%</div>' +
+          '<div class="rb__col"><div class="rb__fill" style="height:' + h + '%"></div></div>' +
+          '<div class="rb__name">' + (vid ? "🎬 " : "") + esc(name) + '</div>' +
+        '</div>'
+      );
+    }
+    el.innerHTML = '<div class="retbars">' + bars.join("") + '</div>';
   }
 
   function renderAnswers(leads) {
