@@ -919,15 +919,8 @@
     try { if (window.fbq) window.fbq("track", "InitiateCheckout"); } catch (e) {}
 
     if (CHECKOUT_URL) {
-      // encaminha fbclid + UTM pro checkout pra Meta casar a COMPRA com o anúncio
-      let url;
-      try {
-        url = new URL(CHECKOUT_URL);
-        ["fbclid", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].forEach(function (k) {
-          const v = ENTRY_PARAMS.get(k); if (v) url.searchParams.set(k, v);
-        });
-      } catch (e) { url = null; }
-      window.location.href = url ? url.toString() : CHECKOUT_URL;
+      // preserva as UTMs (window.location.search) no redirect pro checkout
+      window.location.href = CHECKOUT_URL + window.location.search;
       return;
     }
 
