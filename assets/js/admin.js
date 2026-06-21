@@ -79,10 +79,17 @@
   }
   function origem(l) {
     if (l.utm_source) return l.utm_source;
+    // recupera da URL de entrada (landing_path): utm_source no parâmetro, ou fbclid (= anúncio Meta)
+    var lp = l.landing_path || "";
+    var m = lp.match(/[?&]utm_source=([^&]+)/);
+    if (m) { try { return decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { return m[1]; } }
+    if (/[?&]fbclid=/.test(lp)) return "facebook";
     var d = l.referrer ? refDomain(l.referrer) : ""; if (d) return d;
     var a = uaApp(l.user_agent); if (a) return a;
     return "Direto / sem origem";
   }
+  // origem de uma compra (Kirvano): utm_source, senão fbclid -> facebook
+  function origemP(p) { return p.utm_source || (p.fbclid ? "facebook" : "(sem origem)"); }
 
   /* ----------------------------------------------------------- AUTH */
   function showLogin() { $("login").hidden = false; $("dash").hidden = true; }
@@ -198,7 +205,7 @@
       var t = p.created_at ? new Date(p.created_at) : null;
       if (from && t && t < from) return false;
       if (to && t && t > to) return false;
-      if (utm && p.utm_source !== utm) return false;
+      if (utm && origemP(p) !== utm) return false;
       return true;
     });
     var approved = ps.filter(isApproved);
@@ -214,7 +221,7 @@
     ].join("");
 
     var byUtm = {};
-    approved.forEach(function (p) { var k = p.utm_source || "(sem origem)"; byUtm[k] = (byUtm[k] || 0) + (parseFloat(p.value) || 0); });
+    approved.forEach(function (p) { var k = origemP(p); byUtm[k] = (byUtm[k] || 0) + (parseFloat(p.value) || 0); });
     var keys = Object.keys(byUtm).sort(function (a, b) { return byUtm[b] - byUtm[a]; });
     var max = keys.length ? byUtm[keys[0]] : 1;
     $("salesByUtm").innerHTML = keys.map(function (k) {
@@ -225,7 +232,7 @@
     $("salesBody").innerHTML = ps.slice(0, 100).map(function (p) {
       var when = p.created_at ? new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
       var st = isApproved(p) ? '<span class="ok">aprovada</span>' : esc(p.status || p.event || "—");
-      return "<tr><td>" + esc(when) + "</td><td>" + st + "</td><td>" + money(parseFloat(p.value) || 0) + "</td><td>" + esc(p.utm_source || "—") + "</td><td>" + esc(p.utm_campaign || "—") + "</td><td>" + esc(p.email || "—") + "</td></tr>";
+      return "<tr><td>" + esc(when) + "</td><td>" + st + "</td><td>" + money(parseFloat(p.value) || 0) + "</td><td>" + esc(origemP(p)) + "</td><td>" + esc(p.utm_campaign || "—") + "</td><td>" + esc(p.email || "—") + "</td></tr>";
     }).join("") || '<tr><td colspan="6" class="muted">Nenhuma venda ainda.</td></tr>';
   }
 
