@@ -19,6 +19,9 @@
   // snapshot dos parâmetros de entrada (fbclid/utm) — capturado ANTES do roteador
   // limpar a URL, pra encaminhar a atribuição da Meta até o checkout.
   const ENTRY_PARAMS = new URLSearchParams(location.search);
+  // querystring de entrada (UTMs/fbclid/gclid/ttclid…) crua. O roteador a re-anexa
+  // em TODA escrita de histórico, pra ela NUNCA sumir da barra de endereço.
+  const ENTRY_SEARCH = location.search || "";
   // link do checkout (Hotmart/Kiwify). Vazio = mantém o placeholder no final.
   const CHECKOUT_URL = "";
 
@@ -127,7 +130,7 @@
     if (index < 0 || index >= QUIZ.length) return;
     state.index = index;
     persist();
-    const path = pathForIndex(index);
+    const path = pathForIndex(index) + ENTRY_SEARCH;
     try {
       if (opts.replace) history.replaceState({ i: index }, "", path);
       else history.pushState({ i: index }, "", path);
@@ -919,8 +922,11 @@
     try { if (window.fbq) window.fbq("track", "InitiateCheckout"); } catch (e) {}
 
     if (CHECKOUT_URL) {
-      // preserva as UTMs (window.location.search) no redirect pro checkout
-      window.location.href = CHECKOUT_URL + window.location.search;
+      // preserva as UTMs no redirect pro checkout (trata o "?" já existente no destino)
+      var currentParams = window.location.search;
+      if (!currentParams) window.location.href = CHECKOUT_URL;
+      else if (CHECKOUT_URL.indexOf("?") !== -1) window.location.href = CHECKOUT_URL + "&" + currentParams.substring(1);
+      else window.location.href = CHECKOUT_URL + currentParams;
       return;
     }
 
@@ -951,7 +957,7 @@
   })();
 
   // normaliza a URL pra refletir a etapa real (sem criar entrada no histórico)
-  try { history.replaceState({ i: state.index }, "", pathForIndex(state.index)); } catch (e) {}
+  try { history.replaceState({ i: state.index }, "", pathForIndex(state.index) + ENTRY_SEARCH); } catch (e) {}
   topbarAvatarFromImage();
   startTimer();
   render();
