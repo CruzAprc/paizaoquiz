@@ -77,6 +77,9 @@ const QUIZ = [
      O Carlão fala a carta em ~10s e o stories passa sozinho pro próximo.
      Sem vídeo ainda: o slot fica pronto. Quando tiver, é só preencher
      "video" (caminho do .mp4, autoplay mudo) OU "embed".                    */
+  /* >>> TESTE: Vídeo Carlão (story) DESATIVADO temporariamente — pula da q3 direto pra q4.
+         Pra reativar, é só descomentar este bloco. <<< */
+  /*
   {
     type: "story",
     topName: "Carlão Personal das Estrelas",
@@ -91,6 +94,7 @@ const QUIZ = [
       { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a31eeca1d57eb0be905e65d/main.m3u8", as: "fetch" }
     ]
   },
+  */
 
   /* ============================ P — PROBLEMA (toca a dor) ================= */
   {
@@ -247,7 +251,7 @@ const QUIZ = [
     type: "measure",
     block: "Seu ponto de partida",
     question: "Quase lá, filhota! Me passa sua altura e seu peso de hoje, pro paizão calcular certinho seu ponto de partida:",
-    note: "Fica só entre você e o paizão 🔒 Sem julgamento — é só pra montar seu plano.",
+    note: "Fica só entre você e o paizão 🔒 Sem julgamento, é só pra montar seu plano.",
     fields: [
       { id: "altura_cm", label: "Altura", unit: "cm", placeholder: "165", min: 120, max: 230 },
       { id: "peso_kg",   label: "Peso",   unit: "kg", placeholder: "72",  min: 30,  max: 300 }
@@ -286,14 +290,15 @@ const QUIZ = [
     showImc: true,              // calcula e mostra o IMC dela (altura/peso da tela measure)
     subtitle: "Você me falou que quer <b>{foco}</b> e ver primeiro <b>{primeiro}</b>. Então olha só onde o paizão vai te colocar, filhota 👇",
     lead: "{empatia}",          // frase de empatia (vira card) ligada ao que a trava
-    markStart: "você tá aqui",  // selo no ponto "Hoje"
-    markMid: "já se vê diferente", // micro-rótulo no ponto "4 semaninhas"
-    markGoal: "sua meta 🔥",    // selo no ponto "12 semaninhas"
     startFrom: "q3_rotina",     // calibra o ponto "Hoje" pela rotina atual dela
+    // Cada ponto vira um BALÃOZINHO de marco sobre a curva (estilo linha do tempo).
+    //   bubble     -> texto curto do marco (aceita {tokens} personalizados; EDITE à vontade)
+    //   gold       -> ponto-meta destacado (linha tracejada + glow dourado) = a promessa
+    //   dateOffset -> rótulo do eixo vira DATA REAL (fuso SP) = hoje + N dias (calculado na hora)
     points: [
-      { label: "Hoje", level: 0.18 },   // level vira fallback (recalculado p/ q3)
-      { label: "4 semaninhas", level: 0.58 },
-      { label: "12 semaninhas", level: 0.95 }
+      { label: "Hoje",         level: 0.18, bubble: "você tá aqui" },                          // recalibrado p/ q3
+      { label: "5 dias",       level: 0.52, bubble: "já desincha e veste melhor", dateOffset: 5 },
+      { label: "4 semaninhas", level: 0.92, bubble: "{primeiro} 🔥", gold: true, dateOffset: 28 } // a promessa
     ],
     cta: "Pra receber seu plano, toca aqui, filhota"
   },
@@ -347,8 +352,8 @@ const PERSONA = {
   imc: {
     abaixo:   "Tá tudo certo, filhota! Teu corpo tem espaço pra construir com saúde, no seu ritmo. O paizão vai te deixar tudo no lugar e durinha.",
     saudavel: "Olha que beleza, filhota! Teu corpo já tá na faixa saudável. Agora é o paizão te deixar tudo durinho e no lugar.",
-    acima:    "Tá tudo certo, filhota! Teu corpo já tá pertinho da faixa ideal — e é exatamente aí que o paizão vira o jogo nas primeiras 4 semaninhas.",
-    alto:     "Tá tudo certo, filhota! Daqui pra frente é só ganho de saúde e leveza — e o paizão vai com você passo a passo, sem pressa e sem julgamento.",
+    acima:    "Tá tudo certo, filhota! Teu corpo já tá pertinho da faixa ideal. E é exatamente aí que o paizão vira o jogo nas primeiras 4 semaninhas.",
+    alto:     "Tá tudo certo, filhota! Daqui pra frente é só ganho de saúde e leveza. E o paizão vai com você passo a passo, sem pressa e sem julgamento.",
     _default: "Esse é o seu ponto de partida, filhota. A partir daqui é só evolução com o paizão."
   },
   // rótulo curto da faixa (chip ao lado do número) — com selo de incentivo

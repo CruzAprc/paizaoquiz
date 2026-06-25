@@ -849,32 +849,80 @@
       points[0].level = persoVal("start", state.answers[s.startFrom], points[0].level);
     }
 
-    const W = 320, H = 180, pad = 14;
+    // geometria da curva — viewBox com headroom no topo p/ os balões de marco
+    const W = 320, H = 210, padX = 16, padTop = 66, padBot = 16;
+    const baseY = H - padBot;
     const pts = points.map((p, i) => {
-      const x = pad + (i * (W - pad * 2)) / (points.length - 1);
-      const y = H - pad - p.level * (H - pad * 2);
+      const x = padX + (i * (W - padX * 2)) / (points.length - 1);
+      const y = baseY - p.level * (baseY - padTop);
       return { x, y, ...p };
     });
-    const linePath = pts.map((p, i) => (i ? "L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" ");
-    const areaPath = `${linePath} L${pts[pts.length-1].x.toFixed(1)} ${H-pad} L${pts[0].x.toFixed(1)} ${H-pad} Z`;
+
+    // caminho suave (Catmull-Rom -> Bézier) p/ a curva fluir como na referência
+    function smoothPath(ps) {
+      if (ps.length < 2) return "M" + ps[0].x.toFixed(1) + " " + ps[0].y.toFixed(1);
+      let d = "M" + ps[0].x.toFixed(1) + " " + ps[0].y.toFixed(1);
+      for (let i = 0; i < ps.length - 1; i++) {
+        const p0 = ps[i - 1] || ps[i], p1 = ps[i], p2 = ps[i + 1], p3 = ps[i + 2] || p2, t = 0.16;
+        const c1x = p1.x + (p2.x - p0.x) * t, c1y = p1.y + (p2.y - p0.y) * t;
+        const c2x = p2.x - (p3.x - p1.x) * t, c2y = p2.y - (p3.y - p1.y) * t;
+        d += " C" + c1x.toFixed(1) + " " + c1y.toFixed(1) + " " + c2x.toFixed(1) + " " + c2y.toFixed(1) + " " + p2.x.toFixed(1) + " " + p2.y.toFixed(1);
+      }
+      return d;
+    }
+    const linePath = smoothPath(pts);
+    const areaPath = linePath + " L" + pts[pts.length - 1].x.toFixed(1) + " " + baseY + " L" + pts[0].x.toFixed(1) + " " + baseY + " Z";
+    const goalPt = pts.find(p => p.gold) || pts[pts.length - 1];
+    const gridYs = [0, 1, 2, 3].map(g => padTop + g * (baseY - padTop) / 3);
+
+    // data real (fuso de São Paulo) = hoje + offset de dias -> vira o rótulo do eixo
+    function spDateLabel(offsetDays) {
+      const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+      const ymd = parts.split("-").map(Number);
+      const base = new Date(Date.UTC(ymd[0], ymd[1] - 1, ymd[2]));
+      base.setUTCDate(base.getUTCDate() + offsetDays);
+      const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+      return base.getUTCDate() + " de " + meses[base.getUTCMonth()];
+    }
+    const axisLabel = p => (p.dateOffset != null ? spDateLabel(p.dateOffset) : p.label);
 
     const box = el('<div class="chart__box"></div>');
-    box.innerHTML = `
+    const plot = el('<div class="chart__plot"></div>');
+    plot.innerHTML = `
       <svg class="chart__svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="garea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="rgba(124,58,237,.22)"/><stop offset="100%" stop-color="rgba(124,58,237,0)"/>
+            <stop offset="0%" stop-color="rgba(124,58,237,.20)"/><stop offset="100%" stop-color="rgba(124,58,237,0)"/>
+          </linearGradient>
+          <linearGradient id="gline" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7c3aed"/>
+            <stop offset="58%" stop-color="#7c3aed"/>
+            <stop offset="84%" stop-color="#ef8b34"/>
+            <stop offset="100%" stop-color="#f5b301"/>
           </linearGradient>
         </defs>
+        ${gridYs.map(gy => `<line x1="${padX}" y1="${gy.toFixed(1)}" x2="${W - padX}" y2="${gy.toFixed(1)}" stroke="rgba(124,58,237,.12)" stroke-width="1"/>`).join("")}
+        <line x1="${goalPt.x.toFixed(1)}" y1="${goalPt.y.toFixed(1)}" x2="${goalPt.x.toFixed(1)}" y2="${baseY}" stroke="#f5b301" stroke-width="2" stroke-dasharray="4 5" opacity=".6"/>
         <path d="${areaPath}" fill="url(#garea)" class="cArea"/>
-        <path d="${linePath}" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="cLine"/>
-        ${pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5.5" fill="#fff" stroke="#7c3aed" stroke-width="3"/>`).join("")}
-      </svg>
-      <div class="chart__legend">${points.map(p => `<span>${p.label}</span>`).join("")}</div>`;
-    // selos personalizados na curva ("você tá aqui" / "sua meta 🔥")
-    if (s.markStart) box.appendChild(el(`<span class="chart__badge chart__badge--start">${fillCopy(s.markStart)}</span>`));
-    if (s.markMid) box.appendChild(el(`<span class="chart__badge chart__badge--mid">${fillCopy(s.markMid)}</span>`));
-    if (s.markGoal) box.appendChild(el(`<span class="chart__badge chart__badge--goal">${fillCopy(s.markGoal)}</span>`));
+        <path d="${linePath}" fill="none" stroke="url(#gline)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" class="cLine"/>
+        ${pts.map(p => p.gold
+          ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="#f5b301" opacity=".4"><animate attributeName="r" values="7;15;7" dur="1.9s" repeatCount="indefinite"/><animate attributeName="opacity" values=".4;0;.4" dur="1.9s" repeatCount="indefinite"/></circle><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="#f5b301" stroke="#fff" stroke-width="3"/>`
+          : `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5.5" fill="#fff" stroke="#7c3aed" stroke-width="3"/>`).join("")}
+      </svg>`;
+
+    // balões de marco — um sobre cada ponto que tem `bubble` (texto aceita {tokens})
+    pts.forEach((p, i) => {
+      if (!p.bubble) return;
+      const txt = fillCopy(p.bubble);
+      if (!txt || !txt.trim()) return;
+      const cx = (p.x / W) * 100, top = (p.y / H) * 100;
+      const align = cx <= 24 ? "l" : (cx >= 76 ? "r" : "c");
+      const b = el(`<div class="chart__bubble chart__bubble--${align}${p.gold ? " chart__bubble--gold" : ""}" style="left:${cx.toFixed(1)}%;top:${top.toFixed(1)}%;animation-delay:${(0.7 + i * 0.18).toFixed(2)}s">${txt}</div>`);
+      plot.appendChild(b);
+    });
+
+    box.appendChild(plot);
+    box.appendChild(el(`<div class="chart__legend">${pts.map(p => `<span class="${p.gold ? "is-goal" : ""}">${axisLabel(p)}</span>`).join("")}</div>`));
     root.appendChild(box);
 
     // frase de empatia (card destacado, ligada ao que a trava)

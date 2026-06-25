@@ -680,20 +680,34 @@ body::after {
   background: var(--card); border:1px solid var(--line); border-radius: var(--r);
   padding: 22px 18px 14px; box-shadow: var(--shadow);
 }
-.chart__svg { width:100%; height:auto; display:block; }
-.chart__legend { display:flex; justify-content:space-between; margin-top:6px; }
+.chart__plot { position:relative; }
+.chart__svg { width:100%; height:auto; display:block; overflow:visible; }
+.chart__legend { display:flex; justify-content:space-between; margin-top:8px; padding:0 2px; }
 .chart__legend span { font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.03em; color:var(--tx-soft); }
-/* selos personalizados sobre a curva */
-.chart__badge {
-  position:absolute; font-family:var(--mono); font-size:10.5px; font-weight:700;
-  padding:3px 9px; border-radius:999px; white-space:nowrap; letter-spacing:.02em;
-  animation: badgeIn .4s ease both .7s;
+.chart__legend span.is-goal { color:#b07d00; font-weight:800; }
+/* balões de marco sobre a curva (estilo linha do tempo) */
+.chart__bubble {
+  position:absolute; z-index:2;
+  background:#fff; color:var(--tx); border:1px solid var(--line);
+  font-family:var(--display); font-weight:700; font-size:11px; line-height:1.18;
+  text-align:center; padding:6px 9px; border-radius:11px; max-width:104px;
+  box-shadow:0 8px 18px -10px rgba(76,29,149,.4);
+  animation: bubbleIn .42s ease both;
 }
-.chart__badge--start { left:16px; bottom:36px; background:var(--hair); color:var(--tx-soft); border:1px solid var(--line); }
-.chart__badge--mid   { left:50%; top:42px; transform:translateX(-50%); background:var(--hair); color:var(--tx-soft); border:1px solid var(--line); animation:badgeInMid .4s ease both .7s; }
-.chart__badge--goal  { right:16px; top:18px; background:var(--accent); color:#fff; box-shadow:0 8px 18px -6px rgba(124,58,237,.7); }
-@keyframes badgeIn { from { opacity:0; transform:translateY(4px) scale(.9); } to { opacity:1; transform:none; } }
-@keyframes badgeInMid { from { opacity:0; transform:translate(-50%,4px) scale(.9); } to { opacity:1; transform:translateX(-50%); } }
+.chart__bubble::after {
+  content:""; position:absolute; bottom:-5px; width:10px; height:10px;
+  background:inherit; border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+  transform:rotate(45deg);
+}
+.chart__bubble--c { transform:translate(-50%, calc(-100% - 13px)); }
+.chart__bubble--c::after { left:50%; margin-left:-5px; }
+.chart__bubble--l { transform:translate(-16px, calc(-100% - 13px)); }
+.chart__bubble--l::after { left:16px; margin-left:-5px; }
+.chart__bubble--r { transform:translate(calc(-100% + 16px), calc(-100% - 13px)); }
+.chart__bubble--r::after { right:16px; margin-right:-5px; }
+.chart__bubble--gold { background:#f5b301; color:#3a2a00; border-color:transparent; box-shadow:0 12px 24px -8px rgba(245,179,1,.6); }
+.chart__bubble--gold::after { background:#f5b301; border-color:transparent; }
+@keyframes bubbleIn { from { opacity:0; } to { opacity:1; } }
 /* card de empatia abaixo da curva */
 .chart__note {
   display:flex; gap:10px; align-items:flex-start;
