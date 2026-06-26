@@ -1,3 +1,4 @@
 # Netlify SPA fallback — arquivos reais (assets, pedro.html) têm prioridade
-/pedro    /pedro.html   200
-/*        /index.html   200
+/pedro    /pedro.html    200
+/aula-1   /aula-1.html   200
+/*        /index.html    200
