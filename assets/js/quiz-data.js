@@ -29,7 +29,7 @@ const QUIZ = [
     transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
     imageAlt: "Carlão e filhota",
     imageNote: "Carlão apontando pro botão (autoridade do paizão)",
-    cta: "Iniciar minha avaliação gratuita",
+    cta: "Iniciar minha avaliação",
     subcta: "⏱️ Leva 1 minutinho",
     scarcity: "⏳ Disponível só hoje · você responde uma vez só"
   },
