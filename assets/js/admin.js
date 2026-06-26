@@ -23,11 +23,27 @@
     vsl: "Mini VSL 1", measure: "Medidas", loading: "Montando plano",
     chart: "Diagnóstico", offer: "Mini VSL 2 (oferta)"
   };
+  // slug (= URL da etapa) por tipo — espelha o ROUTE_BY_TYPE do app.js
+  var ROUTE_BY_TYPE = {
+    landing: "", story: "video-carlao", testimonial: "video-liz", letter: "carta",
+    vsl: "mini-vsl-1", measure: "medidas", loading: "montando",
+    chart: "diagnostico", offer: "mini-vsl-2"
+  };
   function labelFor(i) {
     var s = QUIZ[i]; if (!s) return "etapa " + i;
     if (s.type === "question") { var sl = ROUTE_BY_QID[s.id] || ("etapa-" + i); return "Pergunta " + String(sl).replace("pergunta-", ""); }
     return LABEL_BY_TYPE[s.type] || s.type;
   }
+  // slug da etapa i (mesma regra do app.js) -> usado p/ contar o funil pela URL salva
+  function slugFor(i) {
+    var s = QUIZ[i]; if (!s) return null;
+    if (s.type === "question") return (s.id && ROUTE_BY_QID[s.id] != null) ? ROUTE_BY_QID[s.id] : ("etapa-" + i);
+    return (ROUTE_BY_TYPE[s.type] != null) ? ROUTE_BY_TYPE[s.type] : ("etapa-" + i);
+  }
+  // mapa slug(URL) -> índice na etapa ATUAL do quiz. Re-alinha dados antigos cujo
+  // last_step numérico ficou defasado por mudanças no array de telas.
+  var SLUG_TO_INDEX = {};
+  QUIZ.forEach(function (_, i) { SLUG_TO_INDEX[slugFor(i)] = i; });
 
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
@@ -247,11 +263,16 @@
     return _iOffer;
   }
   // reached[i] = quantos leads alcançaram pelo menos a etapa i (cumulativo, monotônico)
+  // A etapa de cada lead é resolvida pela URL/slug salva (last_step_slug), que é estável
+  // mesmo quando telas são add/removidas. Só cai no last_step numérico se faltar o slug.
   function reachedCounts(leads) {
     var n = QUIZ.length, byStep = [], i;
     for (i = 0; i <= n; i++) byStep[i] = 0;
     leads.forEach(function (l) {
-      var s = parseInt(l.last_step, 10); if (isNaN(s) || s < 0) s = 0; if (s >= n) s = n - 1;
+      var s = (l.last_step_slug != null && SLUG_TO_INDEX[l.last_step_slug] != null)
+        ? SLUG_TO_INDEX[l.last_step_slug]            // re-alinha pela URL (estável)
+        : parseInt(l.last_step, 10);                 // fallback: dado antigo sem slug
+      if (isNaN(s) || s < 0) s = 0; if (s >= n) s = n - 1;
       byStep[s]++;
     });
     var reached = [], acc = 0;
