@@ -562,7 +562,7 @@
             <span class="story__av igring avatar-liz"></span>
             <div class="story__id">
               <b>${s.handle || s.author || "Liz Macedo"}${verified}</b>
-              <small>filhota do paizão</small>
+              <small>aluna do paizão</small>
             </div>
           </div>
           <button class="story__soundbtn" id="testiSound" hidden>
@@ -619,7 +619,7 @@
     vbox.appendChild(el(`
       <div class="testi__placeholder">
         <div class="testi__play">${ic.play}</div>
-        <div class="testi__plabel">SLOT VÍDEO · depoimento da ${s.author || "filhota"}</div>
+        <div class="testi__plabel">SLOT VÍDEO · depoimento da ${s.author || "aluna"}</div>
         <div class="testi__pnote">Solte o .mp4 dela falando em <b>video</b> no quiz-data.</div>
       </div>`));
     root.appendChild(vbox);
@@ -682,7 +682,7 @@
     root.classList.add("testi", "testi--story");
     const avatar = s.avatar || "avatar-photo";
     const topName = s.topName || s.handle || s.author || "Carlão Personal das Estrelas";
-    const topSub = s.topSub || (s.handle ? "filhota do paizão" : "agora");
+    const topSub = s.topSub || (s.handle ? "aluna do paizão" : "agora");
     const verified = s.verified ? `<svg class="verified" viewBox="0 0 24 24" width="14" height="14" aria-label="verificado"><path fill="#3897f0" d="M12 1.5l2.4 1.8 3 .2 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .2L12 22.5l-2.4-1.8-3-.2-1-2.8L3.3 15.8l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.2z"/><path fill="#fff" d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.3-3.3 1.1 1.1z"/></svg>` : "";
     const frame = el(`
       <div class="story__frame testi__frame">
@@ -790,7 +790,7 @@
     root.appendChild(form);
     if (s.note) root.appendChild(el(`<p class="measure__note">${s.note}</p>`));
 
-    const err = el(`<p class="measure__err" hidden>Preenche altura e peso certinho, filhota 🙏</p>`);
+    const err = el(`<p class="measure__err" hidden>Preenche altura e peso certinho 🙏</p>`);
     root.appendChild(err);
 
     const proceed = () => {

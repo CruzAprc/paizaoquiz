@@ -23,13 +23,13 @@ const QUIZ = [
   /* ---------------------------------------------------------------- LANDING */
   {
     type: "landing",
-    h1: "Filhota, descubra por que seu corpo não sai do lugar e como eu vou mudar isso em <span class=\"hl\">4 semaninhas</span>.",
+    h1: "Descubra por que seu corpo não sai do lugar e como eu vou mudar isso em <span class=\"hl\">4 semaninhas</span>.",
     h2: "Me conta 3 coisinhas e o paizão já acha o que tá te travando e monta seu plano sob medida.",
     image: "assets/img/carlao-landing.webp",
     transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
-    imageAlt: "Carlão e filhota",
+    imageAlt: "Carlão Personal",
     imageNote: "Carlão apontando pro botão (autoridade do paizão)",
-    cta: "Iniciar minha avaliação",
+    cta: "Iniciar avaliação gratuita",
     subcta: "⏱️ Leva 1 minutinho",
     scarcity: "⏳ Disponível só hoje · você responde uma vez só"
   },
@@ -39,7 +39,7 @@ const QUIZ = [
     type: "question",
     id: "q1_idade",
     block: "Sobre você",
-    question: "Filhota, deixa eu começar te conhecendo. Quantos anos você tem?",
+    question: "Deixa eu começar te conhecendo. Quantos anos você tem?",
     options: [
       "14 a 17",
       "18 a 21",
@@ -52,7 +52,7 @@ const QUIZ = [
     type: "question",
     id: "q2_foco",
     block: "Sobre você",
-    question: "E qual é o seu foco agora, filhota? O que você mais quer?",
+    question: "E qual é o seu foco agora? O que você mais quer?",
     options: [
       "Emagrecer e secar",
       "Tonificar e enrijecer o corpo",
@@ -101,7 +101,7 @@ const QUIZ = [
     type: "question",
     id: "q4_porque",
     block: "O que te trava",
-    question: "Agora me fala de coração, filhota: por que você acha que ainda não conseguiu o corpo que quer?",
+    question: "Agora me fala de coração: por que você acha que ainda não conseguiu o corpo que quer?",
     options: [
       "Nunca soube treinar do jeito certo",
       "Falta disciplina, largo na 2ª semana",
@@ -128,7 +128,7 @@ const QUIZ = [
   {
     type: "testimonial",
     topName: "@lizx.macedo",     // @ real da Liz no topo do stories
-    topSub: "filhota do paizão",
+    topSub: "aluna do paizão",
     avatar: "avatar-liz",
     verified: true,
     videoLen: 58,                // duração real (vturb HLS): 57.99s
@@ -146,7 +146,7 @@ const QUIZ = [
     type: "question",
     id: "q7_deixou",
     block: "O custo de não mudar",
-    question: "Filhota, e esse incômodo com o corpo… o que ele já te fez deixar de fazer?",
+    question: "E esse incômodo com o corpo… o que ele já te fez deixar de fazer?",
     options: [
       "Evito aparecer em foto",
       "Não uso a roupa que eu queria",
@@ -189,7 +189,7 @@ const QUIZ = [
     type: "question",
     id: "q9_plano",
     block: "O que muda o jogo",
-    question: "Agora me responde, filhota: se você tivesse um plano de treino e dieta feito SÓ pra você, isso mudaria o jogo?",
+    question: "Agora me responde: se você tivesse um plano de treino e dieta feito SÓ pra você, isso mudaria o jogo?",
     options: [
       "Com certeza",
       "Acho que sim",
@@ -213,7 +213,7 @@ const QUIZ = [
     type: "question",
     id: "q11_comunidade",
     block: "O que muda o jogo",
-    question: "Olha só, filhota, essa aqui é importante: o quanto mudaria pra você fazer parte de uma <span class=\"hl\">família de filhotas</span> que treina junto, se apoia e não te deixa desistir?",
+    question: "Olha só, essa aqui é importante: o quanto mudaria pra você fazer parte de uma <span class=\"hl\">família de mulheres</span> que treina junto, se apoia e não te deixa desistir?",
     options: [
       "Mudaria tudo, sozinha eu largo",
       "Eu ia me sentir motivada todo dia",
@@ -225,7 +225,7 @@ const QUIZ = [
     type: "question",
     id: "q12_alimentacao",
     block: "O que muda o jogo",
-    question: "E como tá sua alimentação hoje, filhota? Sem vergonha, me fala a real.",
+    question: "E como tá sua alimentação hoje? Sem vergonha, me fala a real.",
     options: [
       "Como de tudo, sem controle",
       "Tento, mas me perco",
@@ -250,7 +250,7 @@ const QUIZ = [
   {
     type: "measure",
     block: "Seu ponto de partida",
-    question: "Quase lá, filhota! Me passa sua altura e seu peso de hoje, pro paizão calcular certinho seu ponto de partida:",
+    question: "Quase lá! Me passa sua altura e seu peso de hoje, pro paizão calcular certinho seu ponto de partida:",
     note: "Fica só entre você e o paizão 🔒 Sem julgamento, é só pra montar seu plano.",
     fields: [
       { id: "altura_cm", label: "Altura", unit: "cm", placeholder: "165", min: 120, max: 230 },
@@ -264,7 +264,7 @@ const QUIZ = [
     type: "question",
     id: "q14_compromisso",
     block: "O compromisso",
-    question: "Última pergunta e é a mais séria, filhota. Você tá realmente comprometida a seguir o plano do paizão por 4 semaninhas?",
+    question: "Última pergunta e é a mais séria. Você tá realmente comprometida a seguir o plano do paizão por 4 semaninhas?",
     options: [
       "Tô pronta, paizão 🙏",
       "Sim, mas tenho medo de não conseguir"
@@ -275,9 +275,9 @@ const QUIZ = [
   {
     type: "loading",
     // 3 batidas de headline em sequência (o recap pipoca durante a batida 2):
-    intro: "Calma, filhota… o paizão tá montando o seu diagnóstico…",  // batida 1 (~1,5s)
-    text:  "Tô guardando tudo que você me contou aqui, filhota…",       // batida 2 (1ª pessoa)
-    done:  "Pronto. Já tô montando o seu plano, filhota…",              // batida 3
+    intro: "Calma… o paizão tá montando o seu diagnóstico…",  // batida 1 (~1,5s)
+    text:  "Tô guardando tudo que você me contou aqui…",       // batida 2 (1ª pessoa)
+    done:  "Pronto. Já tô montando o seu plano…",              // batida 3
     introHold: 1500,
     // (as respostas NÃO são exibidas pra lead — só as mensagens do paizão.
     //  Os dados continuam sendo salvos no Supabase em silêncio.)
@@ -288,7 +288,7 @@ const QUIZ = [
     // tokens {foco} e {primeiro} são resolvidos a partir das respostas reais dela (ver PERSONA)
     title: "Seu corpo nas próximas semaninhas",
     showImc: true,              // calcula e mostra o IMC dela (altura/peso da tela measure)
-    subtitle: "Você me falou que quer <b>{foco}</b> e ver primeiro <b>{primeiro}</b>. Então olha só onde o paizão vai te colocar, filhota 👇",
+    subtitle: "Você me falou que quer <b>{foco}</b> e ver primeiro <b>{primeiro}</b>. Então olha só onde o paizão vai te colocar 👇",
     lead: "{empatia}",          // frase de empatia (vira card) ligada ao que a trava
     startFrom: "q3_rotina",     // calibra o ponto "Hoje" pela rotina atual dela
     // Cada ponto vira um BALÃOZINHO de marco sobre a curva (estilo linha do tempo).
@@ -300,7 +300,7 @@ const QUIZ = [
       { label: "5 dias",       level: 0.52, bubble: "já desincha e veste melhor", dateOffset: 5 },
       { label: "4 semaninhas", level: 0.92, bubble: "{primeiro} 🔥", gold: true, dateOffset: 28 } // a promessa
     ],
-    cta: "Pra receber seu plano, toca aqui, filhota"
+    cta: "Pra receber seu plano, toca aqui"
   },
 
   /* --------------------------- MINI VSL 2 (oferta) — POST DE REELS -------
@@ -313,7 +313,7 @@ const QUIZ = [
     handle: "@oficial_carlaopersonal",
     likes: "12.4 mil",
     // H1 = legenda do post (EDITE este texto à vontade)
-    h1: "Filhota, teu plano já tá pronto 💛 dá o play que o paizão te conta tudo",
+    h1: "Seu plano já tá pronto 💛 dá o play que o paizão te conta tudo",
     // player vturb (a VSL já tem o botão de oferta dentro dela)
     embed: `<vturb-smartplayer id="vid-6a31dcf23f5844587f036b0d" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
@@ -350,11 +350,11 @@ const PERSONA = {
   },
   // Termômetro do Paizão — mensagem por faixa (SEMPRE positiva, sem medo). {foco} é resolvido.
   imc: {
-    abaixo:   "Tá tudo certo, filhota! Teu corpo tem espaço pra construir com saúde, no seu ritmo. O paizão vai te deixar tudo no lugar e durinha.",
-    saudavel: "Olha que beleza, filhota! Teu corpo já tá na faixa saudável. Agora é o paizão te deixar tudo durinho e no lugar.",
-    acima:    "Tá tudo certo, filhota! Teu corpo já tá pertinho da faixa ideal. E é exatamente aí que o paizão vira o jogo nas primeiras 4 semaninhas.",
-    alto:     "Tá tudo certo, filhota! Daqui pra frente é só ganho de saúde e leveza. E o paizão vai com você passo a passo, sem pressa e sem julgamento.",
-    _default: "Esse é o seu ponto de partida, filhota. A partir daqui é só evolução com o paizão."
+    abaixo:   "Tá tudo certo! Seu corpo tem espaço pra construir com saúde, no seu ritmo. O paizão vai te deixar tudo no lugar e durinha.",
+    saudavel: "Olha que beleza! Seu corpo já tá na faixa saudável. Agora é o paizão te deixar tudo durinho e no lugar.",
+    acima:    "Tá tudo certo! Seu corpo já tá pertinho da faixa ideal. E é exatamente aí que o paizão vira o jogo nas primeiras 4 semaninhas.",
+    alto:     "Tá tudo certo! Daqui pra frente é só ganho de saúde e leveza. E o paizão vai com você passo a passo, sem pressa e sem julgamento.",
+    _default: "Esse é o seu ponto de partida. A partir daqui é só evolução com o paizão."
   },
   // rótulo curto da faixa (chip ao lado do número) — com selo de incentivo
   imcCat: {
@@ -376,9 +376,9 @@ const PERSONA = {
   empatia: {
     "Falta de motivação e disciplina": "E dessa vez o paizão te cobra todo dia, viu? Você não larga mais sozinha.",
     "Não sei o que fazer": "E dessa vez você tem um passo a passo feito pra você. O paizão te guia em cada exercício.",
-    "Cansaço, chego sem energia": "E esse plano respeita sua energia, filhota. No seu ritmo, sem te quebrar.",
-    "Falta de tempo": "E ó: esse plano cabe na sua rotina, filhota. Sem desculpa, sem peso.",
-    _default: "E dessa vez você não vai tá sozinha, filhota. O paizão tá com você. 🧡"
+    "Cansaço, chego sem energia": "E esse plano respeita sua energia. No seu ritmo, sem te quebrar.",
+    "Falta de tempo": "E ó: esse plano cabe na sua rotina. Sem desculpa, sem peso.",
+    _default: "E dessa vez você não vai tá sozinha. O paizão tá com você. 🧡"
   }
 };
 
