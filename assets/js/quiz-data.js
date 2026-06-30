@@ -171,16 +171,16 @@ const QUIZ = [
   {
     type: "vsl",
     story: true,            // renderiza em STORIES full-screen (igual Carlão/Liz)
-    videoLen: 100.2,        // duração real (vturb HLS): 100.17s — auto-avança no fim, SEM botão
+    videoLen: 166.03,       // duração real (vturb HLS): 166.03s — auto-avança no fim, SEM botão
     author: "Carlão Personal das Estrelas",
     handle: "Método do Paizão",
     // player vturb (streaming) — carregado só nesta tela; warm-up algumas telas antes
-    embed: `<vturb-smartplayer id="vid-6a31dddf6c302b45d80f7443" style="display: block; margin: 0 auto; width: 100%; height: 100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dddf6c302b45d80f7443/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    embed: `<vturb-smartplayer id="vid-6a43a1d5bee4e20d5948096d" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a43a1d5bee4e20d5948096d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     // assets pra aquecer ANTES da tela (sem pesar na landing)
     preload: [
-      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dddf6c302b45d80f7443/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a43a1d5bee4e20d5948096d/v4/player.js", as: "script" },
       { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
-      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a31dcf439cf80d3ff09dccd/main.m3u8", as: "fetch" }
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a43a1524cbefc3ea7538be3/main.m3u8", as: "fetch" }
     ]
   },
 
