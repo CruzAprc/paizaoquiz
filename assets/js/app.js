@@ -357,11 +357,17 @@
       root.appendChild(mediaBlock(s.image, s.imageAlt, s.imageNote, "portrait"));
     }
 
+    // CTA flutuante FIXO no rodapé (só na landing): garante o botão SEMPRE na dobra,
+    // mesmo no in-app browser do Instagram. Espelha 1:1 a dobra estática do index.html.
+    const bar = el('<div class="landing-cta"></div>');
     const landingCta = ctaButton(s.cta, next);
     landingCta.classList.add("btn--pulse"); // pulso pra chamar a ação (velocidade 2)
-    root.appendChild(landingCta);
-    if (s.subcta) root.appendChild(el(`<p class="subcta">${s.subcta}</p>`));
-    root.appendChild(el(`<p class="scarcity">${s.scarcity}</p>`));
+    const arrowEl = landingCta.querySelector(".arrow");
+    if (arrowEl) arrowEl.remove(); // landing: sem seta (botão numa linha só, mais fino)
+    bar.appendChild(landingCta);
+    if (s.subcta) bar.appendChild(el(`<p class="subcta">${s.subcta}</p>`));
+    bar.appendChild(el(`<p class="scarcity">${s.scarcity}</p>`));
+    root.appendChild(bar);
   }
 
   /* ---- QUESTION ---- */

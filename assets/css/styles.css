@@ -185,6 +185,10 @@ body::after {
 /* animação de entrada de cada tela */
 .screen { animation: rise .42s cubic-bezier(.22,1,.36,1) both; display:flex; flex-direction:column; flex:1; }
 @keyframes rise { from { opacity:0; transform: translateY(16px) scale(.99);} to {opacity:1; transform:none;} }
+/* landing entra SÓ com opacidade (sem transform): um filho position:fixed (a .landing-cta)
+   se ancoraria na section animada em vez do viewport enquanto o transform roda. */
+.screen.landing { animation-name: landingIn; }
+@keyframes landingIn { from { opacity:0; } to { opacity:1; } }
 
 .eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
@@ -215,6 +219,7 @@ body::after {
   gap: 10px;
   text-align: center;
   padding-top: 8px;
+  padding-bottom: calc(150px + env(safe-area-inset-bottom)); /* espaço p/ a .landing-cta fixa */
   min-height: 100dvh;
 }
 .landing .media {
@@ -359,6 +364,32 @@ body::after {
   z-index: 20;
 }
 .ctabar .btn { margin: 0; }
+
+/* ----------- CTA FLUTUANTE DA LANDING (fixo no viewport) -----------
+   Garante o botão SEMPRE na dobra, mesmo no in-app browser do Instagram
+   (viewport curto/dinâmico). FIXED (não sticky): ancora na base do viewport
+   e ignora o reflow de dvh. Centralizado em --maxw no desktop. */
+.landing-cta {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--maxw);            /* 520px — largura do stage */
+  z-index: 40;                       /* acima do conteúdo; topbar(30) some na landing; grão(9999) é pointer-events:none */
+  padding: 20px 18px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, rgba(244,238,255,.9) 30%, #f1e9ff 74%);
+  pointer-events: none;              /* zona transparente do topo não bloqueia a figura */
+}
+.landing-cta > * { pointer-events: auto; }
+.landing-cta .btn { margin: 0; }
+.landing-cta .subcta { margin: 8px 0 0; }
+.landing-cta .scarcity { margin: 6px 0 0; }
+
+@media (max-height: 480px) {         /* landscape/telas muito baixas: enxuga a barra */
+  .landing-cta .subcta,
+  .landing-cta .scarcity { display: none; }
+  .landing-cta { padding-top: 14px; }
+}
 
 /* ------------------------------------------------------------- QUESTION */
 /* cabeçalho de campo estilo anamnese: nº da pergunta + seção, em mono */
