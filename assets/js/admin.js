@@ -134,6 +134,16 @@
      Pagina via .range() porque o PostgREST corta cada resposta em 1000 linhas
      (config "Max Rows" do projeto). Sem isso, o painel travava em 1000 sessões. */
   var PAGE = 1000, SAFETY_MAX = 100000;
+
+  // colunas que o painel realmente usa — dropa o jsonb "answers" (gordo) e colunas não
+  // exibidas, cortando muito o payload por linha.
+  var LEAD_COLS = "id,created_at,completed,last_step,last_step_slug,last_step_label," +
+    "utm_source,landing_path,referrer,user_agent,imc," +
+    "q1_idade,q2_foco,q3_rotina,q4_porque,q5_trava,q6_sozinha,q7_deixou,q8_um_ano," +
+    "q9_plano,q10_cobrando,q11_comunidade,q12_alimentacao,q13_primeiro,q14_compromisso";
+  var MAX_PULL = 40000; // teto do que se puxa pro navegador por carga (evita estourar o timeout)
+
+  // genérico — usado só p/ purchases (tabela pequena).
   async function fetchAll(table, onProgress) {
     var rows = [], offset = 0;
     while (offset < SAFETY_MAX) {
@@ -150,11 +160,50 @@
     return { data: rows, error: null };
   }
 
+  // leads da JANELA [fromISO, toISO], paginado por KEYSET (created_at desc), NÃO por OFFSET.
+  // A tabela tem ~500k linhas; OFFSET fundo faz o Postgres varrer tudo e estoura o
+  // statement_timeout de 8s. Keyset = index scan rápido por página; a janela usa o índice
+  // de created_at, então só varre o período pedido (all-time faz seq scan e sempre estoura).
+  async function fetchLeadsWindow(fromISO, toISO, onProgress) {
+    var rows = [], cursor = toISO || null, capped = false;
+    for (var guard = 0; guard < 5000; guard++) {
+      var q = client.from("paizao_quiz_leads").select(LEAD_COLS)
+        .order("created_at", { ascending: false }).limit(PAGE);
+      if (fromISO) q = q.gte("created_at", fromISO);
+      if (cursor)  q = q.lt("created_at", cursor);
+      var res = await q;
+      if (res.error) return { data: rows, error: res.error, capped: capped };
+      var batch = res.data || [];
+      rows = rows.concat(batch);
+      if (onProgress) onProgress(rows.length);
+      if (batch.length < PAGE) break;               // fim da janela
+      cursor = batch[batch.length - 1].created_at;  // próximo keyset
+      if (rows.length >= MAX_PULL) { capped = true; break; }
+    }
+    return { data: rows, error: null, capped: capped };
+  }
+
+  // janela ativa: usa os inputs De/Até; se "De" vazio, cai pras últimas 24h.
+  function activeWindow() {
+    var fromISO = $("fromDate").value ? new Date($("fromDate").value + "T00:00:00").toISOString()
+                                      : new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    var toISO = $("toDate").value ? new Date($("toDate").value + "T23:59:59").toISOString() : null;
+    return { fromISO: fromISO, toISO: toISO };
+  }
+  function windowLabel() {
+    var f = $("fromDate").value, t = $("toDate").value;
+    if (!f && !t) return "últimas 24h";
+    return "de " + (f || "início") + " até " + (t || "agora");
+  }
+
+  var _capped = false;
   async function load() {
+    var w = activeWindow();
     $("dashSub").textContent = "carregando…";
-    var res = await fetchAll("paizao_quiz_leads", function (n) { $("dashSub").textContent = "carregando… " + n; });
+    var res = await fetchLeadsWindow(w.fromISO, w.toISO, function (n) { $("dashSub").textContent = "carregando… " + n; });
     if (res.error) { $("dashSub").textContent = "Erro ao ler leads: " + res.error.message; return; }
     allLeads = res.data || [];
+    _capped = !!res.capped;
     var pres = await fetchAll("paizao_purchases");
     allPurchases = (pres && !pres.error && pres.data) ? pres.data : [];
     buildUtmOptions();
@@ -183,8 +232,12 @@
     });
   }
 
-  ["fromDate", "toDate", "utmFilter"].forEach(function (id) { $(id).addEventListener("change", render); });
-  $("clearFilters").addEventListener("click", function () { $("fromDate").value = ""; $("toDate").value = ""; $("utmFilter").value = ""; render(); });
+  // datas mudam a JANELA -> re-busca no servidor; utm filtra no que já veio (client-side).
+  ["fromDate", "toDate"].forEach(function (id) { $(id).addEventListener("change", load); });
+  $("utmFilter").addEventListener("change", render);
+  $("clearFilters").addEventListener("click", function () { $("fromDate").value = ""; $("toDate").value = ""; $("utmFilter").value = ""; load(); });
+  // abre o painel no dia de hoje (all-time estoura o timeout de 8s; a janela usa o índice).
+  (function initDefaultWindow(){ var el = $("fromDate"); if (el && !el.value) el.value = new Date().toLocaleDateString("en-CA"); })();
 
   /* ----------------------------------------------------------- RENDER */
   function render() {
@@ -197,7 +250,7 @@
     var reachedOffer = reached[iOffer] || 0; // chegaram na oferta (fundo de funil confiável)
     var completed = leads.filter(function (l) { return l.completed === true; }).length;
 
-    $("dashSub").textContent = pageviews + " pageviews · atualizado agora";
+    $("dashSub").textContent = pageviews + " pageviews · " + windowLabel() + (_capped ? " · ⚠️ teto " + MAX_PULL + " (estreite as datas p/ ver tudo)" : "");
 
     // KPIs — PageView x Inicialização explícitos
     $("kpis").innerHTML = [
