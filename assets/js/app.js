@@ -226,25 +226,18 @@
     if (av) av.classList.add("avatar-photo");
   }
 
-  /* --------------------------------------------------------- CRONÔMETRO (6 min REAIS) */
+  /* --------------------------------------------------------- URGÊNCIA POR DATA
+     Uma linha só: "SUA AVALIAÇÃO GRATUITA COMEÇOU e encerra hoje - DD/MM"
+     A data é sempre o dia de HOJE (fuso do browser da lead). */
   function startTimer() {
-    const TOTAL = 6 * 60; // 6 minutos reais
     const valEl = document.getElementById("timerVal");
-    const bar = document.getElementById("timerbar");
     if (!valEl) return;
-    // persiste o início pra ser um relógio "de verdade" (sobrevive a refresh)
-    // chave nova (quizStart6) invalida sessões antigas de 15 min
-    let start = parseInt(localStorage.getItem("quizStart6"), 10);
-    if (!start || isNaN(start)) { start = Date.now(); localStorage.setItem("quizStart6", String(start)); }
-    function tick() {
-      const left = Math.max(0, TOTAL - Math.floor((Date.now() - start) / 1000));
-      const m = Math.floor(left / 60), s = left % 60;
-      valEl.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-      if (bar) bar.classList.toggle("is-urgent", left <= 60); // pisca no último minuto
-      if (left <= 0 && window.__qTimer) clearInterval(window.__qTimer);
-    }
-    tick();
-    window.__qTimer = setInterval(tick, 1000);
+    try { localStorage.removeItem("quizStart6"); } catch (e) {}
+    if (window.__qTimer) { clearInterval(window.__qTimer); window.__qTimer = null; }
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    valEl.textContent = dd + "/" + mm;
   }
 
   /* --------------------------------------------------------- CHROME (topbar/progresso) */
