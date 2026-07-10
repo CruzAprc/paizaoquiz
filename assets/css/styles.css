@@ -487,16 +487,21 @@ body::after {
 .q__decor {
   /* basis 0: não "pede" a altura da imagem — recebe SÓ o espaço livre da tela */
   flex: 1 1 0; min-height: 0;
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;
+  position: relative;
   margin-top: 10px; overflow: hidden;
 }
+/* imagens ABSOLUTAS: height:100% resolve contra a altura REAL do .q__decor.
+   (Como filho flex normal, o Safari/iOS não trata a altura flexionada como
+   definida e a % cai pro tamanho natural -> aparelhos "decapitados".) */
 .q__decor img {
+  position: absolute; bottom: 0;
   height: 100%; max-height: clamp(120px, 30dvh, 320px);
   width: auto; max-width: 46%;
-  object-fit: contain; object-position: left bottom;
+  object-fit: contain;
 }
+.q__decor img:first-child { left: 0; object-position: left bottom; }
 .q__decor img:only-child { max-width: 72%; }
-.q__decor img:last-child:not(:only-child) { object-position: right bottom; }
+.q__decor img:last-child:not(:only-child) { right: 0; object-position: right bottom; }
 /* telefone curto: se a sobra for uma "lasca" (<90px), some com os mockups
    em vez de mostrar só o topo dos aparelhos */
 .q__decor { container-type: size; }
