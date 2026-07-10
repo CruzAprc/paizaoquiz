@@ -50,8 +50,8 @@ const QUIZ = [
     optionPrefix: "Idade:",
     options: ["16-29", "30-39", "40-49", "50+"],
     images: [
-      "assets/img/idade/idade-18-29.webp",
-      "assets/img/idade/idade-30-39.webp",
+      "assets/img/idade/idade-30-39.webp", // 16-29 (invertida com a faixa de 30-39)
+      "assets/img/idade/idade-18-29.webp", // 30-39
       "assets/img/idade/idade-40-49.webp",
       "assets/img/idade/idade-50plus.webp"
     ]
