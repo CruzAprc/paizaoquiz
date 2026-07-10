@@ -372,19 +372,37 @@
 
   /* ---- QUESTION ---- */
   function renderQuestion(root, s) {
-    // nº da pergunta (estilo campo de anamnese)
-    let qNum = 0, seen = 0;
-    for (let i = 0; i <= state.index; i++) {
-      if (QUIZ[i].type === "question") { seen++; if (i === state.index) qNum = seen; }
-    }
-    const numStr = String(qNum).padStart(2, "0");
-    root.appendChild(el(`
-      <div class="q__head">
-        <span class="q__num">${numStr}</span>
-        ${s.block ? `<span class="q__block">${s.block}</span>` : ""}
-      </div>`));
+    // (cabeçalho "01 · Sobre você" removido — a pergunta abre direto no título)
     root.appendChild(el(`<h2 class="q__title">${s.question}</h2>`));
     if (s.image) root.appendChild(mediaBlock(s.image, s.imageAlt, s.imageNote, "wide"));
+
+    // resposta escolhida -> grava + avança (mesmo fluxo pros dois formatos)
+    function pick(text, container, btn) {
+      state.answers[s.id] = text;
+      if (window.PaizaoDB) PaizaoDB.recordAnswer(s.id, text, state.answers);
+      container.querySelectorAll(".is-selected").forEach(o => o.classList.remove("is-selected"));
+      btn.classList.add("is-selected");
+      const up = QUIZ[state.index + 1];
+      if (up && (up.video || up.embed)) next();
+      else setTimeout(next, 240);
+    }
+
+    // formato GRADE (estilo BetterMe): cards 2x2 com foto + faixa de rótulo
+    if (s.grid && s.images && s.images.length === s.options.length) {
+      const grid = el('<div class="qgrid"></div>');
+      s.options.forEach((text, i) => {
+        const selected = state.answers[s.id] === text;
+        const card = el(`
+          <button class="qcard ${selected ? "is-selected" : ""}">
+            <span class="qcard__imgwrap"><img class="qcard__img" src="${s.images[i]}" alt="${text}" loading="eager" decoding="async" /></span>
+            <span class="qcard__bar">${s.optionPrefix ? s.optionPrefix + " " : ""}${text}<span class="qcard__arrow">${ic.arrow}</span></span>
+          </button>`);
+        card.addEventListener("click", () => pick(text, grid, card));
+        grid.appendChild(card);
+      });
+      root.appendChild(grid);
+      return;
+    }
 
     const opts = el('<div class="opts"></div>');
     s.options.forEach((text) => {
@@ -394,19 +412,7 @@
           <span class="opt__dot">${ic.check}</span>
           <span class="opt__label">${text}</span>
         </button>`);
-      opt.addEventListener("click", () => {
-        state.answers[s.id] = text;
-        // grava no Supabase (resiliente — nunca trava o quiz)
-        if (window.PaizaoDB) PaizaoDB.recordAnswer(s.id, text, state.answers);
-        // feedback visual e avança
-        opts.querySelectorAll(".opt").forEach(o => o.classList.remove("is-selected"));
-        opt.classList.add("is-selected");
-        // se a próxima tela for um vídeo, avança JÁ (sem delay) pra o play() com
-        // som acontecer ainda dentro do clique — senão o navegador bloqueia o áudio.
-        const up = QUIZ[state.index + 1];
-        if (up && (up.video || up.embed)) next();
-        else setTimeout(next, 240);
-      });
+      opt.addEventListener("click", () => pick(text, opts, opt));
       opts.appendChild(opt);
     });
     root.appendChild(opts);

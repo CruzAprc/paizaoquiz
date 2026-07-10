@@ -412,6 +412,41 @@ body::after {
   letter-spacing: -.02em; margin: 0 0 24px;
 }
 .opts { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---- GRADE DE CARDS COM FOTO (estilo BetterMe — ex.: idade) ---- */
+.qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.qcard {
+  position: relative; border: none; cursor: pointer; padding: 0; overflow: hidden;
+  border-radius: var(--r-sm);
+  background: linear-gradient(180deg, #f3ecff 0%, #e6d9fb 100%);
+  box-shadow: 0 10px 24px -14px rgba(124,58,237,.4);
+  display: flex; flex-direction: column;
+  transition: transform .12s ease, box-shadow .2s, outline-color .15s;
+  animation: rise .4s both;
+}
+.qcard:nth-child(1){animation-delay:.04s}.qcard:nth-child(2){animation-delay:.10s}
+.qcard:nth-child(3){animation-delay:.16s}.qcard:nth-child(4){animation-delay:.22s}
+.qcard:active { transform: scale(.97); }
+.qcard.is-selected { outline: 3px solid var(--act); outline-offset: -3px; }
+.qcard__imgwrap {
+  display: flex; align-items: flex-end; justify-content: center;
+  aspect-ratio: 1 / 1; overflow: hidden;
+}
+.qcard__img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center top;
+}
+.qcard__bar {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--display); font-weight: 800; font-size: 14.5px; letter-spacing: -.01em;
+  line-height: 1.2; text-align: center;
+  color: var(--act-tx, #fff);
+  background: var(--grad);
+  padding: 12px 10px;
+  flex: 1; min-height: 44px; /* rótulos de 2 linhas (ex.: foco) sem desalinhar os cards */
+}
+.qcard__arrow { display: inline-flex; }
+.qcard__arrow svg { width: 16px; height: 16px; }
 .opt {
   display: flex; align-items: center; gap: 14px; text-align: left;
   width: 100%; cursor: pointer;

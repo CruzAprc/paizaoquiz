@@ -20,7 +20,11 @@
 
 const QUIZ = [
 
-  /* ---------------------------------------------------------------- LANDING */
+  /* ---------------------------------------------------------------- LANDING
+     >>> TESTE: CAPA/LANDING DESATIVADA — o quiz abre direto na Pergunta 1.
+         Pra reativar, é só descomentar o objeto abaixo (e restaurar a dobra
+         estática da landing no index.html). <<< */
+  /*
   {
     type: "landing",
     h1: "Descubra por que seu corpo não sai do lugar e como eu vou mudar isso em <span class=\"hl\">4 semaninhas</span>.",
@@ -33,6 +37,7 @@ const QUIZ = [
     subcta: "⏱️ Leva 1 minutinho",
     scarcity: "⏳ Disponível só hoje · você responde uma vez só"
   },
+  */
 
   /* ============================ S — SITUAÇÃO (acumula \"sins\" fáceis) ====== */
   {
@@ -40,26 +45,18 @@ const QUIZ = [
     id: "q1_idade",
     block: "Sobre você",
     question: "Deixa eu começar te conhecendo. Quantos anos você tem?",
-    options: [
-      "14 a 17",
-      "18 a 21",
-      "22 a 24",
-      "25 a 29",
-      "30 ou mais"
+    // estilo BetterMe: grade 2x2 de cards com foto + faixa "Idade: X" (ver renderQuestion)
+    grid: true,
+    optionPrefix: "Idade:",
+    options: ["16-29", "30-39", "40-49", "50+"],
+    images: [
+      "assets/img/idade/idade-18-29.webp",
+      "assets/img/idade/idade-30-39.webp",
+      "assets/img/idade/idade-40-49.webp",
+      "assets/img/idade/idade-50plus.webp"
     ]
   },
-  {
-    type: "question",
-    id: "q2_foco",
-    block: "Sobre você",
-    question: "E qual é o seu foco agora? O que você mais quer?",
-    options: [
-      "Emagrecer e secar",
-      "Tonificar e enrijecer o corpo",
-      "Os dois juntos",
-      "Ganhar massa"
-    ]
-  },
+  /* (a pergunta do FOCO desceu pra logo antes do vídeo da Liz — ver abaixo) */
   {
     type: "question",
     id: "q3_rotina",
@@ -122,9 +119,30 @@ const QUIZ = [
     ]
   },
 
-  /* ------------------- BREAK 2 — DEPOIMENTO EM VÍDEO (filhota real) ------
-     Só o @ dela no insta em cima + o vídeo dela falando embaixo. Sem copy.
-     Quando tiver o vídeo, é só preencher "video" (caminho do .mp4).         */
+  /* --------------- FOCO (cards estilo BetterMe) — logo ANTES do vídeo da Liz.
+     Valores das options EXATOS — o PERSONA.foco e o diagnóstico dependem deles. */
+  {
+    type: "question",
+    id: "q2_foco",
+    block: "Sobre você",
+    question: "E qual é o seu foco agora? O que você mais quer?",
+    grid: true,
+    options: [
+      "Emagrecer e secar",
+      "Tonificar e enrijecer o corpo",
+      "Os dois juntos",
+      "Ganhar massa"
+    ],
+    images: [
+      "assets/img/foco/foco-emagrecer.webp",
+      "assets/img/foco/foco-tonificar.webp",
+      "assets/img/foco/foco-dois-juntos.webp",
+      "assets/img/foco/foco-ganhar-massa.webp"
+    ]
+  },
+
+  /* ------------------- BREAK 2 — DEPOIMENTO EM VÍDEO (Liz) ---------------
+     Só o @ dela no insta em cima + o vídeo dela falando embaixo. Sem copy.  */
   {
     type: "testimonial",
     topName: "@lizx.macedo",     // @ real da Liz no topo do stories

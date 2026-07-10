@@ -17,7 +17,7 @@
   <link rel="dns-prefetch" href="https://images.converteai.net" />
   <link rel="dns-prefetch" href="https://license.vturb.com" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=63" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=70" />
   <!-- UTMify Pixel -->
   <script>
     window.pixelId = "6a341d1cb65aeb643445acc3";
@@ -63,39 +63,14 @@
   </header>
 
   <!-- App mount -->
-  <!-- DOBRA ESTÁTICA: pinta o hero instantaneamente, ANTES do JS (defer) bootar.
-       Espelha 1:1 o que renderLanding() gera (app.js ~328-364) -> ao hidratar,
-       o app.js faz stage.innerHTML="" e repinta IDÊNTICO, sem flash. Botão inerte:
-       o handler de clique é assumido pelo app.js no primeiro render. -->
-  <main class="stage" id="stage" aria-live="polite">
-    <section class="screen landing">
-      <div class="igprofile">
-        <span class="igprofile__av igring avatar-photo" id="landingAv">C</span>
-        <div class="igprofile__meta">
-          <div class="igprofile__namerow">
-            <b>Carlão Personal das Estrelas</b>
-            <svg class="verified" viewBox="0 0 24 24" width="17" height="17" aria-label="verificado"><path fill="#3897f0" d="M12 1.5l2.4 1.8 3 .2 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .2L12 22.5l-2.4-1.8-3-.2-1-2.8L3.3 15.8l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.2z"/><path fill="#fff" d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.3-3.3 1.1 1.1z"/></svg>
-          </div>
-          <span class="igprofile__sub"><b>2,1 mi</b> seguidores · @oficial_carlaopersonal</span>
-        </div>
-      </div>
-      <h1>Descubra por que seu corpo não sai do lugar e como eu vou mudar isso em <span class="hl">4 semaninhas</span>.</h1>
-      <h2 class="landing__h2">Me conta 3 coisinhas e o paizão já acha o que tá te travando e monta seu plano sob medida.</h2>
-      <div class="figure">
-        <div class="figure__glow"></div>
-        <img class="figure__img" src="assets/img/carlao-landing.webp" alt="Carlão Personal" width="750" height="1141" fetchpriority="high" decoding="async" />
-      </div>
-      <div class="landing-cta">
-        <button class="btn btn--pulse">Fazer minha avaliação grátis agora</button>
-        <p class="subcta">⏱️ Leva 1 minutinho</p>
-        <p class="scarcity">⏳ Disponível só hoje · você responde uma vez só</p>
-      </div>
-    </section>
-  </main>
+  <!-- TESTE: capa/landing desativada — o quiz abre direto na Pergunta 1 (via quiz-data.js).
+       Sem dobra estática aqui pra não piscar a landing antes do JS. Pra reativar a capa,
+       restaure a <section class="screen landing"> e descomente o objeto landing no quiz-data.js. -->
+  <main class="stage" id="stage" aria-live="polite"></main>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/quiz-data.js?v=63"></script>
-  <script defer src="assets/js/supabase.js?v=63"></script>
-  <script defer src="assets/js/app.js?v=63"></script>
+  <script defer src="assets/js/quiz-data.js?v=70"></script>
+  <script defer src="assets/js/supabase.js?v=70"></script>
+  <script defer src="assets/js/app.js?v=70"></script>
 </body>
 </html>
