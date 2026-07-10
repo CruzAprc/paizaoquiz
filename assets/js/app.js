@@ -226,18 +226,37 @@
     if (av) av.classList.add("avatar-photo");
   }
 
-  /* --------------------------------------------------------- URGÊNCIA POR DATA
-     Uma linha só: "SUA AVALIAÇÃO GRATUITA COMEÇOU e encerra hoje - DD/MM"
-     A data é sempre o dia de HOJE (fuso do browser da lead). */
+  /* --------------------------------------------------------- CRONÔMETRO 3 MIN
+     "SUA AVALIAÇÃO GRATUITA SE ENCERRA EM 03:00" — contagem regressiva real.
+     Só visual (não bloqueia o quiz quando chega a zero). */
   function startTimer() {
+    const TOTAL = 3 * 60; // 3 minutos
     const valEl = document.getElementById("timerVal");
+    const bar = document.getElementById("timerbar");
     if (!valEl) return;
     try { localStorage.removeItem("quizStart6"); } catch (e) {}
-    if (window.__qTimer) { clearInterval(window.__qTimer); window.__qTimer = null; }
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, "0");
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    valEl.textContent = dd + "/" + mm;
+    // chave nova: invalida sessão antiga e recomeça os 3 min
+    let start = parseInt(localStorage.getItem("quizStart3m"), 10);
+    if (!start || isNaN(start)) {
+      start = Date.now();
+      try { localStorage.setItem("quizStart3m", String(start)); } catch (e) {}
+    }
+    function paint(left) {
+      const m = Math.floor(left / 60), s = left % 60;
+      valEl.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      if (bar) bar.classList.toggle("is-urgent", left > 0 && left <= 30);
+    }
+    function tick() {
+      const left = Math.max(0, TOTAL - Math.floor((Date.now() - start) / 1000));
+      paint(left);
+      if (left <= 0 && window.__qTimer) {
+        clearInterval(window.__qTimer);
+        window.__qTimer = null;
+      }
+    }
+    if (window.__qTimer) clearInterval(window.__qTimer);
+    tick();
+    window.__qTimer = setInterval(tick, 1000);
   }
 
   /* --------------------------------------------------------- CHROME (topbar/progresso) */
