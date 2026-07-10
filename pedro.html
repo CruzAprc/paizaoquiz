@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/admin.css?v=59" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=83" />
 </head>
 <body>
   <!-- LOGIN -->
@@ -63,10 +63,10 @@
     </section>
 
     <section class="panel">
-      <h2 class="panel__h">Retenção por etapa <span class="muted">· 🎬 = vídeo</span></h2>
+      <h2 class="panel__h">Retenção por etapa <span class="muted">· por URL · 🎬 = vídeo</span></h2>
       <div id="retCurve" class="retcurve"></div>
       <div id="funnel" class="funnel"></div>
-      <p class="muted" style="font-size:12px;margin:12px 0 0">Retenção medida pela etapa alcançada (last_step). A flag "Completaram" subconta (a tela de loading é pulada em reload/histórico) — use "Chegaram na oferta" como fundo de funil.</p>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">Retenção pela URL alcançada (<code>last_step_slug</code>). Entrada = <strong>PageView · /pergunta-1</strong> (quiz abre direto nela). Cada linha = quantos chegaram pelo menos até aquela URL. A flag "Completaram" subconta — use "Chegaram na oferta" como fundo de funil.</p>
     </section>
 
     <section class="panel">
@@ -88,7 +88,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/quiz-data.js?v=62"></script>
-  <script src="assets/js/admin.js?v=62"></script>
+  <script src="assets/js/quiz-data.js?v=83"></script>
+  <script src="assets/js/admin.js?v=83"></script>
 </body>
 </html>
