@@ -129,15 +129,13 @@ const QUIZ = [
     grid: true,
     options: [
       "Emagrecer e secar",
-      "Tonificar e enrijecer o corpo",
-      "Os dois juntos",
-      "Ganhar massa"
+      "Ganhar massa",
+      "Os dois juntos"
     ],
     images: [
       "assets/img/foco/foco-emagrecer.webp",
-      "assets/img/foco/foco-tonificar.webp",
-      "assets/img/foco/foco-dois-juntos.webp",
-      "assets/img/foco/foco-ganhar-massa.webp"
+      "assets/img/foco/foco-ganhar-massa.webp",
+      "assets/img/foco/foco-dois-juntos.webp"
     ]
   },
 
@@ -163,13 +161,21 @@ const QUIZ = [
   {
     type: "question",
     id: "q7_deixou",
-    block: "O custo de não mudar",
-    question: "E esse incômodo com o corpo… o que ele já te fez deixar de fazer?",
+    block: "Seu corpo hoje",
+    question: "E o seu corpo hoje, qual imagem parece mais com você?",
+    // estilo BetterMe: cards com foto do corpo ATUAL (mantém o id q7_deixou -> coluna já existe no Supabase)
+    grid: true,
     options: [
-      "Evito aparecer em foto",
-      "Não uso a roupa que eu queria",
-      "Invento desculpa pra não ir na praia/festa",
-      "Me sinto mal quando me olho no espelho"
+      "No peso, mas falta definição",
+      "Magrinha",
+      "Uns quilinhos a mais",
+      "Bastante pra mudar, e tô decidida"
+    ],
+    images: [
+      "assets/img/corpo/corpo-definicao.webp",
+      "assets/img/corpo/corpo-magrinha.webp",
+      "assets/img/corpo/corpo-quilinhos.webp",
+      "assets/img/corpo/corpo-mudar.webp"
     ]
   },
   {
@@ -213,7 +219,9 @@ const QUIZ = [
       "Acho que sim",
       "Nunca tive isso",
       "É exatamente o que eu preciso"
-    ]
+    ],
+    // mockups do app no espaço vazio abaixo das opções: Dieta à esquerda, Treino à direita
+    decor: ["assets/img/mockup-dieta.webp", "assets/img/mockup-treino.webp"]
   },
   {
     type: "question",

@@ -416,6 +416,14 @@
       opts.appendChild(opt);
     });
     root.appendChild(opts);
+
+    // mockups decorativos no espaço vazio abaixo das opções (ex.: telas do app);
+    // string = um à esquerda; array = distribui esquerda → direita
+    if (s.decor) {
+      const srcs = Array.isArray(s.decor) ? s.decor : [s.decor];
+      const imgs = srcs.map((src) => `<img src="${src}" alt="" loading="lazy" decoding="async" />`).join("");
+      root.appendChild(el(`<div class="q__decor">${imgs}</div>`));
+    }
   }
 
   /* ---- LETTER ---- */
