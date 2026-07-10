@@ -226,20 +226,21 @@
     if (av) av.classList.add("avatar-photo");
   }
 
-  /* --------------------------------------------------------- CRONÔMETRO (15 min REAIS) */
+  /* --------------------------------------------------------- CRONÔMETRO (6 min REAIS) */
   function startTimer() {
-    const TOTAL = 15 * 60; // 15 minutos reais
+    const TOTAL = 6 * 60; // 6 minutos reais
     const valEl = document.getElementById("timerVal");
     const bar = document.getElementById("timerbar");
     if (!valEl) return;
     // persiste o início pra ser um relógio "de verdade" (sobrevive a refresh)
-    let start = parseInt(localStorage.getItem("quizStart3"), 10);
-    if (!start || isNaN(start)) { start = Date.now(); localStorage.setItem("quizStart3", String(start)); }
+    // chave nova (quizStart6) invalida sessões antigas de 15 min
+    let start = parseInt(localStorage.getItem("quizStart6"), 10);
+    if (!start || isNaN(start)) { start = Date.now(); localStorage.setItem("quizStart6", String(start)); }
     function tick() {
       const left = Math.max(0, TOTAL - Math.floor((Date.now() - start) / 1000));
       const m = Math.floor(left / 60), s = left % 60;
-      valEl.textContent = m + ":" + String(s).padStart(2, "0");
-      if (bar) bar.classList.toggle("is-urgent", left <= 120); // pisca nos últimos 2 min
+      valEl.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      if (bar) bar.classList.toggle("is-urgent", left <= 60); // pisca no último minuto
       if (left <= 0 && window.__qTimer) clearInterval(window.__qTimer);
     }
     tick();
