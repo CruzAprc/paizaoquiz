@@ -331,9 +331,14 @@
   }
 
   // CTA flutuante (sticky no rodapé) — acompanha o scroll nas telas de conteúdo alto
-  function ctaBar(label, onClick) {
+  // opts.pulse = "soft" | true → botão com pulso leve de atenção
+  function ctaBar(label, onClick, opts) {
     const bar = el('<div class="ctabar"></div>');
-    bar.appendChild(ctaButton(label, onClick, false));
+    const btn = ctaButton(label, onClick, false);
+    if (opts && opts.pulse) {
+      btn.classList.add(opts.pulse === "soft" ? "btn--pulse-soft" : "btn--pulse");
+    }
+    bar.appendChild(btn);
     return bar;
   }
 
@@ -386,7 +391,8 @@
   /* ---- QUESTION ---- */
   function renderQuestion(root, s) {
     // (cabeçalho "01 · Sobre você" removido — a pergunta abre direto no título)
-    root.appendChild(el(`<h2 class="q__title">${s.question}</h2>`));
+    // fillCopy resolve tokens tipo {primeiro} (ex.: q14_compromisso)
+    root.appendChild(el(`<h2 class="q__title">${fillCopy(s.question)}</h2>`));
     if (s.image) root.appendChild(mediaBlock(s.image, s.imageAlt, s.imageNote, "wide"));
 
     // resposta escolhida -> grava + avança (mesmo fluxo pros dois formatos)
@@ -770,31 +776,66 @@
     screenAbort = () => { done = true; if (poll) { clearInterval(poll); poll = null; } };
   }
 
-  /* ---- LOADING (auto-advance) — 3 batidas de headline (NÃO expõe as respostas) ---- */
+  /* ---- LOADING — H1 em cima + fotos grandes (5s cada) ---- */
   function renderLoading(root, s) {
     root.classList.add("loading");
     const dots = '<span class="loading__dots"><span>.</span><span>.</span><span>.</span></span>';
-    const head = el(`<p class="loading__text"></p>`);
 
-    root.appendChild(el('<div class="loader"></div>'));
+    // H1 acima da foto (copy do paizão em batidas)
+    const head = el(`<h1 class="loading__h1"></h1>`);
     root.appendChild(head);
 
-    // headline: começa na batida 1 (intro) se houver, senão já na batida 2 (text)
-    const hasIntro = !!s.intro;
-    head.innerHTML = `${hasIntro ? s.intro : (s.text || "")} ${dots}`;
+    const slides = Array.isArray(s.frameImages) && s.frameImages.length
+      ? s.frameImages.slice()
+      : ["assets/img/loading/slide-1.jpg"];
+    const slideMs = Math.max(1000, parseInt(s.slideMs, 10) || 5000);
+
+    const wrap = el(`
+      <div class="loadslide" aria-label="Resultados reais">
+        <img class="loadslide__img" src="${slides[0]}" alt="Resultado real de aluna" loading="eager" decoding="async" />
+        <div class="loadslide__dots" aria-hidden="true">${
+          slides.map((_, i) => `<span class="loadslide__dot${i === 0 ? " is-on" : ""}"></span>`).join("")
+        }</div>
+      </div>`);
+    root.appendChild(wrap);
+
+    const imgEl = wrap.querySelector(".loadslide__img");
+    const dotsEl = wrap.querySelectorAll(".loadslide__dot");
+    let imgIdx = 0;
+    let imgTimer = null;
+    if (slides.length > 1 && imgEl) {
+      imgTimer = setInterval(() => {
+        imgIdx = (imgIdx + 1) % slides.length;
+        imgEl.style.opacity = "0";
+        setTimeout(() => {
+          imgEl.src = slides[imgIdx];
+          imgEl.style.opacity = "1";
+          dotsEl.forEach((d, i) => d.classList.toggle("is-on", i === imgIdx));
+        }, 140);
+      }, slideMs);
+    }
+
+    const introTxt = persoVal("loadingIntro", state.answers.q2_foco, null) || s.intro || "";
+    const textTxt  = persoVal("loadingAge", state.answers.q1_idade, null) || s.text || "";
+    const doneTxt  = fillCopy(s.done || "");
+
+    const hasIntro = !!introTxt;
+    head.innerHTML = `${hasIntro ? introTxt : textTxt} ${dots}`;
 
     const timers = [];
     const after = (ms, fn) => timers.push(setTimeout(fn, ms));
-    screenAbort = () => { timers.forEach(clearTimeout); timers.length = 0; };
+    screenAbort = () => {
+      timers.forEach(clearTimeout);
+      timers.length = 0;
+      if (imgTimer) { clearInterval(imgTimer); imgTimer = null; }
+    };
 
-    const introHold = hasIntro ? (s.introHold || 1500) : 0;
+    const totalMs = Math.max(s.duration || 0, slides.length * slideMs);
+    const introHold = hasIntro ? Math.min(s.introHold || 2500, Math.floor(totalMs / 3)) : 0;
+    if (hasIntro && textTxt) after(introHold, () => { head.innerHTML = `${textTxt} ${dots}`; });
+    if (doneTxt) after(introHold + Math.floor(totalMs / 3), () => { head.innerHTML = `${doneTxt} ${dots}`; });
 
-    // batida 2: troca a headline (sem mostrar as respostas — a lead não vê o que preencheu)
-    if (hasIntro && s.text) after(introHold, () => { head.innerHTML = `${s.text} ${dots}`; });
-    // batida 3: "Pronto. Já tô montando…"
-    if (s.done) after(introHold + 1700, () => { head.innerHTML = `${s.done} ${dots}`; });
-
-    after(s.duration || 3600, () => { cleanupScreen(); next(); });
+    after(totalMs, () => { cleanupScreen(); next(); });
   }
 
   /* ---- MEASURE (altura + peso -> IMC) ---- */
@@ -821,7 +862,15 @@
       form.appendChild(wrap);
     });
     root.appendChild(form);
-    if (s.note) root.appendChild(el(`<p class="measure__note">${s.note}</p>`));
+    if (s.note) {
+      // linha extra por trilha de foco (q2_foco) — só se houver match em PERSONA.measureNote
+      const extra = persoVal("measureNote", state.answers.q2_foco, null);
+      if (extra) {
+        root.appendChild(el(`<p class="measure__note">${s.note}<br>${extra}</p>`));
+      } else {
+        root.appendChild(el(`<p class="measure__note">${s.note}</p>`));
+      }
+    }
 
     const err = el(`<p class="measure__err" hidden>Preenche altura e peso certinho 🙏</p>`);
     root.appendChild(err);
@@ -852,63 +901,20 @@
     root.appendChild(ctaBar(s.cta || "Continuar", proceed));
   }
 
-  /* ---- CHART (curva hoje -> 4 -> 12 semaninhas) ---- */
+  /* ---- CHART / DIAGNÓSTICO — before/after BetterMe (IMC dentro do card, sem emoji de meta) ---- */
   function renderChart(root, s) {
     root.classList.add("chart");
-    root.appendChild(el(`<h2 class="chart__title">${s.title}</h2>`));
-    if (s.subtitle) root.appendChild(el(`<p class="chart__sub">${fillCopy(s.subtitle)}</p>`));
+    if (s.title) root.appendChild(el(`<h2 class="chart__title">${s.title}</h2>`));
 
-    // card do IMC (calculado a partir da altura/peso dela)
-    if (s.showImc) {
-      const info = imcInfo();
-      if (info) {
-        const msg = fillCopy(persoVal("imc", info.cat, ""));
-        const catLabel = persoVal("imcCat", info.cat, "ponto de partida");
-        const imcStr = String(info.imc).replace(".", ",");
-        root.appendChild(el(`
-          <div class="imc imc--${info.cat}">
-            <div class="imc__row">
-              <div class="imc__num"><b>${imcStr}</b><small>Termômetro do Paizão</small></div>
-              <span class="imc__cat">${catLabel}</span>
-            </div>
-            ${msg ? `<p class="imc__msg">${msg}</p>` : ""}
-          </div>`));
-      }
+    // marcos da jornada (ex-curva) → copy no before/after
+    const points = (s.points || []).map(p => ({ ...p }));
+    const trailBubbles = persoVal("chartBubbles", state.answers.q2_foco, null);
+    if (trailBubbles && typeof trailBubbles === "object") {
+      Object.keys(trailBubbles).forEach((k) => {
+        const idx = parseInt(k, 10);
+        if (!isNaN(idx) && points[idx] && trailBubbles[k]) points[idx].bubble = trailBubbles[k];
+      });
     }
-
-    // clona os pontos e calibra o "Hoje" pela resposta de rotina dela (não muta s.points)
-    const points = s.points.map(p => ({ ...p }));
-    if (s.startFrom) {
-      points[0].level = persoVal("start", state.answers[s.startFrom], points[0].level);
-    }
-
-    // geometria da curva — viewBox com headroom no topo p/ os balões de marco
-    const W = 320, H = 210, padX = 16, padTop = 66, padBot = 16;
-    const baseY = H - padBot;
-    const pts = points.map((p, i) => {
-      const x = padX + (i * (W - padX * 2)) / (points.length - 1);
-      const y = baseY - p.level * (baseY - padTop);
-      return { x, y, ...p };
-    });
-
-    // caminho suave (Catmull-Rom -> Bézier) p/ a curva fluir como na referência
-    function smoothPath(ps) {
-      if (ps.length < 2) return "M" + ps[0].x.toFixed(1) + " " + ps[0].y.toFixed(1);
-      let d = "M" + ps[0].x.toFixed(1) + " " + ps[0].y.toFixed(1);
-      for (let i = 0; i < ps.length - 1; i++) {
-        const p0 = ps[i - 1] || ps[i], p1 = ps[i], p2 = ps[i + 1], p3 = ps[i + 2] || p2, t = 0.16;
-        const c1x = p1.x + (p2.x - p0.x) * t, c1y = p1.y + (p2.y - p0.y) * t;
-        const c2x = p2.x - (p3.x - p1.x) * t, c2y = p2.y - (p3.y - p1.y) * t;
-        d += " C" + c1x.toFixed(1) + " " + c1y.toFixed(1) + " " + c2x.toFixed(1) + " " + c2y.toFixed(1) + " " + p2.x.toFixed(1) + " " + p2.y.toFixed(1);
-      }
-      return d;
-    }
-    const linePath = smoothPath(pts);
-    const areaPath = linePath + " L" + pts[pts.length - 1].x.toFixed(1) + " " + baseY + " L" + pts[0].x.toFixed(1) + " " + baseY + " Z";
-    const goalPt = pts.find(p => p.gold) || pts[pts.length - 1];
-    const gridYs = [0, 1, 2, 3].map(g => padTop + g * (baseY - padTop) / 3);
-
-    // data real (fuso de São Paulo) = hoje + offset de dias -> vira o rótulo do eixo
     function spDateLabel(offsetDays) {
       const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
       const ymd = parts.split("-").map(Number);
@@ -917,48 +923,108 @@
       const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
       return base.getUTCDate() + " de " + meses[base.getUTCMonth()];
     }
-    const axisLabel = p => (p.dateOffset != null ? spDateLabel(p.dateOffset) : p.label);
+    // tira emoji residual de balões (ex.: 🔥 legado)
+    const stripEmoji = (t) => String(t || "").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "").replace(/\s{2,}/g, " ").trim();
+    const p0 = points[0] || {};
+    const pGoal = points.find(p => p.gold) || points[points.length - 1] || {};
+    const labelNow = "Hoje";
+    const labelGoal = pGoal.dateOffset != null ? spDateLabel(pGoal.dateOffset) : (pGoal.label || "4 semaninhas");
+    const bubbleNow = stripEmoji(fillCopy(p0.bubble || "você tá aqui"));
+    const bubbleGoal = stripEmoji(fillCopy(pGoal.bubble || "{primeiro}"));
 
-    const box = el('<div class="chart__box"></div>');
-    const plot = el('<div class="chart__plot"></div>');
-    plot.innerHTML = `
-      <svg class="chart__svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <linearGradient id="garea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="rgba(124,58,237,.20)"/><stop offset="100%" stop-color="rgba(124,58,237,0)"/>
-          </linearGradient>
-          <linearGradient id="gline" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#7c3aed"/>
-            <stop offset="58%" stop-color="#7c3aed"/>
-            <stop offset="84%" stop-color="#ef8b34"/>
-            <stop offset="100%" stop-color="#f5b301"/>
-          </linearGradient>
-        </defs>
-        ${gridYs.map(gy => `<line x1="${padX}" y1="${gy.toFixed(1)}" x2="${W - padX}" y2="${gy.toFixed(1)}" stroke="rgba(124,58,237,.12)" stroke-width="1"/>`).join("")}
-        <line x1="${goalPt.x.toFixed(1)}" y1="${goalPt.y.toFixed(1)}" x2="${goalPt.x.toFixed(1)}" y2="${baseY}" stroke="#f5b301" stroke-width="2" stroke-dasharray="4 5" opacity=".6"/>
-        <path d="${areaPath}" fill="url(#garea)" class="cArea"/>
-        <path d="${linePath}" fill="none" stroke="url(#gline)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" class="cLine"/>
-        ${pts.map(p => p.gold
-          ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="#f5b301" opacity=".4"><animate attributeName="r" values="7;15;7" dur="1.9s" repeatCount="indefinite"/><animate attributeName="opacity" values=".4;0;.4" dur="1.9s" repeatCount="indefinite"/></circle><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="#f5b301" stroke="#fff" stroke-width="3"/>`
-          : `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5.5" fill="#fff" stroke="#7c3aed" stroke-width="3"/>`).join("")}
-      </svg>`;
+    // IMC: frase única dentro do card (sem número solto, sem chip, sem quadro de 5 dias)
+    let imcBlock = "";
+    if (s.showImc) {
+      const info = imcInfo();
+      if (info) {
+        const imcStr = String(info.imc).replace(".", ",");
+        const tpl = persoVal("imc", info.cat, "") || "";
+        const msg = tpl.replace(/\{imc\}/g, `<strong>${imcStr}</strong>`);
+        if (msg) {
+          imcBlock = `
+            <div class="ba__imc ba__imc--${info.cat}">
+              <p class="ba__imc-phrase">${msg}</p>
+            </div>`;
+        }
+      }
+    }
 
-    // balões de marco — um sobre cada ponto que tem `bubble` (texto aceita {tokens})
-    pts.forEach((p, i) => {
-      if (!p.bubble) return;
-      const txt = fillCopy(p.bubble);
-      if (!txt || !txt.trim()) return;
-      const cx = (p.x / W) * 100, top = (p.y / H) * 100;
-      const align = cx <= 24 ? "l" : (cx >= 76 ? "r" : "c");
-      const b = el(`<div class="chart__bubble chart__bubble--${align}${p.gold ? " chart__bubble--gold" : ""}" style="left:${cx.toFixed(1)}%;top:${top.toFixed(1)}%;animation-delay:${(0.7 + i * 0.18).toFixed(2)}s">${txt}</div>`);
-      plot.appendChild(b);
-    });
+    const beforeSrc = persoVal("beforeImg", state.answers.q7_deixou, "assets/img/corpo/corpo-quilinhos.webp");
+    const afterSrc = persoVal("metaImg", state.answers.q2_foco, "assets/img/meta/meta-secar.jpg");
+    if (beforeSrc && afterSrc) {
+      const bodyNow = persoVal("beforeBodyLabel", state.answers.q7_deixou, "Seu corpo hoje");
+      const bodyGoal = persoVal("afterBodyLabel", state.answers.q2_foco, "No seu objetivo");
+      const lvlNow = Math.max(0, Math.min(3, parseInt(persoVal("trainLevelNow", state.answers.q3_rotina, 1), 10) || 0));
+      const lvlGoal = Math.max(0, Math.min(3, parseInt(persoVal("trainLevelGoal", state.answers.q3_rotina, 3), 10) || 3));
+      const bars = (n) => [0, 1, 2].map(i =>
+        `<span class="ba__bar${i < n ? " is-on" : ""}"></span>`
+      ).join("");
+      const arrowSvg = `
+        <svg width="18" height="32" viewBox="0 0 27 48" fill="none" aria-hidden="true">
+          <path d="M5.3 1L26 22.2c.25.25.42.53.52.83.1.3.16.61.16.95s-.05.65-.16.95c-.1.3-.27.57-.52.82L5.3 47.1C4.72 47.7 4 48 3.14 48c-.86 0-1.6-.32-2.22-.95C.3 46.42 0 45.68 0 44.83c0-.84.31-1.58.92-2.21L19 24 .92 5.38C.35 4.79.06 4.06.06 3.2.06 2.33.37 1.58.99.95 1.6.32 2.32 0 3.14 0c.82 0 1.54.32 2.16.95z" fill="currentColor"/>
+        </svg>`;
+      root.appendChild(el(`
+        <div class="ba" data-test="beforeAfter">
+          <div class="ba__labels">
+            <div class="ba__labwrap">
+              <span class="ba__lab ba__lab--now">Agora</span>
+              <span class="ba__date">${labelNow}</span>
+            </div>
+            <span class="ba__divider" aria-hidden="true"></span>
+            <div class="ba__labwrap ba__labwrap--goal">
+              <span class="ba__lab ba__lab--goal">Seu objetivo</span>
+              <span class="ba__date ba__date--goal">${labelGoal}</span>
+            </div>
+          </div>
+          <div class="ba__photos">
+            <div class="ba__shot">
+              <img class="ba__img ba__img--before" src="${beforeSrc}" alt="Agora" loading="eager" decoding="async" />
+              <p class="ba__cap">${bubbleNow}</p>
+            </div>
+            <div class="ba__mid" aria-hidden="true">
+              <div class="ba__arrows">
+                <span class="ba__arrow ba__arrow--1">${arrowSvg}</span>
+                <span class="ba__arrow ba__arrow--2">${arrowSvg}</span>
+                <span class="ba__arrow ba__arrow--3">${arrowSvg}</span>
+              </div>
+            </div>
+            <div class="ba__shot">
+              <img class="ba__img ba__img--after" src="${afterSrc}" alt="Seu objetivo" loading="eager" decoding="async" />
+              <p class="ba__cap ba__cap--goal">${bubbleGoal}</p>
+            </div>
+          </div>
+          ${imcBlock}
+          <div class="ba__info">
+            <div class="ba__row">
+              <div class="ba__col">
+                <p class="ba__title">Seu corpo</p>
+                <p class="ba__value">${bodyNow}</p>
+              </div>
+              <div class="ba__vdiv" aria-hidden="true"></div>
+              <div class="ba__col">
+                <p class="ba__title">Seu corpo</p>
+                <p class="ba__value ba__value--goal">${bodyGoal}</p>
+              </div>
+            </div>
+            <div class="ba__hr" aria-hidden="true"></div>
+            <div class="ba__row">
+              <div class="ba__col">
+                <p class="ba__title">Nível de treino</p>
+                <div class="ba__bars">${bars(lvlNow)}</div>
+              </div>
+              <div class="ba__vdiv" aria-hidden="true"></div>
+              <div class="ba__col">
+                <p class="ba__title">Nível de treino</p>
+                <div class="ba__bars">${bars(lvlGoal)}</div>
+              </div>
+            </div>
+          </div>
+        </div>`));
+    } else if (imcBlock) {
+      // fallback raro: sem fotos, ainda mostra o termômetro
+      root.appendChild(el(`<div class="ba">${imcBlock}</div>`));
+    }
 
-    box.appendChild(plot);
-    box.appendChild(el(`<div class="chart__legend">${pts.map(p => `<span class="${p.gold ? "is-goal" : ""}">${axisLabel(p)}</span>`).join("")}</div>`));
-    root.appendChild(box);
-
-    // frase de empatia (card destacado, ligada ao que a trava)
     if (s.lead) {
       const lead = fillCopy(s.lead);
       if (lead && lead.trim()) {
@@ -966,18 +1032,7 @@
       }
     }
 
-    // anima a linha
-    const line = box.querySelector(".cLine");
-    if (line) {
-      const len = line.getTotalLength();
-      line.style.strokeDasharray = len; line.style.strokeDashoffset = len;
-      line.style.transition = "stroke-dashoffset 1.2s ease .15s";
-      requestAnimationFrame(() => requestAnimationFrame(() => { line.style.strokeDashoffset = 0; }));
-      const area = box.querySelector(".cArea");
-      if (area){ area.style.opacity = 0; area.style.transition = "opacity .8s ease .9s"; requestAnimationFrame(()=>requestAnimationFrame(()=>area.style.opacity=1)); }
-    }
-
-    root.appendChild(ctaBar(s.cta, next));
+    root.appendChild(ctaBar(s.cta || "RECEBER MINHA AVALIAÇÃO", next, { pulse: "soft" }));
   }
 
   /* --------------------------------------------------------- NAVEGAÇÃO */
@@ -1020,9 +1075,15 @@
 
   // boot — resolve a etapa a partir da URL
   (function bootIndex() {
-    // preview: ?s=N pula direto pra etapa N (só pra conferência de design)
+    // preview: ?s=N pula direto pra etapa N (só pra conferência de design).
+    // Se houver sessão salva, reaproveita as respostas (pra testar personalização).
     const startAt = parseInt(new URLSearchParams(location.search).get("s"), 10);
-    if (!isNaN(startAt) && startAt >= 0 && startAt < QUIZ.length) { state.index = startAt; return; }
+    if (!isNaN(startAt) && startAt >= 0 && startAt < QUIZ.length) {
+      state.index = startAt;
+      const savedPrev = loadPersisted();
+      if (savedPrev && savedPrev.answers) state.answers = savedPrev.answers;
+      return;
+    }
 
     const parsed = indexForPath(location.pathname); // null = rota desconhecida
     const saved = loadPersisted();

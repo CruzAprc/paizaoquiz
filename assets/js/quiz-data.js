@@ -290,7 +290,8 @@ const QUIZ = [
     type: "question",
     id: "q14_compromisso",
     block: "O compromisso",
-    question: "Última pergunta e é a mais séria. Você tá realmente comprometida a seguir o plano do paizão por 4 semaninhas?",
+    // {primeiro} resolvido em app.js (fillCopy + PERSONA.primeiro)
+    question: "Última pergunta e é a mais séria. Você tá comprometida a seguir o plano do paizão por 4 semaninhas pra ver {primeiro} chegando?",
     options: [
       "Tô pronta, paizão 🙏",
       "Sim, mas tenho medo de não conseguir"
@@ -300,33 +301,36 @@ const QUIZ = [
   /* --------------------------- TRANSIÇÃO -------------------------------- */
   {
     type: "loading",
-    // 3 batidas de headline em sequência (o recap pipoca durante a batida 2):
+    // 3 batidas — personalizadas em app.js (foco / idade / {primeiro}).
+    // Textos abaixo = fallback quando a resposta não bate.
     intro: "Calma… o paizão tá montando o seu diagnóstico…",  // batida 1 (~1,5s)
     text:  "Tô guardando tudo que você me contou aqui…",       // batida 2 (1ª pessoa)
-    done:  "Pronto. Já tô montando o seu plano…",              // batida 3
-    introHold: 1500,
-    // (as respostas NÃO são exibidas pra lead — só as mensagens do paizão.
-    //  Os dados continuam sendo salvos no Supabase em silêncio.)
-    duration: 4200
+    done:  "Pronto, filhota. Já sei por onde a gente começa: {primeiro}.", // batida 3
+    introHold: 2500,
+    // prints reais do app (copy já na foto). 6.5s cada × 3 = 19.5s
+    slideMs: 6500,
+    duration: 19500, // sobrescrito em app.js por slides.length * slideMs
+    frameImages: [
+      "assets/img/loading/slide-1.jpg", // Tailane
+      "assets/img/loading/slide-2.jpg", // Renata
+      "assets/img/loading/slide-3.jpg"  // Luana
+    ]
   },
   {
     type: "chart",
-    // tokens {foco} e {primeiro} são resolvidos a partir das respostas reais dela (ver PERSONA)
+    // personalização vai no before/after (fotos + marcos). Sem subtítulo redundante.
     title: "Seu corpo nas próximas semaninhas",
-    showImc: true,              // calcula e mostra o IMC dela (altura/peso da tela measure)
-    subtitle: "Você me falou que quer <b>{foco}</b> e ver primeiro <b>{primeiro}</b>. Então olha só onde o paizão vai te colocar 👇",
-    lead: "{empatia}",          // frase de empatia (vira card) ligada ao que a trava
-    startFrom: "q3_rotina",     // calibra o ponto "Hoje" pela rotina atual dela
-    // Cada ponto vira um BALÃOZINHO de marco sobre a curva (estilo linha do tempo).
-    //   bubble     -> texto curto do marco (aceita {tokens} personalizados; EDITE à vontade)
-    //   gold       -> ponto-meta destacado (linha tracejada + glow dourado) = a promessa
-    //   dateOffset -> rótulo do eixo vira DATA REAL (fuso SP) = hoje + N dias (calculado na hora)
+    showImc: true,
+    subtitle: "",               // desligado: a personalização já está no bloco de fotos
+    lead: "{empatia}",
+    startFrom: "q3_rotina",
+    // marcos da jornada (antes no gráfico; agora no before/after)
     points: [
-      { label: "Hoje",         level: 0.18, bubble: "você tá aqui" },                          // recalibrado p/ q3
+      { label: "Hoje",         level: 0.18, bubble: "você tá aqui" },
       { label: "5 dias",       level: 0.52, bubble: "já desincha e veste melhor", dateOffset: 5 },
-      { label: "4 semaninhas", level: 0.92, bubble: "{primeiro} 🔥", gold: true, dateOffset: 28 } // a promessa
+      { label: "4 semaninhas", level: 0.92, bubble: "{primeiro}", gold: true, dateOffset: 28 }
     ],
-    cta: "Pra receber seu plano, toca aqui"
+    cta: "RECEBER MINHA AVALIAÇÃO"
   },
 
   /* --------------------------- MINI VSL 2 (oferta) — POST DE REELS -------
@@ -374,12 +378,13 @@ const PERSONA = {
     "Tudo junto": "tudo de uma vez",
     _default: "o resultado que você quer"
   },
-  // Termômetro do Paizão — mensagem por faixa (SEMPRE positiva, sem medo). {foco} é resolvido.
+  // Frase única do IMC no card de diagnóstico. {imc} = valor real com vírgula em <strong>.
+  // Sem dois pontos (:) — humanização aprovada pelo Pedro.
   imc: {
-    abaixo:   "Tá tudo certo! Seu corpo tem espaço pra construir com saúde, no seu ritmo. O paizão vai te deixar tudo no lugar e durinha.",
-    saudavel: "Olha que beleza! Seu corpo já tá na faixa saudável. Agora é o paizão te deixar tudo durinho e no lugar.",
-    acima:    "Tá tudo certo! Seu corpo já tá pertinho da faixa ideal. E é exatamente aí que o paizão vira o jogo nas primeiras 4 semaninhas.",
-    alto:     "Tá tudo certo! Daqui pra frente é só ganho de saúde e leveza. E o paizão vai com você passo a passo, sem pressa e sem julgamento.",
+    abaixo:   "Filhota, seu índice de massa corporal deu {imc}, abaixo da faixa saudável, e seu corpo tem espaço pra construir com saúde. Aperta em RECEBER MINHA AVALIAÇÃO que o paizão vai te firmar do jeito certo.",
+    saudavel: "Filhota, seu índice de massa corporal deu {imc} e ele tá dentro da faixa saudável. Agora o jogo é lapidar, deixar tudo durinho e no lugar. Aperta em RECEBER MINHA AVALIAÇÃO que o paizão já sabe por onde começar.",
+    acima:    "Filhota, seu índice de massa corporal deu {imc} e você precisa cuidar da sua saúde. Ele já passou da faixa saudável e não dá mais pra aceitar isso, porque cada mês que passa mais difícil fica de voltar. Aperta em RECEBER MINHA AVALIAÇÃO agora que o paizão vira esse jogo com você.",
+    alto:     "Filhota, seu índice de massa corporal deu {imc} e sua saúde tem que vir primeiro agora. Ele tá bem acima da faixa saudável e chegou o limite de deixar pra depois. Aperta em RECEBER MINHA AVALIAÇÃO que o paizão começa com você hoje.",
     _default: "Esse é o seu ponto de partida. A partir daqui é só evolução com o paizão."
   },
   // rótulo curto da faixa (chip ao lado do número) — com selo de incentivo
@@ -405,6 +410,85 @@ const PERSONA = {
     "Cansaço, chego sem energia": "E esse plano respeita sua energia. No seu ritmo, sem te quebrar.",
     "Falta de tempo": "E ó: esse plano cabe na sua rotina. Sem desculpa, sem peso.",
     _default: "E dessa vez você não vai tá sozinha. O paizão tá com você. 🧡"
+  },
+
+  // note extra na tela medidas (q2_foco) — sem _default: se não bater, não mostra linha
+  measureNote: {
+    "Emagrecer e secar": "É daqui que o paizão calcula quanto você seca nas primeiras 4 semaninhas.",
+    "Ganhar massa": "É daqui que o paizão calcula onde seu corpo cresce primeiro.",
+    "Os dois juntos": "É daqui que o paizão calcula por onde começar: secar e firmar juntinho."
+  },
+
+  // loading batida 1 — por q2_foco (sem _default: usa intro do screen)
+  loadingIntro: {
+    "Emagrecer e secar": "Calma... o paizão tá montando seu diagnóstico pra secar de verdade...",
+    "Ganhar massa": "Calma... o paizão tá montando seu diagnóstico pra crescer do jeito certo...",
+    "Os dois juntos": "Calma... o paizão tá montando seu diagnóstico pra secar e firmar junto..."
+  },
+
+  // loading batida 2 — por q1_idade (sem _default: usa text do screen)
+  loadingAge: {
+    "16-29": "Seu corpo responde rápido nessa fase, e a gente vai usar isso a seu favor...",
+    "30-39": "Nos seus 30 o corpo pede estratégia, e o seu plano vai ter isso...",
+    "40-49": "Depois dos 40 o jogo muda, e o paizão sabe exatamente o que muda...",
+    "50+": "Nos 50+ o segredo é constância inteligente, sem loucura. É assim que o seu nasce..."
+  },
+
+  // balões da curva (índices 1=5 dias, 2=4 semaninhas) por trilha q2_foco
+  // "Emagrecer e secar" / ausência = mantém bubbles do screen.points
+  chartBubbles: {
+    "Ganhar massa": {
+      1: "já sente o corpo mais firme",
+      // legenda sob a foto: precisa caber em 1 linha no mobile
+      2: "curvas no lugar"
+    },
+    "Os dois juntos": {
+      1: "já desincha e sente firmeza",
+      2: "seca e firma junto"
+    }
+  },
+
+  // foto "depois" (Seu objetivo) no before/after — por trilha q2_foco
+  metaImg: {
+    "Emagrecer e secar": "assets/img/meta/meta-secar.jpg",
+    "Ganhar massa": "assets/img/meta/meta-massa.jpg",
+    "Os dois juntos": "assets/img/meta/meta-dois.jpg",
+    _default: "assets/img/meta/meta-secar.jpg"
+  },
+
+  // foto "Agora" no before/after — pelo corpo atual (q7_deixou)
+  beforeImg: {
+    "No peso, mas falta definição": "assets/img/corpo/corpo-definicao.webp",
+    "Magrinha": "assets/img/corpo/corpo-magrinha.webp",
+    "Uns quilinhos a mais": "assets/img/corpo/corpo-quilinhos.webp",
+    "Bastante pra mudar, e tô decidida": "assets/img/corpo/corpo-mudar.webp",
+    _default: "assets/img/corpo/corpo-quilinhos.webp"
+  },
+
+  // labels curtos do comparativo (Agora / Seu objetivo)
+  beforeBodyLabel: {
+    "No peso, mas falta definição": "Falta definição",
+    "Magrinha": "Magrinha",
+    "Uns quilinhos a mais": "Quilinhos a mais",
+    "Bastante pra mudar, e tô decidida": "Pra mudar",
+    _default: "Seu corpo hoje"
+  },
+  afterBodyLabel: {
+    "Emagrecer e secar": "Seca e no lugar",
+    "Ganhar massa": "Curvas no lugar",
+    "Os dois juntos": "Seca e firme",
+    _default: "No seu objetivo"
+  },
+  // nível de treino 0-3 (barrinhas estilo BetterMe) — por q3_rotina
+  trainLevelNow: {
+    "Eu treino, mas não vejo resultado": 2,
+    "Já parei e voltei várias vezes": 1,
+    "Nunca consegui manter constância": 1,
+    "Tô começando agora": 0,
+    _default: 1
+  },
+  trainLevelGoal: {
+    _default: 3
   }
 };
 

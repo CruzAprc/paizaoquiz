@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview loading · prints reais</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 420px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: 18px; }
+    p { color: #555; font-size: 14px; line-height: 1.4; }
+    a {
+      display: block; padding: 14px 16px; margin: 12px 0; border-radius: 12px;
+      background: #7c3aed; color: #fff; text-decoration: none; font-weight: 700; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Preview · Loading (só as fotos)</h1>
+  <p>Slideshow das alunas (3s cada) + texto do paizão embaixo. Sem moldura de app copiada.</p>
+  <a href="#" id="go">Abrir loading</a>
+  <script>
+    document.getElementById("go").addEventListener("click", e => {
+      e.preventDefault();
+      sessionStorage.setItem("paizao_quiz_state", JSON.stringify({
+        index: 16,
+        answers: {
+          q1_idade: "30-39",
+          q2_foco: "Os dois juntos",
+          q3_rotina: "Eu treino, mas não vejo resultado",
+          q5_trava: "Falta de motivação e disciplina",
+          q7_deixou: "Uns quilinhos a mais",
+          q13_primeiro: "Barriga mais seca",
+          altura_cm: 165,
+          peso_kg: 72
+        }
+      }));
+      location.href = "/?s=16";
+    });
+  </script>
+</body>
+</html>
