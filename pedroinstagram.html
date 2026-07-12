@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <base href="/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Painel · Criadoras /insta · App do Paizão</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=90" />
+  <link rel="stylesheet" href="assets/css/pedroinstagram.css?v=1" />
+</head>
+<body>
+  <!-- LOGIN (mesmo auth do /pedro) -->
+  <div id="login" class="login" hidden>
+    <form class="login__card" id="loginForm">
+      <h1 class="login__title">Criadoras · /insta</h1>
+      <p class="login__sub">Mesmo login do painel do Pedro</p>
+      <label class="login__field"><span>Email</span><input type="email" id="email" autocomplete="username" required /></label>
+      <label class="login__field"><span>Senha</span><input type="password" id="password" autocomplete="current-password" required /></label>
+      <button type="submit" class="login__btn" id="loginBtn">Entrar</button>
+      <p class="login__err" id="loginErr" hidden></p>
+    </form>
+  </div>
+
+  <div id="dash" class="dash" hidden>
+    <header class="dash__top">
+      <div>
+        <h1 class="dash__title">Criadoras · funil /insta</h1>
+        <p class="dash__sub" id="dashSub">carregando…</p>
+      </div>
+      <div class="dash__actions">
+        <a class="btn-ghost" href="/pedro" style="text-decoration:none;display:inline-flex;align-items:center">Quiz</a>
+        <button class="btn-ghost" id="reloadBtn" type="button">Atualizar</button>
+        <button class="btn-ghost" id="exportBtn" type="button">Export CSV</button>
+        <button class="btn-ghost" id="logoutBtn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="filters">
+      <label>De <input type="date" id="fromDate" /></label>
+      <label>Até <input type="date" id="toDate" /></label>
+      <label>Status
+        <select id="statusFilter">
+          <option value="">todos</option>
+          <option value="completed">completou</option>
+          <option value="partial">parcial</option>
+        </select>
+      </label>
+      <label>Busca
+        <input type="search" id="searchQ" placeholder="@, publi, app…" />
+      </label>
+      <button class="btn-ghost" id="clearFilters" type="button">Limpar</button>
+    </section>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="panel">
+      <h2 class="panel__h">Já fez publi?</h2>
+      <div id="chartPubli" class="insta-bars"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__h">Conhece o App do Paizão?</h2>
+      <div id="chartApp" class="insta-bars"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__h">Leads <span id="leadsCount" class="muted"></span></h2>
+      <div class="tablewrap">
+        <table class="leads">
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Instagram</th>
+              <th>Seg. IG</th>
+              <th>TikTok</th>
+              <th>Seg. TT</th>
+              <th>Já fez publi?</th>
+              <th>Conhece o app?</th>
+              <th>Etapa</th>
+              <th>Completou?</th>
+              <th>Origem</th>
+            </tr>
+          </thead>
+          <tbody id="leadsBody"></tbody>
+        </table>
+      </div>
+      <p class="muted" id="dbHint" style="font-size:12px;margin-top:12px"></p>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/admin-insta.js?v=1"></script>
+</body>
+</html>

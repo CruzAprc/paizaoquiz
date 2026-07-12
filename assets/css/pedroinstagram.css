@@ -1,0 +1,63 @@
+/* Painel /pedroinstagram — extras em cima do admin.css */
+
+.insta-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.insta-bar {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.2fr) 1fr auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.insta-bar__label {
+  font-weight: 600;
+  color: var(--tx, #281e44);
+  min-width: 0;
+  word-break: break-word;
+}
+.insta-bar__track {
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(124, 58, 237, 0.12);
+  overflow: hidden;
+}
+.insta-bar__fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  min-width: 2px;
+  transition: width 0.35s ease;
+}
+.insta-bar__n {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--tx-soft, #6c6488);
+  white-space: nowrap;
+}
+
+.leads td code {
+  font-size: 12px;
+  background: rgba(124, 58, 237, 0.08);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.leads .ok {
+  color: #16a34a;
+  font-weight: 700;
+}
+.leads .partial {
+  color: #d97706;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .insta-bar {
+    grid-template-columns: 1fr auto;
+  }
+  .insta-bar__track {
+    grid-column: 1 / -1;
+  }
+}
