@@ -2,6 +2,8 @@
 /pedro              /pedro.html              200
 /pedroinstagram     /pedroinstagram.html     200
 /aula-1             /aula-1.html             200
+/onboarding         /onboarding.html         200
+/onbording          /onboarding.html         200
 /insta              /insta.html              200
 /insta/*            /insta.html              200
 /*                  /index.html              200

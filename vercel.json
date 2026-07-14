@@ -4,6 +4,8 @@
     { "source": "/pedro", "destination": "/pedro.html" },
     { "source": "/pedroinstagram", "destination": "/pedroinstagram.html" },
     { "source": "/aula-1", "destination": "/aula-1.html" },
+    { "source": "/onboarding", "destination": "/onboarding.html" },
+    { "source": "/onbording", "destination": "/onboarding.html" },
     { "source": "/insta", "destination": "/insta.html" },
     { "source": "/insta/(.*)", "destination": "/insta.html" },
     { "source": "/(.*)", "destination": "/index.html" }
