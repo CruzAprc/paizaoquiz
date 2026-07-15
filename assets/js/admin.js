@@ -33,11 +33,14 @@
   };
   function slugFor(i) {
     var s = QUIZ[i]; if (!s) return null;
+    // slug explícito (video-niic / video-liz na bifurcação por foco)
+    if (s.slug) return s.slug;
     if (s.type === "question") return (s.id && ROUTE_BY_QID[s.id] != null) ? ROUTE_BY_QID[s.id] : ("etapa-" + i);
     return (ROUTE_BY_TYPE[s.type] != null) ? ROUTE_BY_TYPE[s.type] : ("etapa-" + i);
   }
   function labelFor(i) {
     var s = QUIZ[i]; if (!s) return "etapa " + i;
+    if (s.label) return s.label;
     if (s.type === "question") {
       var sl = slugFor(i) || "";
       return "Pergunta " + String(sl).replace("pergunta-", "");
@@ -46,7 +49,8 @@
   }
 
   // Ordem do funil = ordem real das telas no QUIZ (fluxo atual), chave = URL/slug.
-  // Ex.: [pergunta-1, pergunta-3, pergunta-4, …, video-liz, pergunta-2, …, mini-vsl-2]
+  // Depoimentos em bifurcação (showIf/hideIf) compartilham parallelGroup + mesmo depth.
+  // Ex.: […, pergunta-2, video-niic || video-liz, pergunta-6, …]
   var FUNNEL_STEPS = [];
   var SLUG_TO_FLOW = {}; // slug → índice no FUNNEL_STEPS
   QUIZ.forEach(function (s, i) {
@@ -56,17 +60,37 @@
     if (slug == null) return;
     // dedupe: se o mesmo slug aparecer 2x (ex. q6/q7), mantém a 1ª ocorrência no fluxo
     if (Object.prototype.hasOwnProperty.call(SLUG_TO_FLOW, slug)) return;
+    var parallelGroup = null;
+    if (s.showIf || s.hideIf) parallelGroup = "branch:" + (s.type || "step");
+    // depoimentos video-niic / video-liz sempre no mesmo grupo (mesmo sem showIf no futuro)
+    if (slug === "video-niic" || slug === "video-liz") parallelGroup = "branch:depoimento";
     var step = {
       slug: slug,
       path: slug === "" ? "/" : ("/" + slug),
       label: labelFor(i),
       type: s.type || "",
       quizIndex: i,
-      qid: s.id || null
+      qid: s.id || null,
+      parallelGroup: parallelGroup,
+      handle: s.topName || s.handle || null
     };
     SLUG_TO_FLOW[slug] = FUNNEL_STEPS.length;
     FUNNEL_STEPS.push(step);
   });
+  // depth linear; irmãos da bifurcação ficam no MESMO depth (não somam 2 etapas no funil)
+  (function assignDepths() {
+    var d = 0;
+    for (var i = 0; i < FUNNEL_STEPS.length; i++) {
+      var st = FUNNEL_STEPS[i];
+      var prev = i > 0 ? FUNNEL_STEPS[i - 1] : null;
+      if (prev && st.parallelGroup && st.parallelGroup === prev.parallelGroup) {
+        st.depth = prev.depth;
+      } else {
+        st.depth = d;
+        d += 1;
+      }
+    }
+  })();
   var ENTRY_SLUG = FUNNEL_STEPS.length ? FUNNEL_STEPS[0].slug : "pergunta-1";
   var OFFER_FLOW = (function () {
     for (var i = 0; i < FUNNEL_STEPS.length; i++) if (FUNNEL_STEPS[i].type === "offer") return i;
@@ -368,6 +392,167 @@
     };
   }
 
+  /* ---- Pós-bifurcação: drop na P6 por trilha (Niic secar × Liz outros) ----
+     Contagens exactas via head:count (não baixa todas as rows).
+     Trilha = q2_foco "Emagrecer e secar" → Niic; demais focos → Liz. */
+  var P6_SLUG = "pergunta-6";
+  var FOCO_SECAR = "Emagrecer e secar";
+  var FOCO_LIZ = ["Ganhar massa", "Os dois juntos"];
+
+  function slugsAfterP6() {
+    var i6 = SLUG_TO_FLOW[P6_SLUG];
+    if (i6 == null) return [];
+    var d6 = FUNNEL_STEPS[i6].depth;
+    var out = [];
+    for (var i = 0; i < FUNNEL_STEPS.length; i++) {
+      if (FUNNEL_STEPS[i].depth > d6) out.push(FUNNEL_STEPS[i].slug);
+    }
+    return out;
+  }
+
+  async function countLeads(applyFilters) {
+    if (!client) return 0;
+    var w = activeWindow();
+    var q = client.from("paizao_quiz_leads").select("id", { count: "exact", head: true });
+    if (w.fromISO) q = q.gte("created_at", w.fromISO);
+    if (w.toISO) q = q.lt("created_at", w.toISO);
+    if (applyFilters) q = applyFilters(q);
+    var res = await q;
+    if (res.error) {
+      console.warn("[pedro] countLeads:", res.error.message);
+      return null;
+    }
+    return res.count || 0;
+  }
+
+  async function loadBranchP6Stats() {
+    var after = slugsAfterP6();
+    // Niic / secar
+    var niicVideo = await countLeads(function (q) {
+      return q.eq("q2_foco", FOCO_SECAR).eq("last_step_slug", "video-niic");
+    });
+    var niicP6 = await countLeads(function (q) {
+      return q.eq("q2_foco", FOCO_SECAR).eq("last_step_slug", P6_SLUG);
+    });
+    var niicPast = after.length
+      ? await countLeads(function (q) {
+          return q.eq("q2_foco", FOCO_SECAR).in("last_step_slug", after);
+        })
+      : 0;
+    // também conta quem parou no vídeo sem q2_foco gravado (edge) — só slug
+    var niicVideoSlugOnly = await countLeads(function (q) {
+      return q.eq("last_step_slug", "video-niic").or("q2_foco.is.null,q2_foco.eq.");
+    });
+
+    // Liz / outros focos
+    var lizVideo = await countLeads(function (q) {
+      return q.in("q2_foco", FOCO_LIZ).eq("last_step_slug", "video-liz");
+    });
+    var lizP6 = await countLeads(function (q) {
+      return q.in("q2_foco", FOCO_LIZ).eq("last_step_slug", P6_SLUG);
+    });
+    var lizPast = after.length
+      ? await countLeads(function (q) {
+          return q.in("q2_foco", FOCO_LIZ).in("last_step_slug", after);
+        })
+      : 0;
+    // video-liz total stops (incl. secar legado antes da bifurcação)
+    var lizVideoAll = await countLeads(function (q) {
+      return q.eq("last_step_slug", "video-liz");
+    });
+    var niicVideoAll = await countLeads(function (q) {
+      return q.eq("last_step_slug", "video-niic");
+    });
+    // P6 total por slug (sem filtro de foco) — referência
+    var p6All = await countLeads(function (q) {
+      return q.eq("last_step_slug", P6_SLUG);
+    });
+
+    // se count falhou (null), aborta
+    if (niicP6 == null || lizP6 == null) {
+      return { error: "sem permissão ou falha ao contar" };
+    }
+
+    return {
+      niic: {
+        stopVideo: niicVideoAll != null ? niicVideoAll : (niicVideo || 0),
+        stopVideoTagged: niicVideo || 0,
+        stopP6: niicP6 || 0,
+        pastP6: niicPast || 0
+      },
+      liz: {
+        stopVideo: lizVideoAll != null ? lizVideoAll : (lizVideo || 0),
+        stopVideoTagged: lizVideo || 0,
+        stopP6: lizP6 || 0,
+        pastP6: lizPast || 0
+      },
+      p6All: p6All || 0,
+      orphanVideoOnly: niicVideoSlugOnly || 0
+    };
+  }
+
+  function renderBranchP6(stats) {
+    var el = $("branchP6");
+    if (!el) return;
+    if (!stats) {
+      el.innerHTML = '<p class="muted">carregando…</p>';
+      return;
+    }
+    if (stats.error) {
+      el.innerHTML = '<p class="muted">Não deu pra calcular: ' + esc(stats.error) + "</p>";
+      return;
+    }
+
+    function card(kind, title, sub, s) {
+      var reachedP6 = (s.stopP6 || 0) + (s.pastP6 || 0);
+      var dropP6 = reachedP6 > 0 ? pct(s.stopP6, reachedP6) : 0;
+      // de quem chegou no bloco pós-vídeo (parou no vídeo + chegou P6+)
+      var afterVideoPool = (s.stopVideo || 0) + reachedP6;
+      var leftAtP6OfPool = afterVideoPool > 0 ? pct(s.stopP6, afterVideoPool) : 0;
+      return (
+        '<div class="branchp6__card branchp6__card--' + kind + '">' +
+          '<p class="branchp6__h">' + esc(title) + "</p>" +
+          '<p class="branchp6__sub">' + esc(sub) + "</p>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam no vídeo</span>' +
+            '<span class="branchp6__v">' + s.stopVideo + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam na <b>Pergunta 6</b></span>' +
+            '<span class="branchp6__v branchp6__v--drop">' + s.stopP6 + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Passaram da P6</span>' +
+            '<span class="branchp6__v branchp6__v--ok">' + s.pastP6 + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Chegaram na P6 (pararam + passaram)</span>' +
+            '<span class="branchp6__v">' + reachedP6 + "</span></div>" +
+          '<div class="branchp6__foot">' +
+            'Das que <b>chegaram na P6</b>, <b class="branchp6__v--drop">' + dropP6 + "%</b> saíram nela" +
+            " (" + s.stopP6 + " de " + reachedP6 + "). " +
+            "Das que passaram do vídeo (vídeo+P6+), <b>" + leftAtP6OfPool + "%</b> ficaram na P6." +
+          "</div>" +
+        "</div>"
+      );
+    }
+
+    el.innerHTML =
+      '<div class="branchp6__grid">' +
+        card(
+          "niic",
+          "🎬 Trilha Niic",
+          "Foco = Emagrecer e secar → /video-niic → P6",
+          stats.niic
+        ) +
+        card(
+          "liz",
+          "🎬 Trilha Liz",
+          "Foco = massa / os dois → /video-liz → P6",
+          stats.liz
+        ) +
+      "</div>" +
+      '<p class="muted" style="font-size:12px;margin:4px 0 0">' +
+        "Total que pararam na P6 (qualquer foco): <b>" + stats.p6All + "</b>" +
+        " · Niic P6 + Liz P6 (taggeados): <b>" +
+        ((stats.niic.stopP6 || 0) + (stats.liz.stopP6 || 0)) +
+        "</b> · filtro de data do painel." +
+      "</p>";
+  }
+
   async function load(opts) {
     opts = opts || {};
     var w = activeWindow();
@@ -375,6 +560,7 @@
     $("dashSub").textContent = "carregando…";
     $("reloadBtn").disabled = true;
     var t0 = performance.now();
+    if ($("branchP6")) $("branchP6").innerHTML = '<p class="muted">carregando bifurcação…</p>';
 
     try {
       // 1) tenta RPC (rápido) — a menos que saibamos que não existe
@@ -389,6 +575,10 @@
           // (quando origin está setado, origins só tem 1 item — mantém opções anteriores se vazio)
           buildUtmOptions(overview.origins || []);
           render();
+          // bifurcação P6 em paralelo (não bloqueia o resto se falhar)
+          loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
+            renderBranchP6({ error: (e && e.message) || String(e) });
+          });
           var ms = Math.round(performance.now() - t0);
           $("dashSub").textContent = (overview.pageviews || 0) + " pageviews · " + windowLabel() +
             " · servidor " + ms + "ms";
@@ -425,6 +615,9 @@
       overview._rawPurchases = purchases;
 
       render();
+      loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
+        renderBranchP6({ error: (e && e.message) || String(e) });
+      });
       var ms2 = Math.round(performance.now() - t0);
       $("dashSub").textContent = (overview.pageviews || 0) + " pageviews · " + windowLabel() +
         " · client " + ms2 + "ms" +
@@ -493,8 +686,11 @@
 
   /* ----------------------------------------------------------- RENDER
      Retenção por URL (last_step_slug), ordem = FUNNEL_STEPS (fluxo atual).
-     Entrada = FUNNEL_STEPS[0] = /pergunta-1 = PageView. */
-  function reachedFromFunnel(funnel) {
+     Entrada = FUNNEL_STEPS[0] = /pergunta-1 = PageView.
+     Bifurcação (video-niic || video-liz): mesmo depth — quem parou num irmão
+     NÃO conta como “alcançou” o outro; quem avançou depois conta nos dois
+     como “passou do depoimento” só via depth do passo seguinte. */
+  function stopsFromFunnel(funnel) {
     var n = FUNNEL_STEPS.length;
     var byStep = [];
     var i;
@@ -505,7 +701,6 @@
       var slug = f.slug;
       var count = f.n || 0;
       if (!count) return;
-      // normaliza aliases
       if (slug == null || slug === "(sem etapa)") {
         unknown += count;
         return;
@@ -514,25 +709,65 @@
         byStep[SLUG_TO_FLOW[slug]] += count;
         return;
       }
-      // slug antigo/desconhecido: não some — conta no topo (pageview)
       unknown += count;
     });
+    return { byStep: byStep, unknown: unknown };
+  }
 
-    // cumulativo monotônico: quem parou em i também "alcançou" 0..i
-    var reached = [];
+  function reachedFromFunnel(funnel) {
+    var n = FUNNEL_STEPS.length;
+    var stops = stopsFromFunnel(funnel);
+    var byStep = stops.byStep;
+    var unknown = stops.unknown;
+    var i;
+
+    // max depth
+    var maxD = 0;
+    for (i = 0; i < n; i++) if ((FUNNEL_STEPS[i].depth || 0) > maxD) maxD = FUNNEL_STEPS[i].depth;
+
+    // por depth: soma de quem PAROU em qualquer step desse depth
+    var byDepth = [];
+    for (i = 0; i <= maxD; i++) byDepth[i] = 0;
+    for (i = 0; i < n; i++) byDepth[FUNNEL_STEPS[i].depth] += byStep[i] || 0;
+
+    // cumulativo por depth (quem parou em d ou depois)
+    var reachedDepth = [];
     var acc = 0;
-    for (i = n - 1; i >= 0; i--) {
-      acc += byStep[i];
-      reached[i] = acc;
+    for (i = maxD; i >= 0; i--) {
+      acc += byDepth[i];
+      reachedDepth[i] = acc;
     }
+
+    var reached = [];
+    for (i = 0; i < n; i++) {
+      var st = FUNNEL_STEPS[i];
+      var d = st.depth || 0;
+      var hasSibling = false;
+      var j;
+      for (j = 0; j < n; j++) {
+        if (j !== i && FUNNEL_STEPS[j].depth === d && FUNNEL_STEPS[j].parallelGroup) {
+          hasSibling = true;
+          break;
+        }
+      }
+      if (hasSibling && st.parallelGroup) {
+        // irmão da bifurcação: pararam AQUI + todo mundo que PASSOU desse depth
+        var after = d < maxD ? (reachedDepth[d + 1] || 0) : 0;
+        reached[i] = (byStep[i] || 0) + after;
+      } else {
+        reached[i] = reachedDepth[d] || 0;
+      }
+    }
+
     // leads sem slug + desconhecidos entram só no topo (PageView / pergunta-1)
     if (n > 0) {
       reached[0] = (reached[0] || 0) + unknown;
-      // se o total de pageviews do overview for maior (linhas criadas), usa como teto do topo
       if (overview && overview.pageviews != null && overview.pageviews > reached[0]) {
         reached[0] = overview.pageviews;
       }
     }
+    // expõe paradas (drop no step) pra UI dos vídeos
+    reached._byStep = byStep;
     return reached;
   }
 
@@ -594,15 +829,28 @@
     return '<div class="kpi"><div class="kpi__v">' + esc(value) + '</div><div class="kpi__l">' + esc(label) + '</div><div class="kpi__s">' + esc(sub) + '</div></div>';
   }
 
+  function prevDistinctDepthIndex(i) {
+    var d = FUNNEL_STEPS[i] ? FUNNEL_STEPS[i].depth : null;
+    for (var k = i - 1; k >= 0; k--) {
+      if (FUNNEL_STEPS[k].depth !== d) return k;
+    }
+    return -1;
+  }
+
   function renderFunnel(reached) {
     var iOffer = OFFER_FLOW;
     var pv = reached[0] || 1;
+    var byStep = reached._byStep || [];
     renderRetBars(reached);
 
-    // gargalo = pior retenção step-a-step DEPOIS da entrada (ignora o 100% do pageview)
+    // gargalo = pior retenção step-a-step DEPOIS da entrada (pula irmãos da bifurcação)
     var minRet = 2, minIdx = -1, j;
     for (j = 1; j <= iOffer; j++) {
-      var pr = reached[j - 1] || 0, r = pr > 0 ? (reached[j] || 0) / pr : 1;
+      var prevI = prevDistinctDepthIndex(j);
+      if (prevI < 0) continue;
+      // se é irmão (mesmo depth do anterior na lista), não usa como gargalo linear
+      if (FUNNEL_STEPS[j].depth === FUNNEL_STEPS[j - 1].depth) continue;
+      var pr = reached[prevI] || 0, r = pr > 0 ? (reached[j] || 0) / pr : 1;
       if (r < minRet) { minRet = r; minIdx = j; }
     }
 
@@ -610,18 +858,34 @@
     for (var i = 0; i <= iOffer && i < FUNNEL_STEPS.length; i++) {
       var st = FUNNEL_STEPS[i];
       var cum = pct(reached[i], pv);
-      var stepPct = i > 0 ? pct(reached[i], reached[i - 1] || 1) : 100;
-      var drop = i > 0 ? Math.max(0, (reached[i - 1] || 0) - (reached[i] || 0)) : 0;
+      var prevI2 = prevDistinctDepthIndex(i);
+      var stepPct = i > 0 && prevI2 >= 0 ? pct(reached[i], reached[prevI2] || 1) : 100;
+      var stopped = byStep[i] || 0;
+      var isBranch = !!(st.parallelGroup && (
+        (i > 0 && FUNNEL_STEPS[i - 1].depth === st.depth) ||
+        (i + 1 <= iOffer && FUNNEL_STEPS[i + 1] && FUNNEL_STEPS[i + 1].depth === st.depth)
+      ));
+      // na bifurcação o "drop" que importa = quem PAROU nesse vídeo
+      var drop = isBranch
+        ? stopped
+        : (i > 0 && prevI2 >= 0 ? Math.max(0, (reached[prevI2] || 0) - (reached[i] || 0)) : 0);
       var vid = isVideoStep(st);
       var name = stepTitle(st, i === 0);
-      var cls = "rfn" + (i === minIdx ? " fn--bottleneck" : "") + (vid ? " rfn--vid" : "") + (i === 0 ? " rfn--top" : "");
+      if (st.handle && vid) name = st.label + " (" + st.handle + ") · " + st.path;
+      var cls = "rfn" + (i === minIdx ? " fn--bottleneck" : "") + (vid ? " rfn--vid" : "") +
+        (isBranch ? " rfn--branch" : "") + (i === 0 ? " rfn--top" : "");
+      var numHtml = (reached[i] || 0) + ' <span class="muted">(' + cum + '%)</span>';
+      if (isBranch) {
+        numHtml += ' <span class="fn__drop" title="pararam neste vídeo">pararam ' + stopped + '</span>';
+      } else if (drop > 0) {
+        numHtml += ' <span class="fn__drop">−' + drop + '</span>';
+      }
       rows.push(
-        '<div class="' + cls + '" title="' + esc(st.path) + '">' +
-          '<div class="fn__lbl">' + (vid ? "🎬 " : "") + esc(name) + '</div>' +
+        '<div class="' + cls + '" title="' + esc(st.path) + (isBranch ? " · bifurcação por foco" : "") + '">' +
+          '<div class="fn__lbl">' + (vid ? "🎬 " : "") + (isBranch ? "↳ " : "") + esc(name) + '</div>' +
           '<div class="fn__ret">' + stepPct + '%</div>' +
           '<div class="fn__barwrap"><div class="fn__bar" style="width:' + cum + '%"></div></div>' +
-          '<div class="fn__num">' + (reached[i] || 0) + ' <span class="muted">(' + cum + '%)</span>' +
-          (drop > 0 ? ' <span class="fn__drop">−' + drop + '</span>' : '') + '</div>' +
+          '<div class="fn__num">' + numHtml + '</div>' +
         '</div>'
       );
     }
@@ -632,6 +896,7 @@
     var el = $("retCurve"); if (!el) return;
     var iOffer = OFFER_FLOW;
     var pv = reached[0] || 1;
+    var byStep = reached._byStep || [];
     var bars = [];
     for (var i = 0; i <= iOffer && i < FUNNEL_STEPS.length; i++) {
       var st = FUNNEL_STEPS[i];
@@ -639,15 +904,23 @@
       var pctv = Math.round(frac * 1000) / 10;
       var h = Math.max(2, Math.round(frac * 100));
       var vid = isVideoStep(st);
+      var isBranch = !!(st.parallelGroup && (
+        (i > 0 && FUNNEL_STEPS[i - 1].depth === st.depth) ||
+        (i + 1 <= iOffer && FUNNEL_STEPS[i + 1] && FUNNEL_STEPS[i + 1].depth === st.depth)
+      ));
       // barras: nome curto (slug) pra caber; title tem o completo
       var shortName = i === 0 ? "P1 · PV" : (st.type === "question"
         ? ("P" + String(st.slug || "").replace("pergunta-", ""))
-        : (st.label || st.slug));
+        : (st.slug === "video-niic" ? "Niic" : st.slug === "video-liz" ? "Liz" : (st.label || st.slug)));
       var fullName = stepTitle(st, i === 0);
-      var cls = "rb" + (vid ? " rb--vid" : "") + (i === 0 ? " rb--first" : "");
+      if (st.handle) fullName = (st.label || "") + " " + st.handle + " · " + st.path;
+      var stopped = byStep[i] || 0;
+      var tip = fullName + " · alcançaram " + (reached[i] || 0) + " (" + pctv + "%)";
+      if (isBranch) tip += " · pararam neste vídeo: " + stopped;
+      var cls = "rb" + (vid ? " rb--vid" : "") + (isBranch ? " rb--branch" : "") + (i === 0 ? " rb--first" : "");
       bars.push(
-        '<div class="' + cls + '" title="' + esc(fullName) + ' · ' + (reached[i] || 0) + ' (' + pctv + '%)">' +
-          '<div class="rb__pct">' + pctv + '%</div>' +
+        '<div class="' + cls + '" title="' + esc(tip) + '">' +
+          '<div class="rb__pct">' + (isBranch ? stopped + "↓" : pctv + "%") + '</div>' +
           '<div class="rb__col"><div class="rb__fill" style="height:' + h + '%"></div></div>' +
           '<div class="rb__name">' + (vid ? "🎬 " : "") + esc(shortName) + '</div>' +
         '</div>'
