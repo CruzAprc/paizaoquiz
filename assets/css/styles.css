@@ -198,6 +198,15 @@ body::after {
   background-position: center, center !important;
   color: transparent !important;
 }
+/* foto da Niic (@niic.ca) — depoimento trilha "Emagrecer e secar" */
+.avatar-niic {
+  background-image: url("../img/niic-avatar.jpg"), var(--ig-ring) !important;
+  background-clip: padding-box, border-box !important;
+  background-origin: border-box !important;
+  background-size: cover, cover !important;
+  background-position: center, center !important;
+  color: transparent !important;
+}
 .topbar__count {
   flex: 0 0 auto; font-size: 12.5px; font-weight: 700;
   color: var(--tx-soft); padding: 5px 11px;

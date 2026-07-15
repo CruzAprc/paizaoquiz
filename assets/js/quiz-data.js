@@ -139,16 +139,40 @@ const QUIZ = [
     ]
   },
 
-  /* ------------------- BREAK 2 — DEPOIMENTO EM VÍDEO (Liz) ---------------
-     Só o @ dela no insta em cima + o vídeo dela falando embaixo. Sem copy.  */
+  /* ------------------- BREAK 2 — DEPOIMENTO (bifurcação por q2_foco) -------
+     Emagrecer e secar → Niic (@niic.ca). Demais focos → Liz (@lizx.macedo).
+     showIf / hideIf resolvidos em app.js (pula a tela invisível).          */
+
+  // trilha SECAR — depoimento Niic (stories IG, mesmo formato da Liz)
   {
     type: "testimonial",
-    topName: "@lizx.macedo",     // @ real da Liz no topo do stories
+    slug: "video-niic",
+    label: "Vídeo Niic",
+    showIf: { q2_foco: "Emagrecer e secar" },
+    topName: "@niic.ca",
+    topSub: "4,2 mi · aluna do paizão",
+    avatar: "avatar-niic",
+    verified: true,
+    videoLen: 27.2,              // duração real (HLS): ~27.19s
+    embed: `<vturb-smartplayer id="vid-6a5799081d54d0d2b4e6933b" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a5799081d54d0d2b4e6933b/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    preload: [
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a5799081d54d0d2b4e6933b/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a5798d098a1466b1167c553/main.m3u8", as: "fetch" }
+    ]
+  },
+
+  // demais focos (massa / os dois) — depoimento Liz
+  {
+    type: "testimonial",
+    slug: "video-liz",
+    label: "Vídeo Liz",
+    hideIf: { q2_foco: "Emagrecer e secar" },
+    topName: "@lizx.macedo",
     topSub: "aluna do paizão",
     avatar: "avatar-liz",
     verified: true,
     videoLen: 58,                // duração real (vturb HLS): 57.99s
-    // player vturb (streaming) em stories full-screen
     embed: `<vturb-smartplayer id="vid-6a313a5eb2d74681824e0933" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
       { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", as: "script" },

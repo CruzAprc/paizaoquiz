@@ -53,11 +53,14 @@
   };
   function slugFor(i) {
     const s = QUIZ[i]; if (!s) return null;
+    // slug explícito (ex.: video-niic / video-liz na bifurcação)
+    if (s.slug) return s.slug;
     if (s.type === "question") return (s.id && ROUTE_BY_QID[s.id] != null) ? ROUTE_BY_QID[s.id] : ("etapa-" + i);
     return (ROUTE_BY_TYPE[s.type] != null) ? ROUTE_BY_TYPE[s.type] : ("etapa-" + i);
   }
   function labelFor(i) {
     const s = QUIZ[i]; if (!s) return "";
+    if (s.label) return s.label;
     if (s.type === "question") { const sl = slugFor(i); return "Pergunta " + String(sl).replace("pergunta-", ""); }
     return LABEL_BY_TYPE[s.type] || s.type;
   }
@@ -68,6 +71,48 @@
     let p = String(path || "/").replace(/^\/+|\/+$/g, "");
     if (p === "") return 0;
     return Object.prototype.hasOwnProperty.call(SLUG_TO_INDEX, p) ? SLUG_TO_INDEX[p] : null;
+  }
+
+  /* Bifurcação de telas: showIf / hideIf batem nas respostas (ex.: q2_foco). */
+  function isScreenVisible(s) {
+    if (!s) return false;
+    if (s.showIf) {
+      const keys = Object.keys(s.showIf);
+      for (let k = 0; k < keys.length; k++) {
+        if (state.answers[keys[k]] !== s.showIf[keys[k]]) return false;
+      }
+    }
+    if (s.hideIf) {
+      const keys = Object.keys(s.hideIf);
+      for (let k = 0; k < keys.length; k++) {
+        if (state.answers[keys[k]] === s.hideIf[keys[k]]) return false;
+      }
+    }
+    return true;
+  }
+  function nextVisibleIndex(from) {
+    let i = from + 1;
+    while (i < QUIZ.length && !isScreenVisible(QUIZ[i])) i++;
+    return i;
+  }
+  function prevVisibleIndex(from) {
+    let i = from - 1;
+    while (i >= 0 && !isScreenVisible(QUIZ[i])) i--;
+    return i;
+  }
+  // se a rota cair numa tela da branch errada, desvia pra irmã visível (mesmo type) ou pula
+  function resolveVisibleIndex(i) {
+    if (i == null || i < 0) return 0;
+    if (i >= QUIZ.length) return QUIZ.length - 1;
+    if (isScreenVisible(QUIZ[i])) return i;
+    const t = QUIZ[i].type;
+    for (let j = 0; j < QUIZ.length; j++) {
+      if (QUIZ[j].type === t && isScreenVisible(QUIZ[j])) return j;
+    }
+    const fwd = nextVisibleIndex(i - 1);
+    if (fwd < QUIZ.length) return fwd;
+    const back = prevVisibleIndex(i + 1);
+    return back >= 0 ? back : 0;
   }
 
   // persistência da sessão (refresh retoma a etapa; deep-link não-alcançado reinicia)
@@ -117,8 +162,10 @@
   // olha as próximas ~4 telas e adianta o download do vídeo nativo OU dos assets
   // do player (vturb) que vierem — sem pesar na landing/perguntas iniciais.
   function prefetchUpcomingVideo(fromIndex) {
-    for (let i = fromIndex + 1; i <= fromIndex + 4 && i < QUIZ.length; i++) {
-      const s = QUIZ[i]; if (!s) continue;
+    let seen = 0;
+    for (let i = fromIndex + 1; i < QUIZ.length && seen < 4; i++) {
+      const s = QUIZ[i]; if (!s || !isScreenVisible(s)) continue;
+      seen++;
       if (s.video) { prefetch(s.video); break; }
       if (s.preload && s.preload.length) { s.preload.forEach(p => prefetchUrl(p.href, p.as)); break; }
     }
@@ -598,10 +645,10 @@
           </div>
           <div class="story__bars"><span class="story__bar"><i id="testiFill"></i></span></div>
           <div class="story__top">
-            <span class="story__av igring avatar-liz"></span>
+            <span class="story__av igring ${s.avatar || "avatar-liz"}"></span>
             <div class="story__id">
-              <b>${s.handle || s.author || "Liz Macedo"}${verified}</b>
-              <small>aluna do paizão</small>
+              <b>${s.handle || s.topName || s.author || "aluna"}${verified}</b>
+              <small>${s.topSub || "aluna do paizão"}</small>
             </div>
           </div>
           <button class="story__soundbtn" id="testiSound" hidden>
@@ -1037,7 +1084,8 @@
 
   /* --------------------------------------------------------- NAVEGAÇÃO */
   function next() {
-    if (state.index < QUIZ.length - 1) go(state.index + 1);
+    const i = nextVisibleIndex(state.index);
+    if (i < QUIZ.length) go(i);
   }
   // voltar delega pro histórico do navegador (popstate sincroniza a tela pela URL)
   function back() {
@@ -1049,6 +1097,7 @@
     if (i == null) i = 0;
     // loading é transitório: ao cair nele pelo histórico, pula pro diagnóstico
     if (QUIZ[i] && QUIZ[i].type === "loading") i = Math.min(QUIZ.length - 1, i + 1);
+    i = resolveVisibleIndex(i);
     state.index = i;
     persist();
     render();
@@ -1092,7 +1141,7 @@
     } else if (saved && typeof saved.index === "number" && saved.index >= parsed) {
       // refresh no meio do funil: retoma a etapa e as respostas
       state.answers = saved.answers || {};
-      state.index = parsed;
+      state.index = resolveVisibleIndex(parsed);
     } else {
       state.index = 0; // deep-link sem ter chegado lá -> reinicia (integridade do funil)
     }
