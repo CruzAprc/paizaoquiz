@@ -425,7 +425,75 @@
     return res.count || 0;
   }
 
+  async function loadAbVsl2Stats() {
+    // PostgREST: answers->>'ab_vsl2'
+    var aAll = await countLeads(function (q) {
+      return q.filter("answers->>ab_vsl2", "eq", "A");
+    });
+    var bAll = await countLeads(function (q) {
+      return q.filter("answers->>ab_vsl2", "eq", "B");
+    });
+    var aOffer = await countLeads(function (q) {
+      return q.filter("answers->>ab_vsl2", "eq", "A").eq("last_step_slug", "mini-vsl-2");
+    });
+    var bOffer = await countLeads(function (q) {
+      return q.filter("answers->>ab_vsl2", "eq", "B").eq("last_step_slug", "mini-vsl-2");
+    });
+    if (aAll == null || bAll == null) return { error: "sem permissão ou falha ao contar" };
+    return {
+      A: { tagged: aAll || 0, stoppedOffer: aOffer || 0 },
+      B: { tagged: bAll || 0, stoppedOffer: bOffer || 0 }
+    };
+  }
+
+  function renderAbVsl2(stats) {
+    var el = $("abVsl2");
+    if (!el) return;
+    if (!stats) { el.innerHTML = '<p class="muted">carregando…</p>'; return; }
+    if (stats.error) {
+      el.innerHTML = '<p class="muted">Não deu pra calcular: ' + esc(stats.error) + "</p>";
+      return;
+    }
+    var a = stats.A.tagged || 0;
+    var b = stats.B.tagged || 0;
+    var tot = a + b;
+    var aShare = tot > 0 ? pct(a, tot) : 0;
+    var bShare = tot > 0 ? pct(b, tot) : 0;
+
+    el.innerHTML =
+      '<div class="kpis" style="margin-bottom:12px">' +
+        kpi("Variante A", a, aShare + "% do A/B · controle") +
+        kpi("Variante B", b, bShare + "% do A/B · teste") +
+        kpi("Total no teste", tot, "leads que viram a oferta com tag") +
+        kpi("Split", (aShare + "/" + bShare), "meta ≈ 50/50") +
+      "</div>" +
+      '<div class="branchp6__grid">' +
+        '<div class="branchp6__card branchp6__card--liz">' +
+          '<p class="branchp6__h">A · controle</p>' +
+          '<p class="branchp6__sub">VSL que já estava no ar (vid-6a31dcf2…)</p>' +
+          '<div class="branchp6__row"><span class="branchp6__k">Chegaram na oferta (tag A)</span>' +
+            '<span class="branchp6__v">' + a + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam na oferta (last = mini-vsl-2)</span>' +
+            '<span class="branchp6__v">' + (stats.A.stoppedOffer || 0) + "</span></div>" +
+          '<div class="branchp6__foot">Share do teste: <b>' + aShare + "%</b></div>" +
+        "</div>" +
+        '<div class="branchp6__card branchp6__card--niic">' +
+          '<p class="branchp6__h">B · teste</p>' +
+          '<p class="branchp6__sub">VSL nova (vid-6a5798cf…)</p>' +
+          '<div class="branchp6__row"><span class="branchp6__k">Chegaram na oferta (tag B)</span>' +
+            '<span class="branchp6__v">' + b + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam na oferta (last = mini-vsl-2)</span>' +
+            '<span class="branchp6__v">' + (stats.B.stoppedOffer || 0) + "</span></div>" +
+          '<div class="branchp6__foot">Share do teste: <b>' + bShare + "%</b></div>" +
+        "</div>" +
+      "</div>" +
+      '<p class="muted" style="font-size:12px;margin:8px 0 0">' +
+        "Fonte: <code>answers.ab_vsl2</code> no filtro de data do painel. A lead não vê a letra A/B — só o vídeo muda." +
+      "</p>";
+  }
+
   async function loadBranchP6Stats() {
+
     var after = slugsAfterP6();
     // Niic / secar
     var niicVideo = await countLeads(function (q) {
@@ -575,9 +643,12 @@
           // (quando origin está setado, origins só tem 1 item — mantém opções anteriores se vazio)
           buildUtmOptions(overview.origins || []);
           render();
-          // bifurcação P6 em paralelo (não bloqueia o resto se falhar)
+          // bifurcação P6 + A/B VSL2 em paralelo (não bloqueia o resto se falhar)
           loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
             renderBranchP6({ error: (e && e.message) || String(e) });
+          });
+          loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
+            renderAbVsl2({ error: (e && e.message) || String(e) });
           });
           var ms = Math.round(performance.now() - t0);
           $("dashSub").textContent = (overview.pageviews || 0) + " pageviews · " + windowLabel() +
@@ -617,6 +688,9 @@
       render();
       loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
         renderBranchP6({ error: (e && e.message) || String(e) });
+      });
+      loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
+        renderAbVsl2({ error: (e && e.message) || String(e) });
       });
       var ms2 = Math.round(performance.now() - t0);
       $("dashSub").textContent = (overview.pageviews || 0) + " pageviews · " + windowLabel() +
@@ -957,6 +1031,18 @@
     $("answers").innerHTML = out.join("") || '<p class="muted">Sem respostas no filtro atual.</p>';
   }
 
+  function abVsl2Of(l) {
+    if (!l) return null;
+    if (l.answers && l.answers.ab_vsl2) return String(l.answers.ab_vsl2).toUpperCase();
+    // fallback: last_step_label grava "… · A" / "… · B" no offer
+    var lab = String(l.last_step_label || "");
+    var m = lab.match(/(?:^|[·\s])([AB])\s*$/);
+    if (m) return m[1];
+    if (/\bA\b/.test(lab) && /VSL 2|oferta|mini-vsl/i.test(lab)) return "A";
+    if (/\bB\b/.test(lab) && /VSL 2|oferta|mini-vsl/i.test(lab)) return "B";
+    return null;
+  }
+
   function renderTable(leads) {
     $("leadsCount").textContent = "(" + (overview.pageviews || leads.length) + " · mostrando " + Math.min(200, leads.length) + ")";
     var rows = (leads || []).slice(0, 200).map(function (l) {
@@ -973,17 +1059,22 @@
       } else {
         etapa = "—";
       }
+      var ab = abVsl2Of(l);
+      var abCell = ab
+        ? '<span class="ok" title="answers.ab_vsl2">VSL2 · ' + esc(ab) + "</span>"
+        : '<span class="muted">—</span>';
       return "<tr>" +
         "<td>" + esc(when) + "</td>" +
         "<td>" + esc(l.q1_idade || "—") + "</td>" +
         "<td>" + esc(l.q2_foco || "—") + "</td>" +
         "<td>" + esc(l.imc != null ? l.imc : "—") + "</td>" +
+        "<td>" + abCell + "</td>" +
         "<td>" + esc(etapa) + "</td>" +
         "<td>" + (l.completed ? '<span class="ok">✓</span>' : '<span class="muted">—</span>') + "</td>" +
         "<td>" + esc(origem(l)) + "</td>" +
         "</tr>";
     }).join("");
-    $("leadsBody").innerHTML = rows || '<tr><td colspan="7" class="muted">Nenhum lead no filtro.</td></tr>';
+    $("leadsBody").innerHTML = rows || '<tr><td colspan="8" class="muted">Nenhum lead no filtro.</td></tr>';
   }
 
   boot();

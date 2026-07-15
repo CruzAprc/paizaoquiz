@@ -359,22 +359,49 @@ const QUIZ = [
 
   /* --------------------------- MINI VSL 2 (oferta) — POST DE REELS -------
      Formato de post do Instagram/Reels: header + vídeo + ações + legenda (H1).
-     O BOTÃO/CTA é da própria vturb (dentro do vídeo) — não colocamos botão nosso. */
+     O BOTÃO/CTA é da própria vturb (dentro do vídeo) — não colocamos botão nosso.
+
+     A/B silencioso (app.js): 50/50 sticky em localStorage (paizao_ab_vsl2).
+     A lead NÃO vê qual variante caiu. Forçar no teste: ?vsl2=A ou ?vsl2=B.
+     Grava answers.ab_vsl2 = "A"|"B" no lead. */
   {
     type: "offer",
     reels: true,
     author: "Carlão Personal das Estrelas",
     handle: "@oficial_carlaopersonal",
     likes: "12.4 mil",
-    // H1 = legenda do post (EDITE este texto à vontade)
+    // H1 = legenda do post (igual nas duas variantes — só o vídeo muda)
     h1: "Seu plano já tá pronto 💛 dá o play que o paizão te conta tudo",
-    // player vturb (a VSL já tem o botão de oferta dentro dela)
+    // fallback = controle (A) se o A/B não resolver
     embed: `<vturb-smartplayer id="vid-6a31dcf23f5844587f036b0d" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
       { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", as: "script" },
       { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
       { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a31dc326c302b45d80f7367/main.m3u8", as: "fetch" }
-    ]
+    ],
+    abTest: {
+      key: "vsl2",
+      variants: {
+        A: {
+          label: "controle",
+          embed: `<vturb-smartplayer id="vid-6a31dcf23f5844587f036b0d" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+          preload: [
+            { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a31dcf23f5844587f036b0d/v4/player.js", as: "script" },
+            { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+            { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a31dc326c302b45d80f7367/main.m3u8", as: "fetch" }
+          ]
+        },
+        B: {
+          label: "teste",
+          embed: `<vturb-smartplayer id="vid-6a5798cfdfe1a1353cb9872c" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a5798cfdfe1a1353cb9872c/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+          preload: [
+            { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a5798cfdfe1a1353cb9872c/v4/player.js", as: "script" },
+            { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+            { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a579710d7c6e4aeca4d423c/main.m3u8", as: "fetch" }
+          ]
+        }
+      }
+    }
   }
 
 ];

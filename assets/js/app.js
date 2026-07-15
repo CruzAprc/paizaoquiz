@@ -161,10 +161,56 @@
   }
   // olha as próximas ~4 telas e adianta o download do vídeo nativo OU dos assets
   // do player (vturb) que vierem — sem pesar na landing/perguntas iniciais.
+  /* ---- A/B silencioso (ex.: Mini VSL 2) ---------------------------------
+     Sorteio 50/50 sticky em localStorage. A lead nunca vê o nome da variante.
+     Forçar no teu teste: ?vsl2=A ou ?vsl2=B (key do abTest). */
+  function pickAbVariant(test) {
+    if (!test || !test.variants) return null;
+    const key = test.key || "ab";
+    const storageKey = "paizao_ab_" + key;
+    const variants = test.variants;
+    const ids = Object.keys(variants);
+    if (!ids.length) return null;
+
+    try {
+      const forced = String(ENTRY_PARAMS.get(key) || ENTRY_PARAMS.get("ab_" + key) || "").toUpperCase();
+      if (forced && variants[forced]) {
+        try { localStorage.setItem(storageKey, forced); } catch (e) {}
+        return forced;
+      }
+    } catch (e) {}
+
+    try {
+      const cur = localStorage.getItem(storageKey);
+      if (cur && variants[cur]) return cur;
+    } catch (e) {}
+
+    // 50/50 se A/B; uniforme se tiver mais variantes
+    const finalPick = ids.length === 2
+      ? (Math.random() < 0.5 ? ids[0] : ids[1])
+      : ids[Math.floor(Math.random() * ids.length)];
+    try { localStorage.setItem(storageKey, finalPick); } catch (e) {}
+    return finalPick;
+  }
+
+  function resolveScreen(raw) {
+    if (!raw) return raw;
+    if (!raw.abTest || !raw.abTest.variants) return raw;
+    const id = pickAbVariant(raw.abTest);
+    if (!id || !raw.abTest.variants[id]) return raw;
+    const conf = raw.abTest.variants[id];
+    return Object.assign({}, raw, conf, {
+      abKey: raw.abTest.key || "ab",
+      abVariant: id,
+      abLabel: conf.label || id
+    });
+  }
+
   function prefetchUpcomingVideo(fromIndex) {
     let seen = 0;
     for (let i = fromIndex + 1; i < QUIZ.length && seen < 4; i++) {
-      const s = QUIZ[i]; if (!s || !isScreenVisible(s)) continue;
+      const raw = QUIZ[i]; if (!raw || !isScreenVisible(raw)) continue;
+      const s = resolveScreen(raw);
       seen++;
       if (s.video) { prefetch(s.video); break; }
       if (s.preload && s.preload.length) { s.preload.forEach(p => prefetchUrl(p.href, p.as)); break; }
@@ -337,7 +383,7 @@
 
   function render() {
     cleanupScreen();
-    const screen = QUIZ[state.index];
+    const screen = resolveScreen(QUIZ[state.index]);
     if (!screen) return;
     updateChrome(screen);
 
@@ -358,8 +404,34 @@
     };
     (map[screen.type] || (() => {}))(root, screen);
 
+    // A/B: grava variante no lead (answers.ab_vsl2) — invisível pra filhota
+    if (screen.abVariant) {
+      const abField = "ab_" + (screen.abKey || "ab");
+      state.answers[abField] = screen.abVariant;
+      try {
+        if (window.PaizaoDB && PaizaoDB.recordAnswer) {
+          PaizaoDB.recordAnswer(abField, screen.abVariant, state.answers);
+        }
+      } catch (e) {}
+      try {
+        (window.dataLayer = window.dataLayer || []).push({
+          event: "quiz_ab",
+          ab_key: screen.abKey,
+          ab_variant: screen.abVariant,
+          step: state.index,
+          slug: slugFor(state.index)
+        });
+      } catch (e) {}
+    }
+
     // rastreia a etapa alcançada (drop-off) + dispara o "pageview" da rota
-    if (window.PaizaoDB && PaizaoDB.recordStep) PaizaoDB.recordStep(state.index, slugFor(state.index), labelFor(state.index));
+    // label do offer inclui a variante só no banco (ex.: "Mini VSL 2 (oferta) · A") — não aparece na UI
+    const stepLabel = screen.abVariant
+      ? (labelFor(state.index) + " · " + screen.abVariant)
+      : labelFor(state.index);
+    if (window.PaizaoDB && PaizaoDB.recordStep) {
+      PaizaoDB.recordStep(state.index, slugFor(state.index), stepLabel);
+    }
     trackRoute(state.index);
     // adianta o download do próximo vídeo (Carlão/Liz) pra não travar na hora
     prefetchUpcomingVideo(state.index);

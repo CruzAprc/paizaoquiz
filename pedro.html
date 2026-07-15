@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/admin.css?v=85" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=87" />
 </head>
 <body>
   <!-- LOGIN -->
@@ -63,6 +63,15 @@
     </section>
 
     <section class="panel">
+      <h2 class="panel__h">A/B Mini VSL 2 (oferta)</h2>
+      <p class="muted" style="font-size:12.5px;margin:0 0 12px">
+        Sorteio 50/50 invisível · grava <code>answers.ab_vsl2</code> = A (controle) ou B (teste).
+        Conta quem <strong>chegou na oferta</strong> com cada variante (no filtro de data).
+      </p>
+      <div id="abVsl2" class="branchp6">carregando…</div>
+    </section>
+
+    <section class="panel">
       <h2 class="panel__h">Pós-bifurcação · saíram na Pergunta 6?</h2>
       <p class="muted" style="font-size:12.5px;margin:0 0 12px">
         Depois do vídeo (Niic se <strong>Emagrecer e secar</strong> · Liz nos outros focos), a próxima tela é a P6 (corpo).
@@ -88,7 +97,7 @@
       <div class="tablewrap">
         <table class="leads">
           <thead><tr>
-            <th>Quando</th><th>Idade</th><th>Foco</th><th>IMC</th><th>Etapa atingida</th><th>Completou?</th><th>Origem</th>
+            <th>Quando</th><th>Idade</th><th>Foco</th><th>IMC</th><th>A/B VSL2</th><th>Etapa atingida</th><th>Completou?</th><th>Origem</th>
           </tr></thead>
           <tbody id="leadsBody"></tbody>
         </table>
@@ -97,7 +106,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/quiz-data.js?v=81"></script>
-  <script src="assets/js/admin.js?v=85"></script>
+  <script src="assets/js/quiz-data.js?v=82"></script>
+  <script src="assets/js/admin.js?v=87"></script>
 </body>
 </html>

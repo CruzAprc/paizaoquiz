@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview A/B VSL2</title>
+  <style>
+    body { font: 16px/1.45 system-ui, sans-serif; padding: 24px; max-width: 420px; margin: 0 auto; }
+    a { display: block; padding: 14px 16px; margin: 10px 0; border-radius: 12px; background: #1a1a22; color: #fff; text-decoration: none; font-weight: 700; }
+    a.b { background: #7c3aed; }
+    p { color: #666; font-size: 14px; }
+    code { background: #f3f3f5; padding: 2px 6px; border-radius: 6px; }
+  </style>
+  <script>
+    function go(v) {
+      try {
+        localStorage.setItem("paizao_ab_vsl2", v);
+        // seed session near the end of quiz so ?s= works with answers
+        sessionStorage.setItem("paizao_quiz_state", JSON.stringify({
+          index: 19,
+          answers: {
+            q1_idade: "30-39",
+            q2_foco: "Emagrecer e secar",
+            q3_rotina: "Eu treino, mas não vejo resultado",
+            q4_porque: "Nunca tive um plano feito pra mim",
+            q5_trava: "Falta de motivação e disciplina",
+            q7_deixou: "Uns quilinhos a mais",
+            q8_um_ano: "Exatamente onde tô agora",
+            q9_plano: "Com certeza",
+            q10_cobrando: "Faz toda diferença",
+            q11_comunidade: "É disso que eu preciso",
+            q12_alimentacao: "Tento, mas me perco",
+            q13_primeiro: "Barriga mais seca",
+            altura_cm: 165,
+            peso_kg: 72,
+            imc: 26.4,
+            q14_compromisso: "Tô pronta, paizão 🙏",
+            ab_vsl2: v
+          }
+        }));
+      } catch (e) {}
+      // s=19 = offer (último step no array ativo de 20 telas, index 0..19)
+      location.href = "/index.html?s=19&vsl2=" + encodeURIComponent(v);
+    }
+  </script>
+</head>
+<body>
+  <h1>A/B Mini VSL 2</h1>
+  <p>A lead não vê diferença de layout — só o vídeo muda. Sticky em <code>localStorage.paizao_ab_vsl2</code>.</p>
+  <a href="javascript:go('A')">Abrir variante <b>A · controle</b></a>
+  <a class="b" href="javascript:go('B')">Abrir variante <b>B · teste</b></a>
+  <p>Ou no funil real: <code>?vsl2=A</code> / <code>?vsl2=B</code> em qualquer URL do quiz.</p>
+</body>
+</html>
