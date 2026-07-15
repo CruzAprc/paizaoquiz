@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview · Vídeo Niic</title>
+  <script>
+    // seed answers with foco secar e pula pro depoimento da Niic
+    try {
+      sessionStorage.setItem("paizao_quiz_state", JSON.stringify({
+        index: 5,
+        answers: {
+          q1_idade: "30-39",
+          q3_rotina: "Eu treino, mas não vejo resultado",
+          q4_porque: "Nunca soube treinar do jeito certo",
+          q5_trava: "Falta de motivação e disciplina",
+          q2_foco: "Emagrecer e secar"
+        }
+      }));
+    } catch (e) {}
+    // s=5 = video-niic no array ativo (sem landing/story)
+    location.replace("/index.html?s=5");
+  </script>
+</head>
+<body>
+  <p style="font:16px system-ui;padding:24px">Abrindo depoimento da Niic…</p>
+</body>
+</html>
