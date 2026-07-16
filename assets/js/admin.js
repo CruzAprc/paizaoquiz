@@ -115,7 +115,21 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  // % inteiro (barras de funil / retenção visual)
   var pct = function (n, d) { return d > 0 ? Math.round((n / d) * 100) : 0; };
+  // % fino pra convert rate — 2 casas se <1%, 1 casa se <10%, senão inteiro
+  function cvr(n, d) {
+    if (!(d > 0)) return "0%";
+    var r = (Number(n) || 0) / d * 100;
+    if (r <= 0) return "0%";
+    if (r < 0.1) return r.toFixed(2).replace(".", ",") + "%";
+    if (r < 1) return r.toFixed(2).replace(".", ",") + "%";
+    if (r < 10) return r.toFixed(1).replace(".", ",") + "%";
+    return Math.round(r) + "%";
+  }
+  function cvrSub(n, d, label) {
+    return cvr(n, d) + " · " + (Number(n) || 0) + " / " + (Number(d) || 0) + (label ? " · " + label : "");
+  }
 
   var client = null;
   try {
@@ -459,36 +473,44 @@
     var tot = a + b;
     var aShare = tot > 0 ? pct(a, tot) : 0;
     var bShare = tot > 0 ? pct(b, tot) : 0;
+    var pageviews = (overview && overview._pageviews) || (overview && overview.pageviews) || 0;
+    var reachedOffer = (overview && overview._reachedOffer) || 0;
+    // % da oferta que caiu em B (hoje force B ≈ 100%)
+    var bOfOffer = cvr(b, reachedOffer || tot || 0);
+    var bOfPv = cvr(b, pageviews);
 
     el.innerHTML =
       '<div class="kpis" style="margin-bottom:12px">' +
-        kpi("Variante A", a, aShare + "% do A/B · controle") +
-        kpi("Variante B", b, bShare + "% do A/B · teste") +
-        kpi("Total no teste", tot, "leads que viram a oferta com tag") +
-        kpi("Split", (aShare + "/" + bShare), "meta ≈ 50/50") +
+        kpi("PageViews (quiz)", pageviews, "entrada do funil na janela") +
+        kpi("Oferta · tag B (VSL nova)", b, cvrSub(b, pageviews, "do pageview")) +
+        kpi("Oferta · tag A (controle)", a, cvrSub(a, pageviews, "do pageview · deve ≈ 0% com force B")) +
+        kpi("Share B na oferta", bShare + "%", b + " de " + tot + " com tag A/B · mode force B") +
       "</div>" +
       '<div class="branchp6__grid">' +
         '<div class="branchp6__card branchp6__card--liz">' +
           '<p class="branchp6__h">A · controle</p>' +
-          '<p class="branchp6__sub">VSL que já estava no ar (vid-6a31dcf2…)</p>' +
-          '<div class="branchp6__row"><span class="branchp6__k">Chegaram na oferta (tag A)</span>' +
+          '<p class="branchp6__sub">VSL antiga (vid-6a31dcf2…) — desligada no force B</p>' +
+          '<div class="branchp6__row"><span class="branchp6__k">PageViews da variante (viram A)</span>' +
             '<span class="branchp6__v">' + a + "</span></div>" +
-          '<div class="branchp6__row"><span class="branchp6__k">Pararam na oferta (last = mini-vsl-2)</span>' +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam em /mini-vsl-2 com A</span>' +
             '<span class="branchp6__v">' + (stats.A.stoppedOffer || 0) + "</span></div>" +
-          '<div class="branchp6__foot">Share do teste: <b>' + aShare + "%</b></div>" +
+          '<div class="branchp6__foot">Share: <b>' + aShare + "%</b> · vs pageview: <b>" + cvr(a, pageviews) + "</b></div>" +
         "</div>" +
         '<div class="branchp6__card branchp6__card--niic">' +
-          '<p class="branchp6__h">B · teste</p>' +
-          '<p class="branchp6__sub">VSL nova (vid-6a5798cf…)</p>' +
-          '<div class="branchp6__row"><span class="branchp6__k">Chegaram na oferta (tag B)</span>' +
+          '<p class="branchp6__h">B · teste (ATIVA)</p>' +
+          '<p class="branchp6__sub">VSL nova (vid-6a5798cf…) — 100% do tráfego</p>' +
+          '<div class="branchp6__row"><span class="branchp6__k">PageViews da variante (viram B)</span>' +
             '<span class="branchp6__v">' + b + "</span></div>" +
-          '<div class="branchp6__row"><span class="branchp6__k">Pararam na oferta (last = mini-vsl-2)</span>' +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam em /mini-vsl-2 com B</span>' +
             '<span class="branchp6__v">' + (stats.B.stoppedOffer || 0) + "</span></div>" +
-          '<div class="branchp6__foot">Share do teste: <b>' + bShare + "%</b></div>" +
+          '<div class="branchp6__foot">Share: <b>' + bShare + "%</b> · vs pageview: <b>" + bOfPv +
+            "</b> · vs oferta total: <b>" + bOfOffer + "</b></div>" +
         "</div>" +
       "</div>" +
       '<p class="muted" style="font-size:12px;margin:8px 0 0">' +
-        "Fonte: <code>answers.ab_vsl2</code> no filtro de data do painel. A lead não vê a letra A/B — só o vídeo muda." +
+        "PageView da variante = lead que <b>renderizou</b> a oferta com <code>answers.ab_vsl2</code>. " +
+        "CVR de venda fica no bloco Kirvano (compras / pageviews e compras / oferta). " +
+        "Com <code>force: \"B\"</code>, A deve ficar perto de zero (só sticky antigo ou <code>?vsl2=A</code>)." +
       "</p>";
   }
 
@@ -651,8 +673,8 @@
             renderAbVsl2({ error: (e && e.message) || String(e) });
           });
           var ms = Math.round(performance.now() - t0);
-          $("dashSub").textContent = (overview.pageviews || 0) + " pageviews · " + windowLabel() +
-            " · servidor " + ms + "ms";
+          // render() já montou o resumo (pageviews + oferta + CVR); só anexa o tempo
+          $("dashSub").textContent = ($("dashSub").textContent || "") + " · servidor " + ms + "ms";
           $("reloadBtn").disabled = false;
           return;
         }
@@ -693,7 +715,7 @@
         renderAbVsl2({ error: (e && e.message) || String(e) });
       });
       var ms2 = Math.round(performance.now() - t0);
-      $("dashSub").textContent = (overview.pageviews || 0) + " pageviews · " + windowLabel() +
+      $("dashSub").textContent = ($("dashSub").textContent || "") +
         " · client " + ms2 + "ms" +
         (_rpcAvailable === false ? " · ⚠️ rode o SQL da RPC p/ ficar instantâneo" : "");
     } catch (e) {
@@ -740,7 +762,7 @@
       base._rawPurchases = overview._rawPurchases;
       overview = base;
       render();
-      $("dashSub").textContent = (overview.pageviews || 0) + " pageviews · " + windowLabel() + " · filtro local";
+      $("dashSub").textContent = ($("dashSub").textContent || "") + " · filtro local";
     } else {
       load();
     }
@@ -848,39 +870,61 @@
   function render() {
     if (!overview) return;
     var reached = reachedFromFunnel(overview.funnel);
-    var pageviews = reached[0] || overview.pageviews || 0;
+    // PageView = leads que abriram o quiz na janela (1 lead = 1 sessão = 1 pageview de entrada)
+    var pageviews = overview.pageviews != null
+      ? overview.pageviews
+      : (reached[0] || 0);
+    if (reached[0] && reached[0] > pageviews) pageviews = reached[0];
     // passaram da 1ª URL (saíram de /pergunta-1)
     var pastEntry = reached.length > 1 ? (reached[1] || 0) : pageviews;
     var reachedOffer = reached[OFFER_FLOW] || 0;
-    var completed = overview.completed || 0;
+    var approved = ((overview.sales || {}).approved) || 0;
     var entryPath = FUNNEL_STEPS[0] ? FUNNEL_STEPS[0].path : "/pergunta-1";
 
+    // guarda denominadores pra A/B e vendas
+    overview._pageviews = pageviews;
+    overview._reachedOffer = reachedOffer;
+    overview._pastEntry = pastEntry;
+
+    $("dashSub").textContent =
+      pageviews + " pageviews · " +
+      reachedOffer + " na oferta · " +
+      approved + " compras · " +
+      "CVR " + cvr(approved, pageviews) + " · " +
+      windowLabel();
+
     $("kpis").innerHTML = [
-      kpi("PageViews", pageviews, "entrada " + entryPath),
-      kpi("Passaram da P1", pastEntry, pct(pastEntry, pageviews) + "% dos pageviews"),
-      kpi("Chegaram na oferta", reachedOffer, pct(reachedOffer, pageviews) + "% dos pageviews"),
-      kpi("Completaram (flag)", completed, "⚠️ subconta — ver retenção")
+      kpi("PageViews", pageviews, "pessoas que abriram o quiz · " + entryPath),
+      kpi("Chegaram na oferta", reachedOffer, cvrSub(reachedOffer, pageviews, "do pageview")),
+      kpi("Compras", approved, "vendas aprovadas (Kirvano)"),
+      kpi("CVR PageView → Compra", cvr(approved, pageviews), cvrSub(approved, pageviews, "compras / pageviews"))
     ].join("");
 
-    renderSales(pastEntry);
+    renderSales(pageviews, reachedOffer);
     renderFunnel(reached);
     renderAnswers(overview.answers || []);
     renderTable(overview.recent || []);
   }
 
-  function renderSales(startedLeads) {
+  function renderSales(pageviews, reachedOffer) {
     var s = (overview && overview.sales) || {};
     var approved = s.approved || 0;
     var receita = parseFloat(s.receita) || 0;
     var events = s.events || 0;
     var ticket = approved ? receita / approved : 0;
+    var pv = pageviews || 0;
+    var offer = reachedOffer || 0;
 
-    $("salesSub").textContent = events + " eventos · " + approved + " aprovadas";
+    $("salesSub").textContent =
+      events + " eventos · " + approved + " aprovadas · " +
+      "ticket " + money(ticket) + " · " +
+      "CVR oferta " + cvr(approved, offer) + " · CVR PV " + cvr(approved, pv);
+
     $("salesKpis").innerHTML = [
-      kpi("Compras", approved, "vendas aprovadas"),
-      kpi("Receita", money(receita), "soma das aprovadas"),
-      kpi("Ticket médio", money(ticket), "por venda"),
-      kpi("Conv. de leads", pct(approved, startedLeads || 0) + "%", "compras / começaram")
+      kpi("Compras", approved, "vendas aprovadas na janela"),
+      kpi("Receita", money(receita), "ticket médio " + money(ticket)),
+      kpi("CVR Oferta → Compra", cvr(approved, offer), cvrSub(approved, offer, "compras / chegaram na oferta")),
+      kpi("CVR PageView → Compra", cvr(approved, pv), cvrSub(approved, pv, "compras / pageviews"))
     ].join("");
 
     var byUtm = s.by_utm || [];
