@@ -6,4 +6,5 @@
 /onbording          /onboarding.html         200
 /insta              /insta.html              200
 /insta/*            /insta.html              200
+/upsell             /upsell.html             200
 /*                  /index.html              200

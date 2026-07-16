@@ -8,6 +8,7 @@
     { "source": "/onbording", "destination": "/onboarding.html" },
     { "source": "/insta", "destination": "/insta.html" },
     { "source": "/insta/(.*)", "destination": "/insta.html" },
+    { "source": "/upsell", "destination": "/upsell.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
