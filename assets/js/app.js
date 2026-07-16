@@ -163,7 +163,8 @@
   // do player (vturb) que vierem — sem pesar na landing/perguntas iniciais.
   /* ---- A/B silencioso (ex.: Mini VSL 2) ---------------------------------
      Sorteio 50/50 sticky em localStorage. A lead nunca vê o nome da variante.
-     Forçar no teu teste: ?vsl2=A ou ?vsl2=B (key do abTest). */
+     Forçar no teu teste: ?vsl2=A ou ?vsl2=B (key do abTest).
+     abTest.force = "B" manda 100% pra B (ignora sticky) — útil pra rodar só o teste. */
   function pickAbVariant(test) {
     if (!test || !test.variants) return null;
     const key = test.key || "ab";
@@ -172,6 +173,7 @@
     const ids = Object.keys(variants);
     if (!ids.length) return null;
 
+    // 1) querystring (?vsl2=A) — sempre vence (QA / preview)
     try {
       const forced = String(ENTRY_PARAMS.get(key) || ENTRY_PARAMS.get("ab_" + key) || "").toUpperCase();
       if (forced && variants[forced]) {
@@ -179,6 +181,15 @@
         return forced;
       }
     } catch (e) {}
+
+    // 2) force no config (ex.: 100% B no ar) — sobrescreve sticky antigo
+    if (test.force) {
+      const forcedId = String(test.force).toUpperCase();
+      if (variants[forcedId]) {
+        try { localStorage.setItem(storageKey, forcedId); } catch (e) {}
+        return forcedId;
+      }
+    }
 
     try {
       const cur = localStorage.getItem(storageKey);
