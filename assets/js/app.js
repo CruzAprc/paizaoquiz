@@ -541,9 +541,13 @@
       const grid = el('<div class="qgrid"></div>');
       s.options.forEach((text, i) => {
         const selected = state.answers[s.id] === text;
+        // P1 (e grids): 1ª imagem = LCP (high); demais lazy se não forem as 2 primeiras
+        // (idade/foco cabem na dobra — eager nas 2 de cima, lazy nas de baixo).
+        const load = i < 2 ? "eager" : "lazy";
+        const prio = i === 0 ? ' fetchpriority="high"' : "";
         const card = el(`
-          <button class="qcard ${selected ? "is-selected" : ""}">
-            <span class="qcard__imgwrap"><img class="qcard__img" src="${s.images[i]}" alt="${text}" loading="eager" decoding="async" /></span>
+          <button type="button" class="qcard ${selected ? "is-selected" : ""}">
+            <span class="qcard__imgwrap"><img class="qcard__img" src="${s.images[i]}" alt="${text}" width="420" height="320" loading="${load}" decoding="async"${prio} /></span>
             <span class="qcard__bar">${s.optionPrefix ? s.optionPrefix + " " : ""}${text}<span class="qcard__arrow">${ic.arrow}</span></span>
           </button>`);
         card.addEventListener("click", () => pick(text, grid, card));
