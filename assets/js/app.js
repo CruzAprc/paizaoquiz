@@ -37,7 +37,8 @@
   const ROUTE_BY_QID = {
     q1_idade: "pergunta-1", q2_foco: "pergunta-2", q3_rotina: "pergunta-3",
     q4_porque: "pergunta-4", q5_trava: "pergunta-5", q6_sozinha: "pergunta-6",
-    q7_deixou: "pergunta-6", q8_um_ano: "pergunta-7", q9_plano: "pergunta-8",
+    q7_deixou: "pergunta-6", q7b_nostalgia: "nostalgia", q8_um_ano: "pergunta-7",
+    q9_plano: "pergunta-8",
     q10_cobrando: "pergunta-9", q11_comunidade: "pergunta-10", q12_alimentacao: "pergunta-11",
     q13_primeiro: "pergunta-12", q14_compromisso: "pergunta-13",
   };
@@ -281,13 +282,43 @@
     if (key != null && key in tbl) return tbl[key];
     return ("_default" in tbl) ? tbl._default : fallback;
   }
-  // troca {foco}, {empatia} e {qID} genérico dentro de qualquer copy
+  // Data em America/Sao_Paulo + offset em dias.
+  // FONTE ÚNICA com o diagnóstico pós-loading: gold point do chart (dateOffset).
+  // short=true → "13 de ago" (chart); short=false → "13 de agosto" (pergunta)
+  function spDateLabel(offsetDays, short) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date());
+    const ymd = parts.split("-").map(Number);
+    const base = new Date(Date.UTC(ymd[0], ymd[1] - 1, ymd[2]));
+    base.setUTCDate(base.getUTCDate() + (offsetDays || 0));
+    const mesesShort = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+    const mesesLong = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    const mes = short === false ? mesesLong[base.getUTCMonth()] : mesesShort[base.getUTCMonth()];
+    return base.getUTCDate() + " de " + mes;
+  }
+  // Dias até a meta do plano = mesmo dateOffset do ponto gold do chart (default 28)
+  function planMetaDays() {
+    try {
+      const chart = (window.QUIZ || []).find((s) => s && s.type === "chart");
+      const gold = chart && (chart.points || []).find((p) => p && p.gold);
+      if (gold && gold.dateOffset != null) return Number(gold.dateOffset) || 28;
+    } catch (e) {}
+    return 28;
+  }
+  // troca {foco}, {empatia}, {data4semanas} e {qID} genérico dentro de qualquer copy
+  // {data4semanas} sai em <span class="q__date"> vermelho (HTML seguro: só data gerada por nós)
   function fillCopy(str) {
     if (!str) return str;
+    const dataPlano = spDateLabel(planMetaDays(), false);
     return str
       .replace("{foco}", persoVal("foco", state.answers.q2_foco, "mudar de corpo"))
       .replace("{primeiro}", persoVal("primeiro", state.answers.q13_primeiro, "o resultado que você quer"))
       .replace("{empatia}", persoVal("empatia", state.answers.q5_trava || state.answers.q6_sozinha, ""))
+      .replace("{data4semanas}", `<span class="q__date">${dataPlano}</span>`)
       .replace(/\{(q\d+_[a-z]+)\}/g, (_, id) => state.answers[id] || "");
   }
 
@@ -1049,14 +1080,7 @@
         if (!isNaN(idx) && points[idx] && trailBubbles[k]) points[idx].bubble = trailBubbles[k];
       });
     }
-    function spDateLabel(offsetDays) {
-      const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-      const ymd = parts.split("-").map(Number);
-      const base = new Date(Date.UTC(ymd[0], ymd[1] - 1, ymd[2]));
-      base.setUTCDate(base.getUTCDate() + offsetDays);
-      const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-      return base.getUTCDate() + " de " + meses[base.getUTCMonth()];
-    }
+    // spDateLabel: helper global (fillCopy + chart)
     // tira emoji residual de balões (ex.: 🔥 legado)
     const stripEmoji = (t) => String(t || "").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "").replace(/\s{2,}/g, " ").trim();
     const p0 = points[0] || {};
@@ -1064,7 +1088,14 @@
     const labelNow = "Hoje";
     const labelGoal = pGoal.dateOffset != null ? spDateLabel(pGoal.dateOffset) : (pGoal.label || "4 semaninhas");
     const bubbleNow = stripEmoji(fillCopy(p0.bubble || "você tá aqui"));
-    const bubbleGoal = stripEmoji(fillCopy(pGoal.bubble || "{primeiro}"));
+    // Cap sob a foto "Seu objetivo": o OBJETIVO do foco (q2_foco / afterBodyLabel),
+    // NÃO a parte do corpo do q13 ({primeiro} → "o bumbum" etc.).
+    // Se o balão do ponto gold já for copy de trilha (chartBubbles), usa ela.
+    let rawGoalCap = pGoal.bubble || "";
+    if (!rawGoalCap || /\{primeiro\}/.test(rawGoalCap) || rawGoalCap === "{primeiro}") {
+      rawGoalCap = persoVal("afterBodyLabel", state.answers.q2_foco, "seu objetivo") || "seu objetivo";
+    }
+    const bubbleGoal = stripEmoji(fillCopy(rawGoalCap));
 
     // IMC: frase única dentro do card (sem número solto, sem chip, sem quadro de 5 dias)
     let imcBlock = "";

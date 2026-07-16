@@ -33,6 +33,7 @@
     "q7_deixou", "q8_um_ano", "q9_plano", "q10_cobrando", "q11_comunidade",
     "q12_alimentacao", "q13_primeiro", "q14_compromisso",
     "altura_cm", "peso_kg", "imc"
+    // q7b_nostalgia: só no jsonb answers (sem coluna dedicada ainda)
   ];
 
   var client = null;

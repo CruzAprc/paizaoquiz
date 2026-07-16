@@ -14,10 +14,12 @@
   // ---- mapa de etapas por URL (espelha o roteador do app.js) ----
   // Landing desligada: a entrada do funil é /pergunta-1 (= PageView).
   // Retenção SEMPRE por last_step_slug (URL), na ordem real do QUIZ atual.
+  // Espelha app.js ROUTE_BY_QID (inclui q7b_nostalgia + slugs atuais)
   var ROUTE_BY_QID = {
     q1_idade: "pergunta-1", q2_foco: "pergunta-2", q3_rotina: "pergunta-3",
     q4_porque: "pergunta-4", q5_trava: "pergunta-5", q6_sozinha: "pergunta-6",
-    q7_deixou: "pergunta-6", q8_um_ano: "pergunta-7", q9_plano: "pergunta-8",
+    q7_deixou: "pergunta-6", q7b_nostalgia: "nostalgia", q8_um_ano: "pergunta-7",
+    q9_plano: "pergunta-8",
     q10_cobrando: "pergunta-9", q11_comunidade: "pergunta-10", q12_alimentacao: "pergunta-11",
     q13_primeiro: "pergunta-12", q14_compromisso: "pergunta-13"
   };
@@ -26,6 +28,23 @@
     vsl: "Mini VSL 1", measure: "Medidas", loading: "Montando plano",
     chart: "Diagnóstico", offer: "Mini VSL 2 (oferta)"
   };
+  // Labels curtos pra etapas com slug fora de pergunta-N (funil atual)
+  var LABEL_BY_QID = {
+    q1_idade: "Idade",
+    q2_foco: "Foco",
+    q3_rotina: "Rotina",
+    q4_porque: "Por que não conseguiu",
+    q5_trava: "O que te trava",
+    q7_deixou: "Corpo hoje (P6)",
+    q7b_nostalgia: "Nostalgia",
+    q8_um_ano: "Daqui 1 ano",
+    q9_plano: "Plano / falta",
+    q10_cobrando: "Cobrança",
+    q11_comunidade: "Comunidade",
+    q12_alimentacao: "Alimentação",
+    q13_primeiro: "Primeiro no espelho",
+    q14_compromisso: "Compromisso"
+  };
   var ROUTE_BY_TYPE = {
     landing: "", story: "video-carlao", testimonial: "video-liz", letter: "carta",
     vsl: "mini-vsl-1", measure: "medidas", loading: "montando",
@@ -33,17 +52,22 @@
   };
   function slugFor(i) {
     var s = QUIZ[i]; if (!s) return null;
-    // slug explícito (video-niic / video-liz na bifurcação por foco)
+    // slug explícito (video-niic / video-liz / nostalgia)
     if (s.slug) return s.slug;
     if (s.type === "question") return (s.id && ROUTE_BY_QID[s.id] != null) ? ROUTE_BY_QID[s.id] : ("etapa-" + i);
     return (ROUTE_BY_TYPE[s.type] != null) ? ROUTE_BY_TYPE[s.type] : ("etapa-" + i);
+  }
+  function stripHtml(html) {
+    return String(html == null ? "" : html).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
   }
   function labelFor(i) {
     var s = QUIZ[i]; if (!s) return "etapa " + i;
     if (s.label) return s.label;
     if (s.type === "question") {
+      if (s.id && LABEL_BY_QID[s.id]) return LABEL_BY_QID[s.id];
       var sl = slugFor(i) || "";
-      return "Pergunta " + String(sl).replace("pergunta-", "");
+      if (sl.indexOf("pergunta-") === 0) return "Pergunta " + sl.replace("pergunta-", "");
+      return sl || ("Q" + i);
     }
     return LABEL_BY_TYPE[s.type] || s.type;
   }
@@ -408,10 +432,18 @@
 
   /* ---- Pós-bifurcação: drop na P6 por trilha (Niic secar × Liz outros) ----
      Contagens exactas via head:count (não baixa todas as rows).
-     Trilha = q2_foco "Emagrecer e secar" → Niic; demais focos → Liz. */
+     Trilha secar (copy nova + legado) → Niic; demais focos → Liz. */
   var P6_SLUG = "pergunta-6";
-  var FOCO_SECAR = "Emagrecer e secar";
-  var FOCO_LIZ = ["Ganhar massa", "Os dois juntos"];
+  var FOCO_SECAR = [
+    "Quero me olhar no espelho e secar de verdade",
+    "Emagrecer e secar" // legado
+  ];
+  var FOCO_LIZ = [
+    "Quero curvas e corpo firme",
+    "Quero secar e firmar junto",
+    "Ganhar massa",
+    "Os dois juntos"
+  ];
 
   function slugsAfterP6() {
     var i6 = SLUG_TO_FLOW[P6_SLUG];
@@ -519,14 +551,14 @@
     var after = slugsAfterP6();
     // Niic / secar
     var niicVideo = await countLeads(function (q) {
-      return q.eq("q2_foco", FOCO_SECAR).eq("last_step_slug", "video-niic");
+      return q.in("q2_foco", FOCO_SECAR).eq("last_step_slug", "video-niic");
     });
     var niicP6 = await countLeads(function (q) {
-      return q.eq("q2_foco", FOCO_SECAR).eq("last_step_slug", P6_SLUG);
+      return q.in("q2_foco", FOCO_SECAR).eq("last_step_slug", P6_SLUG);
     });
     var niicPast = after.length
       ? await countLeads(function (q) {
-          return q.eq("q2_foco", FOCO_SECAR).in("last_step_slug", after);
+          return q.in("q2_foco", FOCO_SECAR).in("last_step_slug", after);
         })
       : 0;
     // também conta quem parou no vídeo sem q2_foco gravado (edge) — só slug
@@ -625,21 +657,24 @@
         card(
           "niic",
           "🎬 Trilha Niic",
-          "Foco = Emagrecer e secar → /video-niic → P6",
+          "Foco secar (novo + legado) → /video-niic → P6 corpo → /nostalgia…",
           stats.niic
         ) +
         card(
           "liz",
           "🎬 Trilha Liz",
-          "Foco = massa / os dois → /video-liz → P6",
+          "Foco curvas / secar+firmar (novo + legado) → /video-liz → P6 → /nostalgia…",
           stats.liz
         ) +
       "</div>" +
       '<p class="muted" style="font-size:12px;margin:4px 0 0">' +
-        "Total que pararam na P6 (qualquer foco): <b>" + stats.p6All + "</b>" +
-        " · Niic P6 + Liz P6 (taggeados): <b>" +
+        "Secar = <code>Quero me olhar no espelho e secar de verdade</code> (legado: Emagrecer e secar). " +
+        "Liz = curvas / secar e firmar junto (+ legado Ganhar massa / Os dois juntos). " +
+        "Depois da P6 vem <code>/nostalgia</code> (q7b). " +
+        "Total pararam na P6: <b>" + stats.p6All + "</b>" +
+        " · Niic+Liz taggeados na P6: <b>" +
         ((stats.niic.stopP6 || 0) + (stats.liz.stopP6 || 0)) +
-        "</b> · filtro de data do painel." +
+        "</b>." +
       "</p>";
   }
 
@@ -1070,7 +1105,10 @@
           '<div class="ans__barwrap"><div class="ans__bar" style="width:' + w + '%"></div></div>' +
           '<div class="ans__num">' + c + ' <span class="muted">' + w + '%</span></div></div>';
       }).join("");
-      out.push('<div class="ans"><div class="ans__q">' + esc(labelFor(i) + " · " + s.question) + '</div>' + bars + '</div>');
+      var qTxt = stripHtml(s.question || "");
+      // token de data no título: mostra genérico no painel
+      qTxt = qTxt.replace(/\{data4semanas\}/g, "…");
+      out.push('<div class="ans"><div class="ans__q">' + esc(labelFor(i) + " · " + qTxt) + '</div>' + bars + '</div>');
     });
     $("answers").innerHTML = out.join("") || '<p class="muted">Sem respostas no filtro atual.</p>';
   }

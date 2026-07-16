@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/admin.css?v=88" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=89" />
 </head>
 <body>
   <!-- LOGIN -->
@@ -50,7 +50,8 @@
     <section class="kpis" id="kpis"></section>
     <p class="muted" style="font-size:12px;margin:-12px 0 18px">
       <strong>PageView</strong> = 1 lead/sessão que abriu o quiz (entrada <code>/pergunta-1</code>).
-      <strong>CVR</strong> usa o denominador certo: compras ÷ pageviews e compras ÷ quem chegou na oferta (não “passaram da P1”).
+      <strong>CVR</strong> = compras ÷ pageviews e compras ÷ quem chegou na oferta.
+      Funil espelha o <code>quiz-data.js</code> atual (foco novo, <code>/nostalgia</code>, P12 Barriga/Bumbum/Coxas/Tudo, VSL2 force B).
     </p>
 
     <section class="panel">
@@ -69,30 +70,44 @@
     <section class="panel">
       <h2 class="panel__h">A/B Mini VSL 2 (oferta)</h2>
       <p class="muted" style="font-size:12.5px;margin:0 0 12px">
-        <strong>HOJE: 100% B</strong> (VSL nova · force no quiz-data) · grava <code>answers.ab_vsl2</code> = A|B.
-        Conta quem <strong>chegou na oferta</strong> com cada variante (no filtro de data). Pra voltar 50/50, remove <code>force: "B"</code>.
+        <strong>HOJE: 100% B</strong> (VSL nova · <code>force: "B"</code> no quiz-data · player <code>vid-6a5798cf…</code>).
+        Grava <code>answers.ab_vsl2</code> = A|B. Conta quem chegou na oferta com cada tag (filtro de data).
+        Pra voltar 50/50, remove o <code>force</code> no quiz-data.
       </p>
       <div id="abVsl2" class="branchp6">carregando…</div>
     </section>
 
     <section class="panel">
-      <h2 class="panel__h">Pós-bifurcação · saíram na Pergunta 6?</h2>
+      <h2 class="panel__h">Pós-bifurcação · saíram na Pergunta 6 (corpo)?</h2>
       <p class="muted" style="font-size:12.5px;margin:0 0 12px">
-        Depois do vídeo (Niic se <strong>Emagrecer e secar</strong> · Liz nos outros focos), a próxima tela é a P6 (corpo).
-        Aqui: quantos <strong>pararam no vídeo</strong>, quantos <strong>pararam na P6</strong> e quantos <strong>passaram da P6</strong> — por trilha.
+        Depois do depoimento:
+        <strong>Niic</strong> se foco = <em>Quero me olhar no espelho e secar de verdade</em>
+        (legado: Emagrecer e secar) ·
+        <strong>Liz</strong> nos outros focos (curvas / secar e firmar junto + legado).
+        Próxima tela = <strong>P6 corpo</strong> (<code>/pergunta-6</code>), depois <code>/nostalgia</code>.
+        Aqui: pararam no vídeo · pararam na P6 · passaram da P6 — por trilha.
       </p>
       <div id="branchP6" class="branchp6">carregando…</div>
     </section>
 
     <section class="panel">
-      <h2 class="panel__h">Retenção por etapa <span class="muted">· por URL · 🎬 = vídeo</span></h2>
+      <h2 class="panel__h">Retenção por etapa <span class="muted">· por URL · 🎬 = vídeo · inclui /nostalgia</span></h2>
       <div id="retCurve" class="retcurve"></div>
       <div id="funnel" class="funnel"></div>
-      <p class="muted" style="font-size:12px;margin:12px 0 0">Retenção pela URL alcançada (<code>last_step_slug</code>). Entrada = <strong>PageView · /pergunta-1</strong> (quiz abre direto nela). Cada linha = quantos chegaram pelo menos até aquela URL. A flag "Completaram" subconta — use "Chegaram na oferta" como fundo de funil.</p>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">
+        Retenção pela URL alcançada (<code>last_step_slug</code>), ordem do QUIZ atual.
+        Entrada = <strong>PageView · /pergunta-1</strong>.
+        Ordem real do meio: … → foco → Niic|Liz → P6 corpo → <strong>/nostalgia</strong> → 1 ano → Mini VSL 1 → … → P12 (Barriga/Bumbum/Coxas/Tudo) → … → oferta.
+        Use "Chegaram na oferta" como fundo de funil (flag Completaram subconta).
+      </p>
     </section>
 
     <section class="panel">
       <h2 class="panel__h">Respostas por pergunta</h2>
+      <p class="muted" style="font-size:12px;margin:0 0 12px">
+        Options novas (foco, trava, corpo, plano, primeiro no espelho) + strings legadas se ainda aparecerem em leads antigos.
+        <code>q7b_nostalgia</code> grava só no jsonb <code>answers</code> (sem coluna SQL) — pode não entrar nesta agregação RPC até o overview ser estendido.
+      </p>
       <div id="answers" class="answers"></div>
     </section>
 
@@ -109,8 +124,9 @@
     </section>
   </div>
 
+  <!-- quiz-data = MESMA fonte do funil (ordem/labels/options). Bump junto com o quiz. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/quiz-data.js?v=82"></script>
-  <script src="assets/js/admin.js?v=88"></script>
+  <script src="assets/js/quiz-data.js?v=93"></script>
+  <script src="assets/js/admin.js?v=89"></script>
 </body>
 </html>

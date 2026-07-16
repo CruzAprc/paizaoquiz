@@ -112,10 +112,10 @@ const QUIZ = [
     block: "O que te trava",
     question: "E o que mais te trava na hora de manter o treino?",
     options: [
-      "Falta de motivação e disciplina",
-      "Não sei o que fazer",
-      "Cansaço, chego sem energia",
-      "Falta de tempo"
+      "Largo na 2ª semana, sozinha não me cobro",
+      "Entro na academia e não sei o que fazer",
+      "Chego morta e o treino vira desculpa",
+      "Tempo some no dia e o treino fica por último"
     ]
   },
 
@@ -125,12 +125,13 @@ const QUIZ = [
     type: "question",
     id: "q2_foco",
     block: "Sobre você",
-    question: "E qual é o seu foco agora? O que você mais quer?",
+    // Trilha do plano (secar / massa / os dois) — tom oral do paizão, sem “entregasse UMA coisa”
+    question: "Me fala a real o que você mais quer pro seu corpo nessas 4 semaninhas?",
     grid: true,
     options: [
-      "Emagrecer e secar",
-      "Ganhar massa",
-      "Os dois juntos"
+      "Quero me olhar no espelho e secar de verdade",
+      "Quero curvas e corpo firme",
+      "Quero secar e firmar junto"
     ],
     images: [
       "assets/img/foco/foco-emagrecer.webp",
@@ -140,7 +141,7 @@ const QUIZ = [
   },
 
   /* ------------------- BREAK 2 — DEPOIMENTO (bifurcação por q2_foco) -------
-     Emagrecer e secar → Niic (@niic.ca). Demais focos → Liz (@lizx.macedo).
+     Secar de verdade → Niic (@niic.ca). Demais focos → Liz (@lizx.macedo).
      showIf / hideIf resolvidos em app.js (pula a tela invisível).          */
 
   // trilha SECAR — depoimento Niic (stories IG, mesmo formato da Liz)
@@ -148,7 +149,7 @@ const QUIZ = [
     type: "testimonial",
     slug: "video-niic",
     label: "Vídeo Niic",
-    showIf: { q2_foco: "Emagrecer e secar" },
+    showIf: { q2_foco: "Quero me olhar no espelho e secar de verdade" },
     topName: "@niic.ca",
     topSub: "4,2 mi · aluna do paizão",
     avatar: "avatar-niic",
@@ -167,7 +168,7 @@ const QUIZ = [
     type: "testimonial",
     slug: "video-liz",
     label: "Vídeo Liz",
-    hideIf: { q2_foco: "Emagrecer e secar" },
+    hideIf: { q2_foco: "Quero me olhar no espelho e secar de verdade" },
     topName: "@lizx.macedo",
     topSub: "aluna do paizão",
     avatar: "avatar-liz",
@@ -186,20 +187,33 @@ const QUIZ = [
     type: "question",
     id: "q7_deixou",
     block: "Seu corpo hoje",
-    question: "E o seu corpo hoje, qual imagem parece mais com você?",
+    question: "Onde você tá hoje? Sem julgamento, filhota, é só o ponto de partida.",
     // estilo BetterMe: cards com foto do corpo ATUAL (mantém o id q7_deixou -> coluna já existe no Supabase)
     grid: true,
     options: [
-      "No peso, mas falta definição",
-      "Magrinha",
-      "Uns quilinhos a mais",
-      "Bastante pra mudar, e tô decidida"
+      "No peso, mas falta aquela definição",
+      "Magrinha demais, quero formato",
+      "Uns quilinhos a mais que nenhuma roupa disfarça",
+      "Bastante pra mudar e dessa vez eu vou"
     ],
     images: [
       "assets/img/corpo/corpo-definicao.webp",
       "assets/img/corpo/corpo-magrinha.webp",
       "assets/img/corpo/corpo-quilinhos.webp",
       "assets/img/corpo/corpo-mudar.webp"
+    ]
+  },
+  /* Nostalgia (DanceGo) — INSERIDA entre corpo e “1 ano” (não substitui o 1 ano) */
+  {
+    type: "question",
+    id: "q7b_nostalgia",
+    block: "Seu corpo hoje",
+    question: "Lembra da última vez que você se olhou no espelho e gostou do que viu?",
+    options: [
+      "Foi esse ano",
+      "Faz uns 2 anos",
+      "Faz tanto tempo que quase esqueci",
+      "Sinceramente? Não lembro de gostar"
     ]
   },
   {
@@ -237,12 +251,12 @@ const QUIZ = [
     type: "question",
     id: "q9_plano",
     block: "O que muda o jogo",
-    question: "Agora me responde: se você tivesse um plano de treino e dieta feito SÓ pra você, isso mudaria o jogo?",
+    question: "O que mais te falta hoje pra o treino parar de ser copiado da internet?",
     options: [
-      "Com certeza",
-      "Acho que sim",
-      "Nunca tive isso",
-      "É exatamente o que eu preciso"
+      "Um plano feito pro meu corpo e rotina",
+      "Alguém me dizendo exato o que fazer",
+      "Só disciplina (eu já sei o que fazer)",
+      "As duas coisas: plano e cobrança"
     ],
     // mockups do app no espaço vazio abaixo das opções: Dieta à esquerda, Treino à direita
     decor: ["assets/img/mockup-dieta.webp", "assets/img/mockup-treino.webp"]
@@ -287,12 +301,22 @@ const QUIZ = [
     type: "question",
     id: "q13_primeiro",
     block: "O que muda o jogo",
-    question: "Me diz o que você mais quer ver mudando PRIMEIRO:",
+    // {data4semanas} = MESMA data do diagnóstico pós-loading (chart gold dateOffset: 28)
+    // fillCopy → <span class="q__date">13 de agosto</span> em vermelho
+    // grid 2x2 = mesmo formato da P1 (idade). Imagens em assets/img/primeiro/
+    question: "No plano que o paizão vai montar pra você, no dia {data4semanas}, o que você quer notar primeiro no espelho?",
+    grid: true,
     options: [
-      "Barriga mais seca",
-      "Corpo mais durinho e tonificado",
-      "Mais disposição e energia",
+      "Barriga",
+      "Bumbum",
+      "Coxas",
       "Tudo junto"
+    ],
+    images: [
+      "assets/img/primeiro/primeiro-barriga.webp?v=2",
+      "assets/img/primeiro/primeiro-bumbum.webp?v=2",
+      "assets/img/primeiro/primeiro-coxas.webp?v=2",
+      "assets/img/primeiro/primeiro-tudo.webp?v=2"
     ]
   },
 
@@ -327,9 +351,10 @@ const QUIZ = [
     type: "loading",
     // 3 batidas — personalizadas em app.js (foco / idade / {primeiro}).
     // Textos abaixo = fallback quando a resposta não bate.
-    intro: "Calma… o paizão tá montando o seu diagnóstico…",  // batida 1 (~1,5s)
-    text:  "Tô guardando tudo que você me contou aqui…",       // batida 2 (1ª pessoa)
-    done:  "Pronto, filhota. Já sei por onde a gente começa: {primeiro}.", // batida 3
+    // Batida 1: PERSONA.loadingIntro[q2_foco] | Batida 2: PERSONA.loadingAge[q1_idade]
+    intro: "Calma… o paizão tá montando o seu caminho…",  // batida 1 fallback
+    text:  "Tô cruzando tudo que você me contou com o seu perfil…", // batida 2 fallback
+    done:  "Pronto, filhota. Cruzei seu foco, sua idade e o que te trava. A gente começa por {primeiro}.", // batida 3
     introHold: 2500,
     // prints reais do app (copy já na foto). 6.5s cada × 3 = 19.5s
     slideMs: 6500,
@@ -349,10 +374,13 @@ const QUIZ = [
     lead: "{empatia}",
     startFrom: "q3_rotina",
     // marcos da jornada (antes no gráfico; agora no before/after)
+    // gold.dateOffset = FONTE ÚNICA da data do plano (pergunta q13 {data4semanas} + label do diagnóstico)
     points: [
       { label: "Hoje",         level: 0.18, bubble: "você tá aqui" },
       { label: "5 dias",       level: 0.52, bubble: "já desincha e veste melhor", dateOffset: 5 },
-      { label: "4 semaninhas", level: 0.92, bubble: "{primeiro}", gold: true, dateOffset: 28 }
+      // bubble vazio no gold: app.js preenche com afterBodyLabel (objetivo do FOCO q2),
+      // não com {primeiro}/parte do corpo (evita "o bumbum" na legenda da foto).
+      { label: "4 semaninhas", level: 0.92, bubble: "", gold: true, dateOffset: 28 }
     ],
     cta: "RECEBER MINHA AVALIAÇÃO"
   },
@@ -418,18 +446,25 @@ const QUIZ = [
 const PERSONA = {
   // {foco} — q2_foco -> palavra curta destacada no subtítulo da curva
   foco: {
-    "Emagrecer e secar": "secar",
+    "Quero me olhar no espelho e secar de verdade": "secar",
+    "Emagrecer e secar": "secar", // legado (leads antigos)
     "Tonificar e enrijecer o corpo": "tonificar o corpo",
+    "Quero secar e firmar junto": "secar e tonificar",
     "Os dois juntos": "secar e tonificar",
+    "Quero curvas e corpo firme": "ganhar massa",
     "Ganhar massa": "ganhar massa",
     _default: "mudar de corpo"
   },
-  // {primeiro} — q13_primeiro -> o que ela quer ver primeiro
+  // {primeiro} — q13_primeiro -> o que ela quer ver primeiro (loading / chart / compromisso)
   primeiro: {
-    "Barriga mais seca": "a barriga mais seca",
+    "Barriga": "a barriga",
+    "Bumbum": "o bumbum",
+    "Coxas": "as coxas",
+    "Tudo junto": "tudo junto",
+    // legado (respostas antigas no Supabase / sessão)
+    "Barriga mais seca": "a barriga",
     "Corpo mais durinho e tonificado": "o corpo mais durinho",
     "Mais disposição e energia": "mais disposição e energia",
-    "Tudo junto": "tudo de uma vez",
     _default: "o resultado que você quer"
   },
   // Frase única do IMC no card de diagnóstico. {imc} = valor real com vírgula em <strong>.
@@ -459,6 +494,11 @@ const PERSONA = {
   },
   // {empatia} — ligada ao que a trava (q5_trava; fallback q6_sozinha) — voz Carlão, sem travessão
   empatia: {
+    "Largo na 2ª semana, sozinha não me cobro": "E dessa vez o paizão te cobra todo dia, viu? Você não larga mais sozinha.",
+    "Entro na academia e não sei o que fazer": "E dessa vez você tem um passo a passo feito pra você. O paizão te guia em cada exercício.",
+    "Chego morta e o treino vira desculpa": "E esse plano respeita sua energia. No seu ritmo, sem te quebrar.",
+    "Tempo some no dia e o treino fica por último": "E ó: esse plano cabe na sua rotina. Sem desculpa, sem peso.",
+    // legado
     "Falta de motivação e disciplina": "E dessa vez o paizão te cobra todo dia, viu? Você não larga mais sozinha.",
     "Não sei o que fazer": "E dessa vez você tem um passo a passo feito pra você. O paizão te guia em cada exercício.",
     "Cansaço, chego sem energia": "E esse plano respeita sua energia. No seu ritmo, sem te quebrar.",
@@ -468,33 +508,48 @@ const PERSONA = {
 
   // note extra na tela medidas (q2_foco) — sem _default: se não bater, não mostra linha
   measureNote: {
+    "Quero me olhar no espelho e secar de verdade": "É daqui que o paizão calcula quanto você seca nas primeiras 4 semaninhas.",
     "Emagrecer e secar": "É daqui que o paizão calcula quanto você seca nas primeiras 4 semaninhas.",
+    "Quero curvas e corpo firme": "É daqui que o paizão calcula onde seu corpo cresce primeiro.",
     "Ganhar massa": "É daqui que o paizão calcula onde seu corpo cresce primeiro.",
+    "Quero secar e firmar junto": "É daqui que o paizão calcula por onde começar: secar e firmar juntinho.",
     "Os dois juntos": "É daqui que o paizão calcula por onde começar: secar e firmar juntinho."
   },
 
   // loading batida 1 — por q2_foco (sem _default: usa intro do screen)
+  // copy nova + legado (leads/opções antigas) pra personalização não quebrar
   loadingIntro: {
-    "Emagrecer e secar": "Calma... o paizão tá montando seu diagnóstico pra secar de verdade...",
-    "Ganhar massa": "Calma... o paizão tá montando seu diagnóstico pra crescer do jeito certo...",
-    "Os dois juntos": "Calma... o paizão tá montando seu diagnóstico pra secar e firmar junto..."
+    "Quero me olhar no espelho e secar de verdade": "Calma… o paizão tá montando o caminho pra você secar de verdade…",
+    "Emagrecer e secar": "Calma… o paizão tá montando o caminho pra você secar de verdade…",
+    "Quero curvas e corpo firme": "Calma… o paizão tá montando o caminho pra você crescer do jeito certo…",
+    "Ganhar massa": "Calma… o paizão tá montando o caminho pra você crescer do jeito certo…",
+    "Quero secar e firmar junto": "Calma… o paizão tá montando o caminho pra secar e firmar junto…",
+    "Os dois juntos": "Calma… o paizão tá montando o caminho pra secar e firmar junto…"
   },
 
   // loading batida 2 — por q1_idade (sem _default: usa text do screen)
   loadingAge: {
-    "16-29": "Seu corpo responde rápido nessa fase, e a gente vai usar isso a seu favor...",
-    "30-39": "Nos seus 30 o corpo pede estratégia, e o seu plano vai ter isso...",
-    "40-49": "Depois dos 40 o jogo muda, e o paizão sabe exatamente o que muda...",
-    "50+": "Nos 50+ o segredo é constância inteligente, sem loucura. É assim que o seu nasce..."
+    "16-29": "Seu corpo responde rápido nessa fase, e a gente vai usar o que você me contou a seu favor…",
+    "30-39": "Nos seus 30 o corpo pede estratégia, e o seu plano vai ter isso com o que você me falou…",
+    "40-49": "Depois dos 40 o jogo muda, e o paizão sabe exatamente o que muda no seu caso…",
+    "50+": "Nos 50+ o segredo é constância inteligente, sem loucura. É assim que o seu plano nasce…"
   },
 
   // balões da curva (índices 1=5 dias, 2=4 semaninhas) por trilha q2_foco
   // "Emagrecer e secar" / ausência = mantém bubbles do screen.points
   chartBubbles: {
+    "Quero curvas e corpo firme": {
+      1: "já sente o corpo mais firme",
+      2: "curvas no lugar"
+    },
     "Ganhar massa": {
       1: "já sente o corpo mais firme",
       // legenda sob a foto: precisa caber em 1 linha no mobile
       2: "curvas no lugar"
+    },
+    "Quero secar e firmar junto": {
+      1: "já desincha e sente firmeza",
+      2: "seca e firma junto"
     },
     "Os dois juntos": {
       1: "já desincha e sente firmeza",
@@ -504,32 +559,46 @@ const PERSONA = {
 
   // foto "depois" (Seu objetivo) no before/after — por trilha q2_foco
   metaImg: {
+    "Quero me olhar no espelho e secar de verdade": "assets/img/meta/meta-secar.jpg",
     "Emagrecer e secar": "assets/img/meta/meta-secar.jpg",
+    "Quero curvas e corpo firme": "assets/img/meta/meta-massa.jpg",
     "Ganhar massa": "assets/img/meta/meta-massa.jpg",
+    "Quero secar e firmar junto": "assets/img/meta/meta-dois.jpg",
     "Os dois juntos": "assets/img/meta/meta-dois.jpg",
     _default: "assets/img/meta/meta-secar.jpg"
   },
 
   // foto "Agora" no before/after — pelo corpo atual (q7_deixou)
   beforeImg: {
+    "No peso, mas falta aquela definição": "assets/img/corpo/corpo-definicao.webp",
     "No peso, mas falta definição": "assets/img/corpo/corpo-definicao.webp",
+    "Magrinha demais, quero formato": "assets/img/corpo/corpo-magrinha.webp",
     "Magrinha": "assets/img/corpo/corpo-magrinha.webp",
+    "Uns quilinhos a mais que nenhuma roupa disfarça": "assets/img/corpo/corpo-quilinhos.webp",
     "Uns quilinhos a mais": "assets/img/corpo/corpo-quilinhos.webp",
+    "Bastante pra mudar e dessa vez eu vou": "assets/img/corpo/corpo-mudar.webp",
     "Bastante pra mudar, e tô decidida": "assets/img/corpo/corpo-mudar.webp",
     _default: "assets/img/corpo/corpo-quilinhos.webp"
   },
 
   // labels curtos do comparativo (Agora / Seu objetivo)
   beforeBodyLabel: {
+    "No peso, mas falta aquela definição": "Falta definição",
     "No peso, mas falta definição": "Falta definição",
+    "Magrinha demais, quero formato": "Magrinha",
     "Magrinha": "Magrinha",
+    "Uns quilinhos a mais que nenhuma roupa disfarça": "Quilinhos a mais",
     "Uns quilinhos a mais": "Quilinhos a mais",
+    "Bastante pra mudar e dessa vez eu vou": "Pra mudar",
     "Bastante pra mudar, e tô decidida": "Pra mudar",
     _default: "Seu corpo hoje"
   },
   afterBodyLabel: {
+    "Quero me olhar no espelho e secar de verdade": "Seca e no lugar",
     "Emagrecer e secar": "Seca e no lugar",
+    "Quero curvas e corpo firme": "Curvas no lugar",
     "Ganhar massa": "Curvas no lugar",
+    "Quero secar e firmar junto": "Seca e firme",
     "Os dois juntos": "Seca e firme",
     _default: "No seu objetivo"
   },
