@@ -56,7 +56,7 @@ const QUIZ = [
       "assets/img/idade/idade-50plus.webp"
     ]
   },
-  /* (a pergunta do FOCO desceu pra logo antes do vídeo da Liz — ver abaixo) */
+  /* (a pergunta do FOCO fica logo antes do depoimento Niic — ver abaixo) */
   {
     type: "question",
     id: "q3_rotina",
@@ -119,7 +119,7 @@ const QUIZ = [
     ]
   },
 
-  /* --------------- FOCO (cards estilo BetterMe) — logo ANTES do vídeo da Liz.
+  /* --------------- FOCO (cards estilo BetterMe) — logo ANTES do depoimento Niic.
      Valores das options EXATOS — o PERSONA.foco e o diagnóstico dependem deles. */
   {
     type: "question",
@@ -140,16 +140,16 @@ const QUIZ = [
     ]
   },
 
-  /* ------------------- BREAK 2 — DEPOIMENTO (bifurcação por q2_foco) -------
-     Secar de verdade → Niic (@niic.ca). Demais focos → Liz (@lizx.macedo).
-     showIf / hideIf resolvidos em app.js (pula a tela invisível).          */
+  /* ------------------- BREAK 2 — DEPOIMENTO (100% Niic) -------------------
+     HOJE: todo mundo assiste a Niic (@niic.ca), independente do foco.
+     Liz desligada — pra reativar a bifurcação, descomente o bloco video-liz
+     e devolva o showIf na Niic.                                              */
 
-  // trilha SECAR — depoimento Niic (stories IG, mesmo formato da Liz)
+  // depoimento Niic (stories IG) — TODOS os focos
   {
     type: "testimonial",
     slug: "video-niic",
     label: "Vídeo Niic",
-    showIf: { q2_foco: "Quero me olhar no espelho e secar de verdade" },
     topName: "@niic.ca",
     topSub: "4,2 mi · aluna do paizão",
     avatar: "avatar-niic",
@@ -163,7 +163,7 @@ const QUIZ = [
     ]
   },
 
-  // demais focos (massa / os dois) — depoimento Liz
+  /* >>> DESLIGADO: depoimento Liz (antes: focos ≠ secar) <<<
   {
     type: "testimonial",
     slug: "video-liz",
@@ -173,7 +173,7 @@ const QUIZ = [
     topSub: "aluna do paizão",
     avatar: "avatar-liz",
     verified: true,
-    videoLen: 58,                // duração real (vturb HLS): 57.99s
+    videoLen: 58,
     embed: `<vturb-smartplayer id="vid-6a313a5eb2d74681824e0933" style="display:block;width:100%;height:100%;"></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
       { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a313a5eb2d74681824e0933/v4/player.js", as: "script" },
@@ -181,6 +181,7 @@ const QUIZ = [
       { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a313a0ab33864477f837845/main.m3u8", as: "fetch" }
     ]
   },
+  */
 
   /* ============================ I — IMPLICAÇÃO (o custo) ================= */
   {

@@ -25,6 +25,21 @@
   // link do checkout (Hotmart/Kiwify). Vazio = mantém o placeholder no final.
   const CHECKOUT_URL = "";
 
+  /* ---- BACKREDIRECT (TESTE) — só na 1ª etapa do funil (index 0 / P1) ----
+     Liga:  pessoa na P1 → empilha 1 estado no histórico.
+     Voltar: em vez de sair pro anúncio/feed, vai pra BACK_REDIRECT.url.
+     Sai da P1: desliga. NÃO roda nas outras perguntas.
+     Produção: trocar url + manter enabled só se quiser. SEM push ainda. */
+  const BACK_REDIRECT = {
+    enabled: false, // TESTE pausado — religar quando for usar de novo
+    onlyIndex: 0,
+    // página local de teste (python -m http.server / Vercel)
+    url: "/back-test.html",
+    // badge visual na P1 pra você saber que o trap tá armado
+    showBadge: false
+  };
+  let backTrapArmed = false;
+
   const state = {
     index: 0,
     answers: {}, // { questionId: optionText }
@@ -233,6 +248,8 @@
   function go(index, opts) {
     opts = opts || {};
     if (index < 0 || index >= QUIZ.length) return;
+    // saindo da P1 → desliga trap (outras etapas sem backredirect)
+    if (BACK_REDIRECT.enabled && index !== BACK_REDIRECT.onlyIndex) backTrapArmed = false;
     state.index = index;
     persist();
     const path = pathForIndex(index) + ENTRY_SEARCH;
@@ -241,6 +258,41 @@
       else history.pushState({ i: index }, "", path);
     } catch (e) {}
     render();
+  }
+
+  // Armar trap só na P1: 1 pushState extra. Voltar do browser cai no popstate → recovery.
+  function syncBackTrap() {
+    if (!BACK_REDIRECT.enabled) return;
+    if (state.index !== BACK_REDIRECT.onlyIndex) {
+      backTrapArmed = false;
+      const b = document.getElementById("backTrapBadge");
+      if (b) b.remove();
+      return;
+    }
+    if (!backTrapArmed) {
+      backTrapArmed = true;
+      try {
+        history.pushState(
+          { i: state.index, paizaoBackTrap: 1 },
+          "",
+          pathForIndex(state.index) + ENTRY_SEARCH
+        );
+      } catch (e) {}
+      try { console.info("[paizao] backredirect P1 armado →", BACK_REDIRECT.url); } catch (e2) {}
+    }
+    if (BACK_REDIRECT.showBadge && !document.getElementById("backTrapBadge")) {
+      const badge = document.createElement("div");
+      badge.id = "backTrapBadge";
+      badge.setAttribute("aria-hidden", "true");
+      badge.textContent = "TEST · backredirect P1 ON — aperte VOLTAR do browser";
+      badge.style.cssText = [
+        "position:fixed", "left:10px", "right:10px", "bottom:10px", "z-index:99999",
+        "background:#e11d48", "color:#fff", "font:700 12px/1.3 system-ui,sans-serif",
+        "text-align:center", "padding:10px 12px", "border-radius:12px",
+        "box-shadow:0 8px 24px rgba(0,0,0,.35)", "pointer-events:none"
+      ].join(";");
+      document.body.appendChild(badge);
+    }
   }
 
   /* --------------------------------------------------------- ÍCONES (svg) */
@@ -483,6 +535,8 @@
 
     stage.appendChild(root);
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    // backredirect de teste: arma só na P1, desliga nas outras
+    syncBackTrap();
   }
 
   function ctaButton(label, onClick, block) {
@@ -1210,7 +1264,19 @@
     if (state.index > 0) history.back();
   }
   // botão voltar/avançar do navegador -> sincroniza a tela a partir da URL
+  // + backredirect de TESTE só se o trap da P1 estiver armado
   window.addEventListener("popstate", function () {
+    if (BACK_REDIRECT.enabled && backTrapArmed) {
+      backTrapArmed = false;
+      var dest = BACK_REDIRECT.url || "/back-test.html";
+      // preserva UTMs do anúncio na recovery
+      if (ENTRY_SEARCH) {
+        dest += (dest.indexOf("?") === -1 ? ENTRY_SEARCH : "&" + ENTRY_SEARCH.slice(1));
+      }
+      try { console.info("[paizao] backredirect P1 →", dest); } catch (e) {}
+      location.replace(dest);
+      return;
+    }
     let i = indexForPath(location.pathname);
     if (i == null) i = 0;
     // loading é transitório: ao cair nele pelo histórico, pula pro diagnóstico
@@ -1270,4 +1336,6 @@
   topbarAvatarFromImage();
   startTimer();
   render();
+  // depois do 1º paint: se bootou na P1, arma o backredirect de teste
+  syncBackTrap();
 })();

@@ -549,24 +549,22 @@
   async function loadBranchP6Stats() {
 
     var after = slugsAfterP6();
-    // Niic / secar
+    // HOJE: 100% Niic no funil — P6+ conta todos os focos (não só secar).
+    // Liz = só histórico (last_step em video-liz / foco legado da trilha Liz).
     var niicVideo = await countLeads(function (q) {
-      return q.in("q2_foco", FOCO_SECAR).eq("last_step_slug", "video-niic");
+      return q.eq("last_step_slug", "video-niic");
     });
     var niicP6 = await countLeads(function (q) {
-      return q.in("q2_foco", FOCO_SECAR).eq("last_step_slug", P6_SLUG);
+      return q.eq("last_step_slug", P6_SLUG);
     });
     var niicPast = after.length
       ? await countLeads(function (q) {
-          return q.in("q2_foco", FOCO_SECAR).in("last_step_slug", after);
+          return q.in("last_step_slug", after);
         })
       : 0;
-    // também conta quem parou no vídeo sem q2_foco gravado (edge) — só slug
-    var niicVideoSlugOnly = await countLeads(function (q) {
-      return q.eq("last_step_slug", "video-niic").or("q2_foco.is.null,q2_foco.eq.");
-    });
+    var niicVideoSlugOnly = 0;
 
-    // Liz / outros focos
+    // Liz / histórico
     var lizVideo = await countLeads(function (q) {
       return q.in("q2_foco", FOCO_LIZ).eq("last_step_slug", "video-liz");
     });
@@ -656,25 +654,23 @@
       '<div class="branchp6__grid">' +
         card(
           "niic",
-          "🎬 Trilha Niic",
-          "Foco secar (novo + legado) → /video-niic → P6 corpo → /nostalgia…",
+          "🎬 Niic (tráfego atual = 100%)",
+          "Todos os focos → /video-niic → P6 corpo → /nostalgia…",
           stats.niic
         ) +
         card(
           "liz",
-          "🎬 Trilha Liz",
-          "Foco curvas / secar+firmar (novo + legado) → /video-liz → P6 → /nostalgia…",
+          "🎬 Liz (histórico — desligada no funil)",
+          "Só leads antigos com last_step em /video-liz",
           stats.liz
         ) +
       "</div>" +
       '<p class="muted" style="font-size:12px;margin:4px 0 0">' +
-        "Secar = <code>Quero me olhar no espelho e secar de verdade</code> (legado: Emagrecer e secar). " +
-        "Liz = curvas / secar e firmar junto (+ legado Ganhar massa / Os dois juntos). " +
-        "Depois da P6 vem <code>/nostalgia</code> (q7b). " +
+        "<strong>Agora:</strong> quiz manda todo mundo pra Niic (Liz comentada no quiz-data). " +
+        "Depois da P6 vem <code>/nostalgia</code>. " +
         "Total pararam na P6: <b>" + stats.p6All + "</b>" +
-        " · Niic+Liz taggeados na P6: <b>" +
-        ((stats.niic.stopP6 || 0) + (stats.liz.stopP6 || 0)) +
-        "</b>." +
+        " · stops Niic P6 (tag secar): <b>" + (stats.niic.stopP6 || 0) + "</b>" +
+        " · stops Liz P6 (legado): <b>" + (stats.liz.stopP6 || 0) + "</b>." +
       "</p>";
   }
 
