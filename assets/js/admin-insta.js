@@ -83,14 +83,87 @@
     $("fromDate").value = "";
     $("toDate").value = "";
     $("statusFilter").value = "";
+    $("minIgFollowers").value = "";
+    $("minTtFollowers").value = "";
+    $("sortBy").value = "date_desc";
+    $("publiFilter").value = "";
     $("searchQ").value = "";
     render();
   });
-  ["fromDate", "toDate", "statusFilter"].forEach(function (id) {
+  ["fromDate", "toDate", "statusFilter", "minIgFollowers", "minTtFollowers", "sortBy", "publiFilter"].forEach(function (id) {
     $(id).addEventListener("change", render);
   });
   $("searchQ").addEventListener("input", render);
   $("exportBtn").addEventListener("click", exportCsv);
+
+  /** Parseia "12 mil", "12k", "12.5k", "12500", "12.500", "1,2 milhão" → número */
+  function parseFollowers(raw) {
+    if (raw == null || raw === "") return null;
+    var s = String(raw).trim().toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/seguidores?/g, "")
+      .replace(/approx\.?|cerca de|mais de|quase|~/gi, "")
+      .trim();
+    if (!s) return null;
+
+    // 12.5k / 12k / 1.2m
+    var mK = s.match(/^([\d]+([.,]\d+)?)\s*k$/i);
+    if (mK) return Math.round(parseFloat(mK[1].replace(",", ".")) * 1000);
+
+    var mM = s.match(/^([\d]+([.,]\d+)?)\s*m$/i);
+    if (mM) return Math.round(parseFloat(mM[1].replace(",", ".")) * 1000000);
+
+    // milhão / milhoes
+    if (/milh[oõ]es?/.test(s)) {
+      var nM = s.replace(/[^\d.,]/g, "").replace(",", ".");
+      var vM = parseFloat(nM);
+      return isNaN(vM) ? null : Math.round(vM * 1000000);
+    }
+
+    // "12 mil" / "12,5 mil" / "12.5 mil"
+    if (/\bmil\b/.test(s)) {
+      var nMil = s.replace(/[^\d.,]/g, "").replace(",", ".");
+      var vMil = parseFloat(nMil);
+      return isNaN(vMil) ? null : Math.round(vMil * 1000);
+    }
+
+    // só dígitos com pontos/vírgulas: 12.500 ou 12,500 ou 12500
+    var digits = s.replace(/[^\d.,]/g, "");
+    if (!digits) return null;
+    // se tem ponto E vírgula, assume formato BR (1.234.567,89) ou US (1,234,567.89)
+    if (digits.indexOf(".") >= 0 && digits.indexOf(",") >= 0) {
+      if (digits.lastIndexOf(",") > digits.lastIndexOf(".")) {
+        digits = digits.replace(/\./g, "").replace(",", ".");
+      } else {
+        digits = digits.replace(/,/g, "");
+      }
+    } else if (digits.indexOf(",") >= 0) {
+      // "12,5" → 12.5  |  "12500," weird
+      var partsC = digits.split(",");
+      if (partsC.length === 2 && partsC[1].length <= 2) {
+        digits = partsC[0] + "." + partsC[1];
+      } else {
+        digits = digits.replace(/,/g, "");
+      }
+    } else if (digits.indexOf(".") >= 0) {
+      var partsD = digits.split(".");
+      // "12.500" (milhar BR) vs "12.5" (decimal)
+      if (partsD.length > 2 || (partsD.length === 2 && partsD[1].length === 3)) {
+        digits = digits.replace(/\./g, "");
+      }
+    }
+    var n = parseFloat(digits);
+    return isNaN(n) ? null : Math.round(n);
+  }
+
+  function fmtFollowers(n) {
+    if (n == null || isNaN(n)) return "—";
+    try {
+      return n.toLocaleString("pt-BR");
+    } catch (e) {
+      return String(n);
+    }
+  }
 
   function windowBounds() {
     var fromISO = $("fromDate").value
@@ -108,14 +181,18 @@
   function normalizeRow(r) {
     // unifica formato: colunas dedicadas OU answers jsonb (fallback quiz)
     var a = r.answers || {};
+    var igRaw = r.instagram_followers || a.instagram_followers || null;
+    var ttRaw = r.tiktok_followers || a.tiktok_followers || null;
     return {
       id: r.id,
       created_at: r.created_at,
       updated_at: r.updated_at,
       instagram_handle: r.instagram_handle || a.instagram_handle || null,
-      instagram_followers: r.instagram_followers || a.instagram_followers || null,
+      instagram_followers: igRaw,
+      instagram_followers_n: parseFollowers(igRaw),
       tiktok_handle: r.tiktok_handle || a.tiktok_handle || null,
-      tiktok_followers: r.tiktok_followers || a.tiktok_followers || null,
+      tiktok_followers: ttRaw,
+      tiktok_followers_n: parseFollowers(ttRaw),
       ja_fez_publi: r.ja_fez_publi || a.ja_fez_publi || null,
       conhece_app_paizao: r.conhece_app_paizao || a.conhece_app_paizao || null,
       last_step: r.last_step,
@@ -198,12 +275,23 @@
   function filtered() {
     var b = windowBounds();
     var status = $("statusFilter").value;
+    var minIg = parseInt($("minIgFollowers").value, 10) || 0;
+    var minTt = parseInt($("minTtFollowers").value, 10) || 0;
+    var publi = $("publiFilter").value;
+    var sortBy = $("sortBy").value || "date_desc";
     var q = ($("searchQ").value || "").trim().toLowerCase();
-    return rows.filter(function (r) {
+    var list = rows.filter(function (r) {
       if (b.fromISO && r.created_at && r.created_at < b.fromISO) return false;
       if (b.toISO && r.created_at && r.created_at >= b.toISO) return false;
       if (status === "completed" && !r.completed) return false;
       if (status === "partial" && r.completed) return false;
+      if (minIg > 0) {
+        if (r.instagram_followers_n == null || r.instagram_followers_n < minIg) return false;
+      }
+      if (minTt > 0) {
+        if (r.tiktok_followers_n == null || r.tiktok_followers_n < minTt) return false;
+      }
+      if (publi && r.ja_fez_publi !== publi) return false;
       if (q) {
         var blob = [
           r.instagram_handle, r.tiktok_handle, r.instagram_followers, r.tiktok_followers,
@@ -213,6 +301,30 @@
       }
       return true;
     });
+
+    list.sort(function (a, b) {
+      function nOr(x, fallback) {
+        return x == null || isNaN(x) ? fallback : x;
+      }
+      var tA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      var tB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      switch (sortBy) {
+        case "date_asc":
+          return tA - tB;
+        case "ig_desc":
+          return nOr(b.instagram_followers_n, -1) - nOr(a.instagram_followers_n, -1);
+        case "ig_asc":
+          return nOr(a.instagram_followers_n, Infinity) - nOr(b.instagram_followers_n, Infinity);
+        case "tt_desc":
+          return nOr(b.tiktok_followers_n, -1) - nOr(a.tiktok_followers_n, -1);
+        case "tt_asc":
+          return nOr(a.tiktok_followers_n, Infinity) - nOr(b.tiktok_followers_n, Infinity);
+        case "date_desc":
+        default:
+          return tB - tA;
+      }
+    });
+    return list;
   }
 
   function countBy(arr, key) {
@@ -258,12 +370,19 @@
     var done = list.filter(function (r) { return r.completed; }).length;
     var withIg = list.filter(function (r) { return r.instagram_handle; }).length;
     var withTt = list.filter(function (r) { return r.tiktok_handle; }).length;
+    var igNums = list.map(function (r) { return r.instagram_followers_n; }).filter(function (n) { return n != null; });
+    var avgIg = igNums.length
+      ? Math.round(igNums.reduce(function (s, n) { return s + n; }, 0) / igNums.length)
+      : null;
+    var maxIg = igNums.length ? Math.max.apply(null, igNums) : null;
 
     $("kpis").innerHTML =
       kpi("Total (filtro)", total) +
       kpi("Completou", done + " · " + pct(done, total) + "%") +
       kpi("Com Instagram", withIg) +
-      kpi("Com TikTok", withTt);
+      kpi("Com TikTok", withTt) +
+      kpi("Média seg. IG", avgIg != null ? fmtFollowers(avgIg) : "—") +
+      kpi("Maior IG", maxIg != null ? fmtFollowers(maxIg) : "—");
 
     renderBars($("chartPubli"), countBy(list, "ja_fez_publi"), total);
     renderBars($("chartApp"), countBy(list, "conhece_app_paizao"), total);
@@ -271,13 +390,25 @@
     $("leadsCount").textContent = "· " + total;
     $("leadsBody").innerHTML = list.map(function (r) {
       var slug = String(r.last_step_slug || "").replace(/^insta\//, "");
+      var igCell = r.instagram_followers
+        ? (esc(r.instagram_followers) +
+            (r.instagram_followers_n != null
+              ? ' <span class="fol-n" title="valor parseado">' + esc(fmtFollowers(r.instagram_followers_n)) + "</span>"
+              : ' <span class="fol-n fol-n--bad" title="não deu pra ler o número">?</span>'))
+        : "—";
+      var ttCell = r.tiktok_followers
+        ? (esc(r.tiktok_followers) +
+            (r.tiktok_followers_n != null
+              ? ' <span class="fol-n" title="valor parseado">' + esc(fmtFollowers(r.tiktok_followers_n)) + "</span>"
+              : ' <span class="fol-n fol-n--bad" title="não deu pra ler o número">?</span>'))
+        : "—";
       return (
         "<tr>" +
           "<td>" + esc(fmtWhen(r.created_at)) + "</td>" +
           "<td><code>" + esc(r.instagram_handle || "—") + "</code></td>" +
-          "<td>" + esc(r.instagram_followers || "—") + "</td>" +
+          "<td class=\"fol-cell\">" + igCell + "</td>" +
           "<td><code>" + esc(r.tiktok_handle || "—") + "</code></td>" +
-          "<td>" + esc(r.tiktok_followers || "—") + "</td>" +
+          "<td class=\"fol-cell\">" + ttCell + "</td>" +
           "<td>" + esc(r.ja_fez_publi || "—") + "</td>" +
           "<td>" + esc(r.conhece_app_paizao || "—") + "</td>" +
           "<td>" + esc(slug || r.last_step_label || "—") + "</td>" +
@@ -300,7 +431,8 @@
   function exportCsv() {
     var list = filtered();
     var cols = [
-      "created_at", "instagram_handle", "instagram_followers", "tiktok_handle", "tiktok_followers",
+      "created_at", "instagram_handle", "instagram_followers", "instagram_followers_n",
+      "tiktok_handle", "tiktok_followers", "tiktok_followers_n",
       "ja_fez_publi", "conhece_app_paizao", "last_step_slug", "completed", "utm_source", "landing_path"
     ];
     var lines = [cols.join(",")];

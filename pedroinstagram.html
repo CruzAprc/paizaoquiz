@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/admin.css?v=90" />
-  <link rel="stylesheet" href="assets/css/pedroinstagram.css?v=1" />
+  <link rel="stylesheet" href="assets/css/pedroinstagram.css?v=2" />
 </head>
 <body>
   <!-- LOGIN (mesmo auth do /pedro) -->
@@ -48,6 +48,47 @@
           <option value="">todos</option>
           <option value="completed">completou</option>
           <option value="partial">parcial</option>
+        </select>
+      </label>
+      <label>Mín. seguidores IG
+        <select id="minIgFollowers">
+          <option value="">qualquer</option>
+          <option value="1000">1.000+</option>
+          <option value="5000">5.000+</option>
+          <option value="10000">10.000+</option>
+          <option value="25000">25.000+</option>
+          <option value="50000">50.000+</option>
+          <option value="100000">100.000+</option>
+        </select>
+      </label>
+      <label>Mín. seguidores TT
+        <select id="minTtFollowers">
+          <option value="">qualquer</option>
+          <option value="1000">1.000+</option>
+          <option value="5000">5.000+</option>
+          <option value="10000">10.000+</option>
+          <option value="25000">25.000+</option>
+          <option value="50000">50.000+</option>
+          <option value="100000">100.000+</option>
+        </select>
+      </label>
+      <label>Ordenar por
+        <select id="sortBy">
+          <option value="date_desc">mais recentes</option>
+          <option value="date_asc">mais antigos</option>
+          <option value="ig_desc">IG · maior → menor</option>
+          <option value="ig_asc">IG · menor → maior</option>
+          <option value="tt_desc">TT · maior → menor</option>
+          <option value="tt_asc">TT · menor → maior</option>
+        </select>
+      </label>
+      <label>Já fez publi?
+        <select id="publiFilter">
+          <option value="">todos</option>
+          <option value="Sim, já fiz várias">Sim, já fiz várias</option>
+          <option value="Já fiz uma ou duas">Já fiz uma ou duas</option>
+          <option value="Nunca fiz">Nunca fiz</option>
+          <option value="Só indicação sem ser paga">Só indicação sem ser paga</option>
         </select>
       </label>
       <label>Busca
@@ -94,6 +135,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/admin-insta.js?v=1"></script>
+  <script src="assets/js/admin-insta.js?v=2"></script>
 </body>
 </html>
