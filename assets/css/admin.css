@@ -125,6 +125,15 @@ body {
 }
 .branchp6__card--niic { border-color: rgba(245, 158, 11, 0.35); }
 .branchp6__card--liz { border-color: rgba(167, 139, 250, 0.35); }
+.branchp6__card--secar { border-color: rgba(56, 189, 248, 0.4); }
+.branchp6__card--massa { border-color: rgba(52, 211, 153, 0.4); }
+.branchp6__card--dois { border-color: rgba(251, 146, 60, 0.4); }
+.branchp6__grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 980px) {
+  .branchp6__grid--3 { grid-template-columns: 1fr; }
+}
 .branchp6__h {
   font-size: 14px; font-weight: 800; margin: 0 0 4px; color: var(--tx);
 }
