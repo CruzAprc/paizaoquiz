@@ -88,6 +88,10 @@
     if (s.showIf || s.hideIf) parallelGroup = "branch:" + (s.type || "step");
     // depoimentos video-niic / video-liz sempre no mesmo grupo (mesmo sem showIf no futuro)
     if (slug === "video-niic" || slug === "video-liz") parallelGroup = "branch:depoimento";
+    // Mini VSL 1 por foco (secar / massa / os dois) = 1 etapa no funil
+    if (slug === "mini-vsl-1-secar" || slug === "mini-vsl-1-massa" || slug === "mini-vsl-1-dois" || slug === "mini-vsl-1") {
+      parallelGroup = "branch:mini-vsl-1";
+    }
     var step = {
       slug: slug,
       path: slug === "" ? "/" : ("/" + slug),
@@ -471,6 +475,170 @@
     return res.count || 0;
   }
 
+  /* ---- Mini VSL 1: 3 trilhas por q2_foco (secar / massa / os dois) ---- */
+  var VSL1_TRAILS = [
+    {
+      key: "secar",
+      title: "🎬 Secar",
+      sub: "Foco secar → /mini-vsl-1-secar",
+      slug: "mini-vsl-1-secar",
+      focos: [
+        "Quero me olhar no espelho e secar de verdade",
+        "Emagrecer e secar"
+      ]
+    },
+    {
+      key: "massa",
+      title: "🎬 Ganhar massa",
+      sub: "Foco curvas/massa → /mini-vsl-1-massa",
+      slug: "mini-vsl-1-massa",
+      focos: [
+        "Quero curvas e corpo firme",
+        "Ganhar massa"
+      ]
+    },
+    {
+      key: "dois",
+      title: "🎬 Os dois",
+      sub: "Foco secar + firmar → /mini-vsl-1-dois",
+      slug: "mini-vsl-1-dois",
+      focos: [
+        "Quero secar e firmar junto",
+        "Os dois juntos"
+      ]
+    }
+  ];
+
+  function slugsAfterMiniVsl1() {
+    var anchor =
+      SLUG_TO_FLOW["mini-vsl-1-secar"] != null ? SLUG_TO_FLOW["mini-vsl-1-secar"]
+        : (SLUG_TO_FLOW["mini-vsl-1-massa"] != null ? SLUG_TO_FLOW["mini-vsl-1-massa"]
+          : (SLUG_TO_FLOW["mini-vsl-1-dois"] != null ? SLUG_TO_FLOW["mini-vsl-1-dois"]
+            : SLUG_TO_FLOW["mini-vsl-1"]));
+    if (anchor == null) return [];
+    var d = FUNNEL_STEPS[anchor].depth;
+    var out = [];
+    for (var i = 0; i < FUNNEL_STEPS.length; i++) {
+      if (FUNNEL_STEPS[i].depth > d) out.push(FUNNEL_STEPS[i].slug);
+    }
+    return out;
+  }
+
+  async function loadBranchVsl1Stats() {
+    var after = slugsAfterMiniVsl1();
+    var trails = [];
+    for (var t = 0; t < VSL1_TRAILS.length; t++) {
+      var tr = VSL1_TRAILS[t];
+      var chose = await countLeads(function (q) {
+        return q.in("q2_foco", tr.focos);
+      });
+      var stopVideo = await countLeads(function (q) {
+        return q.eq("last_step_slug", tr.slug);
+      });
+      var stopVideoTagged = await countLeads(function (q) {
+        return q.in("q2_foco", tr.focos).eq("last_step_slug", tr.slug);
+      });
+      // legado: slug único mini-vsl-1 (antes da bifurcação)
+      var stopLegacy = await countLeads(function (q) {
+        return q.in("q2_foco", tr.focos).eq("last_step_slug", "mini-vsl-1");
+      });
+      var past = after.length
+        ? await countLeads(function (q) {
+            return q.in("q2_foco", tr.focos).in("last_step_slug", after);
+          })
+        : 0;
+      var atOffer = await countLeads(function (q) {
+        return q.in("q2_foco", tr.focos).eq("last_step_slug", "mini-vsl-2");
+      });
+      if (chose == null || stopVideo == null) {
+        return { error: "sem permissão ou falha ao contar" };
+      }
+      trails.push({
+        key: tr.key,
+        title: tr.title,
+        sub: tr.sub,
+        slug: tr.slug,
+        chose: chose || 0,
+        stopVideo: stopVideo || 0,
+        stopVideoTagged: stopVideoTagged || 0,
+        stopLegacy: stopLegacy || 0,
+        past: past || 0,
+        atOffer: atOffer || 0
+      });
+    }
+    var legacyAny = await countLeads(function (q) {
+      return q.eq("last_step_slug", "mini-vsl-1");
+    });
+    return { trails: trails, legacyAny: legacyAny || 0 };
+  }
+
+  function renderBranchVsl1(stats) {
+    var el = $("branchVsl1");
+    if (!el) return;
+    if (!stats) { el.innerHTML = '<p class="muted">carregando…</p>'; return; }
+    if (stats.error) {
+      el.innerHTML = '<p class="muted">Não deu pra calcular: ' + esc(stats.error) + "</p>";
+      return;
+    }
+    var trails = stats.trails || [];
+    var choseTot = trails.reduce(function (a, t) { return a + (t.chose || 0); }, 0);
+    var stopTot = trails.reduce(function (a, t) { return a + (t.stopVideo || 0); }, 0);
+    var pastTot = trails.reduce(function (a, t) { return a + (t.past || 0); }, 0);
+    var pageviews = (overview && overview._pageviews) || (overview && overview.pageviews) || 0;
+
+    var kpisHtml =
+      '<div class="kpis" style="margin-bottom:12px">' +
+        kpi("Escolheram um foco", choseTot, "q2_foco nas 3 trilhas (janela)") +
+        kpi("Pararam numa Mini VSL 1", stopTot, "last_step = /mini-vsl-1-*") +
+        kpi("Passaram da Mini VSL 1", pastTot, "mesmo foco · etapa depois do vídeo") +
+        kpi("Share vs pageview", cvr(choseTot, pageviews), "focaram ÷ pageviews") +
+      "</div>";
+
+    var cards = trails.map(function (t) {
+      var stopAll = (t.stopVideoTagged || 0) + (t.stopLegacy || 0);
+      var reached = stopAll + (t.past || 0);
+      var dropVid = reached > 0 ? pct(stopAll, reached) : 0;
+      var cont = reached > 0 ? pct(t.past, reached) : 0;
+      var shareFoco = choseTot > 0 ? pct(t.chose, choseTot) : 0;
+      return (
+        '<div class="branchp6__card branchp6__card--' + esc(t.key) + '">' +
+          '<p class="branchp6__h">' + esc(t.title) + "</p>" +
+          '<p class="branchp6__sub">' + esc(t.sub) + "</p>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Escolheram esse foco</span>' +
+            '<span class="branchp6__v">' + t.chose + " <span class=\"muted\">(" + shareFoco + "%)</span></span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam em <code>/' + esc(t.slug) + "</code></span>" +
+            '<span class="branchp6__v branchp6__v--drop">' + t.stopVideo + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam no vídeo (foco bate)</span>' +
+            '<span class="branchp6__v">' + t.stopVideoTagged +
+            (t.stopLegacy ? ' <span class="muted">+ legado ' + t.stopLegacy + "</span>" : "") +
+            "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Passaram do vídeo (P8+)</span>' +
+            '<span class="branchp6__v branchp6__v--ok">' + t.past + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam na oferta (mesmo foco)</span>' +
+            '<span class="branchp6__v">' + t.atOffer + "</span></div>" +
+          '<div class="branchp6__foot">' +
+            "De quem <b>chegou no bloco do vídeo</b> (" + reached + "): " +
+            '<b class="branchp6__v--drop">' + dropVid + "%</b> saíram no vídeo · " +
+            "<b class=\"branchp6__v--ok\">" + cont + "%</b> seguiram. " +
+            "Share do foco: <b>" + shareFoco + "%</b>." +
+          "</div>" +
+        "</div>"
+      );
+    }).join("");
+
+    el.innerHTML =
+      kpisHtml +
+      '<div class="branchp6__grid branchp6__grid--3">' + cards + "</div>" +
+      '<p class="muted" style="font-size:12px;margin:8px 0 0">' +
+        "Trilha = <code>q2_foco</code> (copy nova + legado). " +
+        "Pararam no vídeo = <code>last_step_slug</code> da trilha. " +
+        "Passaram = mesmo foco e slug <b>depois</b> da Mini VSL 1 no funil. " +
+        (stats.legacyAny
+          ? "Stops no slug antigo <code>/mini-vsl-1</code> (pré-bifurcação): <b>" + stats.legacyAny + "</b>."
+          : "Sem stops no slug antigo <code>/mini-vsl-1</code> nesta janela.") +
+      "</p>";
+  }
+
   async function loadAbVsl2Stats() {
     // PostgREST: answers->>'ab_vsl2'
     var aAll = await countLeads(function (q) {
@@ -682,6 +850,19 @@
     $("reloadBtn").disabled = true;
     var t0 = performance.now();
     if ($("branchP6")) $("branchP6").innerHTML = '<p class="muted">carregando bifurcação…</p>';
+    if ($("branchVsl1")) $("branchVsl1").innerHTML = '<p class="muted">carregando Mini VSL 1…</p>';
+
+    function loadBranchPanels() {
+      loadBranchVsl1Stats().then(renderBranchVsl1).catch(function (e) {
+        renderBranchVsl1({ error: (e && e.message) || String(e) });
+      });
+      loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
+        renderBranchP6({ error: (e && e.message) || String(e) });
+      });
+      loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
+        renderAbVsl2({ error: (e && e.message) || String(e) });
+      });
+    }
 
     try {
       // 1) tenta RPC (rápido) — a menos que saibamos que não existe
@@ -696,13 +877,8 @@
           // (quando origin está setado, origins só tem 1 item — mantém opções anteriores se vazio)
           buildUtmOptions(overview.origins || []);
           render();
-          // bifurcação P6 + A/B VSL2 em paralelo (não bloqueia o resto se falhar)
-          loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
-            renderBranchP6({ error: (e && e.message) || String(e) });
-          });
-          loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
-            renderAbVsl2({ error: (e && e.message) || String(e) });
-          });
+          // Mini VSL 1 + P6 + A/B VSL2 em paralelo (não bloqueia o resto se falhar)
+          loadBranchPanels();
           var ms = Math.round(performance.now() - t0);
           // render() já montou o resumo (pageviews + oferta + CVR); só anexa o tempo
           $("dashSub").textContent = ($("dashSub").textContent || "") + " · servidor " + ms + "ms";
@@ -739,12 +915,7 @@
       overview._rawPurchases = purchases;
 
       render();
-      loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
-        renderBranchP6({ error: (e && e.message) || String(e) });
-      });
-      loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
-        renderAbVsl2({ error: (e && e.message) || String(e) });
-      });
+      loadBranchPanels();
       var ms2 = Math.round(performance.now() - t0);
       $("dashSub").textContent = ($("dashSub").textContent || "") +
         " · client " + ms2 + "ms" +
@@ -1060,7 +1231,13 @@
       // barras: nome curto (slug) pra caber; title tem o completo
       var shortName = i === 0 ? "P1 · PV" : (st.type === "question"
         ? ("P" + String(st.slug || "").replace("pergunta-", ""))
-        : (st.slug === "video-niic" ? "Niic" : st.slug === "video-liz" ? "Liz" : (st.label || st.slug)));
+        : (st.slug === "video-niic" ? "Niic"
+          : st.slug === "video-liz" ? "Liz"
+          : st.slug === "mini-vsl-1-secar" ? "VSL1 secar"
+          : st.slug === "mini-vsl-1-massa" ? "VSL1 massa"
+          : st.slug === "mini-vsl-1-dois" ? "VSL1 dois"
+          : st.slug === "mini-vsl-1" ? "VSL1"
+          : (st.label || st.slug)));
       var fullName = stepTitle(st, i === 0);
       if (st.handle) fullName = (st.label || "") + " " + st.handle + " · " + st.path;
       var stopped = byStep[i] || 0;
@@ -1121,6 +1298,23 @@
     return null;
   }
 
+  function miniVsl1TrailOf(l) {
+    if (!l) return null;
+    var slug = String(l.last_step_slug || "");
+    if (slug === "mini-vsl-1-secar") return { key: "secar", label: "Secar", via: "slug" };
+    if (slug === "mini-vsl-1-massa") return { key: "massa", label: "Massa", via: "slug" };
+    if (slug === "mini-vsl-1-dois") return { key: "dois", label: "Os dois", via: "slug" };
+    if (slug === "mini-vsl-1") return { key: "legacy", label: "VSL1 antiga", via: "slug" };
+    var f = String(l.q2_foco || "");
+    if (!f) return null;
+    for (var i = 0; i < VSL1_TRAILS.length; i++) {
+      if (VSL1_TRAILS[i].focos.indexOf(f) >= 0) {
+        return { key: VSL1_TRAILS[i].key, label: VSL1_TRAILS[i].key === "dois" ? "Os dois" : (VSL1_TRAILS[i].key === "massa" ? "Massa" : "Secar"), via: "foco" };
+      }
+    }
+    return null;
+  }
+
   function renderTable(leads) {
     $("leadsCount").textContent = "(" + (overview.pageviews || leads.length) + " · mostrando " + Math.min(200, leads.length) + ")";
     var rows = (leads || []).slice(0, 200).map(function (l) {
@@ -1137,6 +1331,10 @@
       } else {
         etapa = "—";
       }
+      var v1 = miniVsl1TrailOf(l);
+      var v1Cell = v1
+        ? '<span class="ok" title="' + esc(v1.via === "slug" ? "last_step_slug" : "q2_foco") + '">VSL1 · ' + esc(v1.label) + "</span>"
+        : '<span class="muted">—</span>';
       var ab = abVsl2Of(l);
       var abCell = ab
         ? '<span class="ok" title="answers.ab_vsl2">VSL2 · ' + esc(ab) + "</span>"
@@ -1146,13 +1344,14 @@
         "<td>" + esc(l.q1_idade || "—") + "</td>" +
         "<td>" + esc(l.q2_foco || "—") + "</td>" +
         "<td>" + esc(l.imc != null ? l.imc : "—") + "</td>" +
+        "<td>" + v1Cell + "</td>" +
         "<td>" + abCell + "</td>" +
         "<td>" + esc(etapa) + "</td>" +
         "<td>" + (l.completed ? '<span class="ok">✓</span>' : '<span class="muted">—</span>') + "</td>" +
         "<td>" + esc(origem(l)) + "</td>" +
         "</tr>";
     }).join("");
-    $("leadsBody").innerHTML = rows || '<tr><td colspan="8" class="muted">Nenhum lead no filtro.</td></tr>';
+    $("leadsBody").innerHTML = rows || '<tr><td colspan="9" class="muted">Nenhum lead no filtro.</td></tr>';
   }
 
   boot();
