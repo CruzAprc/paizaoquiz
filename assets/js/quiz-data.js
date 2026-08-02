@@ -230,20 +230,55 @@ const QUIZ = [
     ]
   },
 
-  /* --------------------------- MINI VSL 1 (~1min40) --------------------- */
+  /* --------------------------- MINI VSL 1 — bifurcação por q2_foco ---------
+     Layout STORIES full-screen (igual antes). 1 vídeo por trilha de foco.
+     Ordem das options = secar → massa → os dois. Prefetch só da branch visível. */
   {
     type: "vsl",
-    story: true,            // renderiza em STORIES full-screen (igual Carlão/Liz)
-    videoLen: 166.03,       // duração real (vturb HLS): 166.03s — auto-avança no fim, SEM botão
+    slug: "mini-vsl-1-secar",
+    label: "Mini VSL 1 · Secar",
+    showIf: { q2_foco: "Quero me olhar no espelho e secar de verdade" },
+    story: true,
+    videoLen: 205.37, // HLS ~3m25s
     author: "Carlão Personal das Estrelas",
     handle: "Método do Paizão",
-    // player vturb (streaming) — carregado só nesta tela; warm-up algumas telas antes
-    embed: `<vturb-smartplayer id="vid-6a43a1d5bee4e20d5948096d" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a43a1d5bee4e20d5948096d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
-    // assets pra aquecer ANTES da tela (sem pesar na landing)
+    embed: `<vturb-smartplayer id="vid-6a6ac9a80362ce188475e94d" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a6ac9a80362ce188475e94d/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
     preload: [
-      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a43a1d5bee4e20d5948096d/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a6ac9a80362ce188475e94d/v4/player.js", as: "script" },
       { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
-      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a43a1524cbefc3ea7538be3/main.m3u8", as: "fetch" }
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a6ac85796e528f8b37e9e86/main.m3u8", as: "fetch" }
+    ]
+  },
+  {
+    type: "vsl",
+    slug: "mini-vsl-1-massa",
+    label: "Mini VSL 1 · Ganhar massa",
+    showIf: { q2_foco: "Quero curvas e corpo firme" },
+    story: true,
+    videoLen: 204.44, // HLS ~3m24s
+    author: "Carlão Personal das Estrelas",
+    handle: "Método do Paizão",
+    embed: `<vturb-smartplayer id="vid-6a6ac85596e528f8b37e9e74" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a6ac85596e528f8b37e9e74/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    preload: [
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a6ac85596e528f8b37e9e74/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a6ac70d3185208d112a269f/main.m3u8", as: "fetch" }
+    ]
+  },
+  {
+    type: "vsl",
+    slug: "mini-vsl-1-dois",
+    label: "Mini VSL 1 · Os dois",
+    showIf: { q2_foco: "Quero secar e firmar junto" },
+    story: true,
+    videoLen: 203.34, // HLS ~3m23s
+    author: "Carlão Personal das Estrelas",
+    handle: "Método do Paizão",
+    embed: `<vturb-smartplayer id="vid-6a6ac70c361d9d4d992c247c" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a6ac70c361d9d4d992c247c/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
+    preload: [
+      { href: "https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a6ac70c361d9d4d992c247c/v4/player.js", as: "script" },
+      { href: "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js", as: "script" },
+      { href: "https://cdn.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/6a6ac5c4dc36d99533fc19e1/main.m3u8", as: "fetch" }
     ]
   },
 
