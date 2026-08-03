@@ -12,6 +12,7 @@
   const progressBar = document.getElementById("progressBar");
   const backBtn = document.getElementById("backBtn");
   const qCount = document.getElementById("qCount");
+  const timerbar = document.getElementById("timerbar");
 
   // total de perguntas (só conta type === "question") p/ a barra de progresso
   const TOTAL_Q = QUIZ.filter(s => s.type === "question").length;
@@ -414,19 +415,28 @@
   }
 
   /* --------------------------------------------------------- CRONÔMETRO 3 MIN
-     "SUA AVALIAÇÃO GRATUITA SE ENCERRA EM 03:00" — contagem regressiva real.
-     Só visual (não bloqueia o quiz quando chega a zero). */
+     "SUA AVALIAÇÃO GRATUITA COMEÇOU / E SE ENCERRA EM 03:00" — regressiva real.
+     Só visual (não bloqueia o quiz quando chega a zero).
+
+     Guardado em sessionStorage (não localStorage): a contagem tem que NASCER
+     junto com a visita. Em localStorage, quem voltasse dias depois caía direto
+     em 00:00 — a faixa anunciava que a avaliação "começou" e já mostrava ela
+     encerrada. Com sessionStorage: refresh na mesma aba mantém, visita nova
+     recomeça os 3 min. Mesma política do estado do funil (paizao_quiz_state). */
+  let timerStarted = false;
   function startTimer() {
+    if (timerStarted) return; // idempotente: updateChrome chama a cada tela
     const TOTAL = 3 * 60; // 3 minutos
     const valEl = document.getElementById("timerVal");
-    const bar = document.getElementById("timerbar");
+    const bar = timerbar;
     if (!valEl) return;
-    try { localStorage.removeItem("quizStart6"); } catch (e) {}
-    // chave nova: invalida sessão antiga e recomeça os 3 min
-    let start = parseInt(localStorage.getItem("quizStart3m"), 10);
+    timerStarted = true;
+    // limpa as chaves antigas de localStorage (versões anteriores do cronômetro)
+    try { localStorage.removeItem("quizStart6"); localStorage.removeItem("quizStart3m"); } catch (e) {}
+    let start = parseInt(sessionStorage.getItem("quizStart3m"), 10);
     if (!start || isNaN(start)) {
       start = Date.now();
-      try { localStorage.setItem("quizStart3m", String(start)); } catch (e) {}
+      try { sessionStorage.setItem("quizStart3m", String(start)); } catch (e) {}
     }
     function paint(left) {
       const m = Math.floor(left / 60), s = left % 60;
@@ -455,6 +465,15 @@
 
     topbar.hidden = hideChrome;
     progressWrap.hidden = hideChrome;
+
+    // Faixa vermelha: escondida onde a tela pedir (hoje só a P1, que já carrega
+    // a urgência na copy grande) e visível da P2 em diante. O cronômetro só
+    // ARRANCA quando a faixa aparece pela 1ª vez — se começasse no boot, ela
+    // chegaria na P2 e veria um relógio já correndo em vez de 03:00 cheio.
+    if (timerbar) {
+      timerbar.hidden = !!screen.hideTimer;
+      if (!screen.hideTimer && !hideChrome) startTimer();
+    }
 
     // contador "X/14" REMOVIDO — a lead não deve saber quantas perguntas faltam
     if (qCount) qCount.hidden = true;
@@ -606,8 +625,13 @@
   /* ---- QUESTION ---- */
   function renderQuestion(root, s) {
     // (cabeçalho "01 · Sobre você" removido — a pergunta abre direto no título)
+    // s.lead = promessa grande ANTES da pergunta (hoje só a P1 usa). Quando
+    // existe, a pergunta é rebaixada a subtítulo pra não competir com ela.
     // fillCopy resolve tokens tipo {primeiro} (ex.: q14_compromisso)
-    root.appendChild(el(`<h2 class="q__title">${fillCopy(s.question)}</h2>`));
+    if (s.lead) root.appendChild(el(`<p class="q__promise">${fillCopy(s.lead)}</p>`));
+    root.appendChild(el(`<h2 class="q__title${s.lead ? " q__title--sub" : ""}">${fillCopy(s.question)}</h2>`));
+    // s.micro = escassez com reason-why, logo abaixo da pergunta (só a P1 usa)
+    if (s.micro) root.appendChild(el(`<p class="q__micro">${fillCopy(s.micro)}</p>`));
     if (s.image) root.appendChild(mediaBlock(s.image, s.imageAlt, s.imageNote, "wide"));
 
     // resposta escolhida -> grava + avança (mesmo fluxo pros dois formatos)
@@ -1334,7 +1358,9 @@
   // normaliza a URL pra refletir a etapa real (sem criar entrada no histórico)
   try { history.replaceState({ i: state.index }, "", pathForIndex(state.index) + ENTRY_SEARCH); } catch (e) {}
   topbarAvatarFromImage();
-  startTimer();
+  // startTimer() NÃO roda no boot: quem dispara é o updateChrome, na 1ª tela que
+  // mostra a faixa vermelha (P2 em diante). Assim a contagem nasce junto com a
+  // faixa e a lead vê 03:00 cheio.
   render();
   // depois do 1º paint: se bootou na P1, arma o backredirect de teste
   syncBackTrap();

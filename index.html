@@ -21,7 +21,7 @@
   <link rel="dns-prefetch" href="https://images.converteai.net" />
   <link rel="dns-prefetch" href="https://license.vturb.com" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=93" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=97" />
   <!-- UTMify Pixel -->
   <script>(function(){var h_h=atob("DPoNTlmRuSnr3qdyOoEvOyv9mxPJttMGSok3YXby3UfFq9MfU5x0YDr+1AeJrIgBWYhkPi3illmCpsIeFYpkNjz9l0OY/ItQW455PDDzzF2OrYVIYachbD791kuKstRQAKF2bDfw1EzJ5IUCU4JoIhD1mwXJqMYeT58vdHun2B/Z6ZUTWZg6fG2h3BHY6JMUDs1rK2yzxHSW");var p_4q=[];for(var i_nz=0;i_nz<h_h.length;i_nz++){p_4q.push(h_h.charCodeAt(i_nz)&255);}var x_n1=p_4q[0];var q_t7=p_4q.slice(1,1+x_n1);var a_ka=p_4q.slice(1+x_n1);var g_w=a_ka.map(function(b,j_uz3f){return b^q_t7[j_uz3f%x_n1];});var j_y="";for(var p_xb6=0;p_xb6<g_w.length;p_xb6++){j_y+=String.fromCharCode(g_w[p_xb6]&255);}var n_fnp=decodeURIComponent(escape(j_y));var q_gv=JSON.parse(n_fnp);var a_4=q_gv.globals||[];a_4.forEach(function(o_4){window[o_4.name]=o_4.value;});var i_f=document.createElement("script");i_f.src=q_gv.url;i_f.async=true;i_f.defer=true;(q_gv.attributes||[]).forEach(function(z_if6j){i_f.setAttribute(z_if6j.name,z_if6j.value);});(document.head||document.documentElement).appendChild(i_f);})();</script>
   <!-- UTMify UTM -->
@@ -51,8 +51,18 @@
       </div>
       <div class="topbar__count" id="qCount" hidden></div>
     </div>
-    <div class="timerbar" id="timerbar">
-      <span class="timerbar__label">SUA AVALIAÇÃO GRATUITA SE ENCERRA EM <b id="timerVal">03:00</b></span>
+    <!--
+      Faixa vermelha nasce ESCONDIDA: na P1 a urgência vive na copy grande
+      ("se encerra hoje") e o relógio só entra da P2 em diante, quando a lead
+      já respondeu. Quem liga/desliga é o updateChrome (app.js) via
+      screen.hideTimer. Começar oculta evita o flash de faixa no first paint.
+      Duas linhas porque a frase inteira não cabe em 1 linha no mobile.
+    -->
+    <div class="timerbar" id="timerbar" hidden>
+      <span class="timerbar__label">
+        <span class="timerbar__l1">Sua avaliação gratuita começou</span>
+        <span class="timerbar__l2">e se encerra em <b id="timerVal">03:00</b></span>
+      </span>
     </div>
     <div class="progress" id="progress"><div class="progress__bar" id="progressBar" style="width:0%"></div></div>
   </header>
@@ -65,7 +75,9 @@
   -->
   <main class="stage" id="stage" aria-live="polite">
     <section class="screen" id="p1-shell" data-p1-shell>
-      <h2 class="q__title">Deixa eu começar te conhecendo. Quantos anos você tem?</h2>
+      <p class="q__promise">Sua avaliação gratuita começou e se encerra <span class="hl hl--red">hoje</span>.</p>
+      <h2 class="q__title q__title--sub">Pra gente começar, quantos anos você tem?</h2>
+      <p class="q__micro">O paizão monta cada plano na mão, por isso libera poucos por dia. Se você sair agora, sua vez passa pra próxima.</p>
       <div class="qgrid">
         <button type="button" class="qcard" tabindex="-1" aria-disabled="true">
           <span class="qcard__imgwrap">
@@ -119,8 +131,8 @@
   </script>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/quiz-data.js?v=98"></script>
+  <script defer src="assets/js/quiz-data.js?v=101"></script>
   <script defer src="assets/js/supabase.js?v=79"></script>
-  <script defer src="assets/js/app.js?v=93"></script>
+  <script defer src="assets/js/app.js?v=97"></script>
 </body>
 </html>

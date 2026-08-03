@@ -44,7 +44,21 @@ const QUIZ = [
     type: "question",
     id: "q1_idade",
     block: "Sobre você",
-    question: "Deixa eu começar te conhecendo. Quantos anos você tem?",
+    // lead = frase grande renderizada ANTES da pergunta (só a P1 usa).
+    // Motivo: a landing está desligada, então esta é a 1ª tela que a lead vê
+    // vindo do anúncio. Ela precisa LER de cara o que ganhou, em corpo grande,
+    // e não numa faixa de 10px. Quando existe lead, a pergunta vira subtítulo
+    // (q__title--sub). ATENÇÃO: espelhada no shell estático do index.html.
+    lead: "Sua avaliação gratuita começou e se encerra <span class=\"hl hl--red\">hoje</span>.",
+    question: "Pra gente começar, quantos anos você tem?",
+    // micro = escassez COM MECANISMO (reason-why). Escassez solta o cérebro
+    // descarta; com motivo plausível ("ele monta na mão, por isso são poucos")
+    // ela sustenta. Fecha a saída: sair agora = perder a vez, não pausar.
+    micro: "O paizão monta cada plano na mão, por isso libera poucos por dia. Se você sair agora, sua vez passa pra próxima.",
+    // hideTimer: a faixa vermelha NÃO aparece aqui. Na P1 a urgência já está na
+    // copy grande ("hoje"); relógio correndo na cara de quem acabou de clicar no
+    // anúncio lê como pressão. A faixa volta da P2 em diante (ver updateChrome).
+    hideTimer: true,
     // estilo BetterMe: grade 2x2 de cards com foto + faixa "Idade: X" (ver renderQuestion)
     grid: true,
     optionPrefix: "Idade:",
