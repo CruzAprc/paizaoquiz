@@ -21,44 +21,40 @@
 const QUIZ = [
 
   /* ---------------------------------------------------------------- LANDING
-     >>> TESTE: CAPA/LANDING DESATIVADA — o quiz abre direto na Pergunta 1.
-         Pra reativar, é só descomentar o objeto abaixo (e restaurar a dobra
-         estática da landing no index.html). <<< */
-  /*
+     ETAPA 1 — o 80/20 do funil (Aula 03 §5). Anatomia obrigatória, nesta ordem
+     e toda acima da dobra: headline de promessa + imagem + botão + escassez.
+     A pergunta de idade só entra na ETAPA 2 (§5.6) — abrir com pergunta é o
+     erro fatal nº 1 da aula ("ela não está pronta").
+
+     H1: desafio de prontidão + future pacing com prazo (Hooks Library #14 +
+     #10). "Se olhar no espelho e gostar do que vê" é reaproveitado de propósito
+     da q7b_nostalgia lá na frente: a etapa 1 planta, a pergunta 7b cobra.
+     Serve as 3 trilhas (secar / curvas / os dois) sem prometer kg.
+
+     Sem h2: "etapa 1 com mais informação converteu menos" (§15, A/B validado).
+     O botão responde a pergunta do H1 — é ali que nasce o primeiro sim. */
   {
     type: "landing",
-    h1: "Descubra por que seu corpo não sai do lugar e como eu vou mudar isso em <span class=\"hl\">4 semaninhas</span>.",
-    h2: "Me conta 3 coisinhas e o paizão já acha o que tá te travando e monta seu plano sob medida.",
+    h1: "Você tá pronta pra em <span class=\"hl\">4 semaninhas</span> se olhar no espelho e gostar do que vê?",
     image: "assets/img/carlao-landing.webp",
     transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
     imageAlt: "Carlão Personal",
     imageNote: "Carlão apontando pro botão (autoridade do paizão)",
-    cta: "Fazer minha avaliação grátis agora",
-    subcta: "⏱️ Leva 1 minutinho",
+    cta: "Iniciar minha avaliação gratuita",
+    // A frase do custo de sair migrou pro header (faixa vermelha), onde acompanha
+    // a lead o funil inteiro. Aqui fica a escassez curta da Aula 03 §5.4 — repetir
+    // a mesma frase nos dois lugares, na mesma dobra, só enfraquece as duas.
     scarcity: "⏳ Disponível só hoje · você responde uma vez só"
   },
-  */
 
   /* ============================ S — SITUAÇÃO (acumula \"sins\" fáceis) ====== */
   {
     type: "question",
     id: "q1_idade",
     block: "Sobre você",
-    // lead = frase grande renderizada ANTES da pergunta (só a P1 usa).
-    // Motivo: a landing está desligada, então esta é a 1ª tela que a lead vê
-    // vindo do anúncio. Ela precisa LER de cara o que ganhou, em corpo grande,
-    // e não numa faixa de 10px. Quando existe lead, a pergunta vira subtítulo
-    // (q__title--sub). ATENÇÃO: espelhada no shell estático do index.html.
-    lead: "Sua avaliação gratuita começou e se encerra <span class=\"hl hl--red\">hoje</span>.",
+    // Sem hideTimer: o cronômetro nasce na landing e corre SEM interrupção daqui
+    // em diante. Faixa que some e volta quebra a credibilidade da contagem.
     question: "Pra gente começar, quantos anos você tem?",
-    // micro = escassez COM MECANISMO (reason-why). Escassez solta o cérebro
-    // descarta; com motivo plausível ("ele monta na mão, por isso são poucos")
-    // ela sustenta. Fecha a saída: sair agora = perder a vez, não pausar.
-    micro: "O paizão monta cada plano na mão, por isso libera poucos por dia. Se você sair agora, sua vez passa pra próxima.",
-    // hideTimer: a faixa vermelha NÃO aparece aqui. Na P1 a urgência já está na
-    // copy grande ("hoje"); relógio correndo na cara de quem acabou de clicar no
-    // anúncio lê como pressão. A faixa volta da P2 em diante (ver updateChrome).
-    hideTimer: true,
     // estilo BetterMe: grade 2x2 de cards com foto + faixa "Idade: X" (ver renderQuestion)
     grid: true,
     optionPrefix: "Idade:",

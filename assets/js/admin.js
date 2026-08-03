@@ -12,7 +12,10 @@
   var QUIZ = window.QUIZ || [];
 
   // ---- mapa de etapas por URL (espelha o roteador do app.js) ----
-  // Landing desligada: a entrada do funil é /pergunta-1 (= PageView).
+  // Landing (Etapa 1) LIGADA: a entrada do funil é "/" (= PageView) e
+  // /pergunta-1 (idade) virou a 2ª linha. FUNNEL_STEPS se monta do window.QUIZ,
+  // então isso se ajusta sozinho — o que NÃO se ajusta é o ?v= do quiz-data
+  // aqui no pedro.html: se ficar velho, o painel desenha o funil errado.
   // Retenção SEMPRE por last_step_slug (URL), na ordem real do QUIZ atual.
   // Espelha app.js ROUTE_BY_QID (inclui q7b_nostalgia + slugs atuais)
   var ROUTE_BY_QID = {

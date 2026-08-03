@@ -122,33 +122,17 @@ body::after {
   /* protege o caso de 1 linha só (ex.: faixa do /insta) */
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* linha 1 (a posse) discreta; linha 2 (o relógio) é a que puxa o olho */
+/* linha 1 (a posse) discreta; linha 2 (o custo de sair) é a que puxa o olho.
+   A l2 é longa: em vez de cortar com reticências, ela QUEBRA em telas estreitas
+   (perder o fim da frase seria pior que a faixa crescer 1 linha). */
 .timerbar__l1 {
   font-size: 10px; letter-spacing: .05em; opacity: .92;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
 .timerbar__l2 {
-  font-size: 11.5px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  font-size: 11px; letter-spacing: .03em;
+  white-space: normal; max-width: 100%;
 }
-.timerbar__label b {
-  font-family: var(--mono, ui-monospace, monospace);
-  font-weight: 800;
-  font-size: 13px;
-  color: #fff;
-  letter-spacing: .04em;
-  font-variant-numeric: tabular-nums;
-}
-/* últimos 30s: brilho + número piscando */
-.timerbar.is-urgent {
-  background: linear-gradient(180deg, #ff3b3b 0%, #ff0a0a 50%, #b30000 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.25),
-    0 0 0 1px rgba(255,80,80,.35),
-    0 0 16px rgba(255,0,0,.45);
-}
-.timerbar.is-urgent b { animation: timerBlink 1s steps(1, end) infinite; }
-@keyframes timerBlink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 .topbar__back {
   display: grid; place-items: center;
   width: 36px; height: 36px; flex: 0 0 auto;
@@ -279,6 +263,9 @@ body::after {
 }
 /* variante vermelha do destaque — pra urgência/prazo (mesmo tom do .q__date) */
 .hl--red { color: #e11d48; }
+/* libera a quebra de linha: o .hl é nowrap por causa do "4 semaninhas", mas
+   destaque em frase longa precisa quebrar ou estoura a largura no mobile */
+.hl--wrap { white-space: normal; }
 
 /* ------------------------------------------------------------- LANDING */
 /* FOLD-SAFE (AULA 03 §6): H1 + imagem + botão + escassez sempre visíveis
@@ -495,25 +482,15 @@ body::after {
    descobre o que ganha respondendo. */
 .q__promise {
   font-family: var(--display);
-  font-size: clamp(21px, 5.5vw, 26px); line-height: 1.2; font-weight: 800;
-  letter-spacing: -.02em; margin: 0 0 10px;
+  font-size: clamp(19.5px, 5.1vw, 24px); line-height: 1.22; font-weight: 800;
+  letter-spacing: -.02em; margin: 0 0 12px;
 }
-/* pergunta rebaixada a subtítulo quando existe promessa acima */
+/* A pergunta quando existe promessa acima. NÃO é um subtítulo apagado: ela é a
+   ação da tela, então mantém cor cheia e peso 800. Fica só um degrau abaixo da
+   promessa no tamanho, o suficiente pra hierarquia sem perder força. */
 .q__title--sub {
-  font-size: clamp(15px, 3.9vw, 17.5px); line-height: 1.35; font-weight: 600;
-  letter-spacing: -.005em; color: var(--tx-soft); margin: 0 0 12px;
-}
-/* ESCASSEZ COM MECANISMO: o "por que" da única chance, logo abaixo da pergunta.
-   Vermelho da marca (#e11d48, mesmo do prazo no diagnóstico) + barra lateral:
-   lê como aviso sem gritar como a faixa do topo. Compacta de propósito, pra
-   não empurrar as 4 fotos pra fora da dobra em tela curta. */
-.q__micro {
-  margin: 0 0 16px; padding: 8px 11px;
-  border-left: 3px solid #e11d48;
-  border-radius: 0 10px 10px 0;
-  background: rgba(225,29,72,.07);
-  font-size: 12.5px; line-height: 1.35; font-weight: 600;
-  letter-spacing: -.005em; color: #9f1239;
+  font-size: clamp(17px, 4.5vw, 20px); line-height: 1.3; font-weight: 800;
+  letter-spacing: -.015em; color: var(--tx); margin: 0 0 16px;
 }
 /* data do plano (hoje+4 sem) — mesma do diagnóstico, destaque em vermelho */
 .q__title .q__date {

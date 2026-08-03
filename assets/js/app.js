@@ -13,6 +13,7 @@
   const backBtn = document.getElementById("backBtn");
   const qCount = document.getElementById("qCount");
   const timerbar = document.getElementById("timerbar");
+  const topbarRow = document.querySelector(".topbar__row");
 
   // total de perguntas (só conta type === "question") p/ a barra de progresso
   const TOTAL_Q = QUIZ.filter(s => s.type === "question").length;
@@ -414,66 +415,33 @@
     if (av) av.classList.add("avatar-photo");
   }
 
-  /* --------------------------------------------------------- CRONÔMETRO 3 MIN
-     "SUA AVALIAÇÃO GRATUITA COMEÇOU / E SE ENCERRA EM 03:00" — regressiva real.
-     Só visual (não bloqueia o quiz quando chega a zero).
-
-     Guardado em sessionStorage (não localStorage): a contagem tem que NASCER
-     junto com a visita. Em localStorage, quem voltasse dias depois caía direto
-     em 00:00 — a faixa anunciava que a avaliação "começou" e já mostrava ela
-     encerrada. Com sessionStorage: refresh na mesma aba mantém, visita nova
-     recomeça os 3 min. Mesma política do estado do funil (paizao_quiz_state). */
-  let timerStarted = false;
-  function startTimer() {
-    if (timerStarted) return; // idempotente: updateChrome chama a cada tela
-    const TOTAL = 3 * 60; // 3 minutos
-    const valEl = document.getElementById("timerVal");
-    const bar = timerbar;
-    if (!valEl) return;
-    timerStarted = true;
-    // limpa as chaves antigas de localStorage (versões anteriores do cronômetro)
-    try { localStorage.removeItem("quizStart6"); localStorage.removeItem("quizStart3m"); } catch (e) {}
-    let start = parseInt(sessionStorage.getItem("quizStart3m"), 10);
-    if (!start || isNaN(start)) {
-      start = Date.now();
-      try { sessionStorage.setItem("quizStart3m", String(start)); } catch (e) {}
-    }
-    function paint(left) {
-      const m = Math.floor(left / 60), s = left % 60;
-      valEl.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-      if (bar) bar.classList.toggle("is-urgent", left > 0 && left <= 30);
-    }
-    function tick() {
-      const left = Math.max(0, TOTAL - Math.floor((Date.now() - start) / 1000));
-      paint(left);
-      if (left <= 0 && window.__qTimer) {
-        clearInterval(window.__qTimer);
-        window.__qTimer = null;
-      }
-    }
-    if (window.__qTimer) clearInterval(window.__qTimer);
-    tick();
-    window.__qTimer = setInterval(tick, 1000);
-  }
+  /* A faixa de urgência é ESTÁTICA (sem contagem regressiva): o texto dela vive
+     direto no index.html. Limpa as chaves do cronômetro antigo pra não deixar
+     lixo no navegador de quem já visitou. */
+  try {
+    localStorage.removeItem("quizStart6");
+    localStorage.removeItem("quizStart3m");
+    sessionStorage.removeItem("quizStart3m");
+  } catch (e) {}
 
   /* --------------------------------------------------------- CHROME (topbar/progresso) */
   function updateChrome(screen) {
     const isQuestion = screen.type === "question";
-    const hideChrome = screen.type === "landing" || screen.type === "loading" || screen.type === "story"
+    const isLanding = screen.type === "landing";
+    const hideChrome = screen.type === "loading" || screen.type === "story"
       || screen.story === true || screen.reels === true
       || (screen.type === "testimonial" && (!!screen.embed || !!screen.video));
 
     topbar.hidden = hideChrome;
-    progressWrap.hidden = hideChrome;
+    // Na landing o topbar entra SÓ pela faixa do cronômetro: o perfil do IG já
+    // está dentro da tela (e lá com contagem de seguidores), então a linha de
+    // cima apareceria duplicada. A barra de progresso também some, porque na
+    // etapa 1 ela ainda não começou a responder nada.
+    if (topbarRow) topbarRow.hidden = isLanding;
+    progressWrap.hidden = hideChrome || isLanding;
 
-    // Faixa vermelha: escondida onde a tela pedir (hoje só a P1, que já carrega
-    // a urgência na copy grande) e visível da P2 em diante. O cronômetro só
-    // ARRANCA quando a faixa aparece pela 1ª vez — se começasse no boot, ela
-    // chegaria na P2 e veria um relógio já correndo em vez de 03:00 cheio.
-    if (timerbar) {
-      timerbar.hidden = !!screen.hideTimer;
-      if (!screen.hideTimer && !hideChrome) startTimer();
-    }
+    // Faixa vermelha de urgência: some só onde a tela pedir (screen.hideTimer).
+    if (timerbar) timerbar.hidden = !!screen.hideTimer;
 
     // contador "X/14" REMOVIDO — a lead não deve saber quantas perguntas faltam
     if (qCount) qCount.hidden = true;
@@ -630,8 +598,6 @@
     // fillCopy resolve tokens tipo {primeiro} (ex.: q14_compromisso)
     if (s.lead) root.appendChild(el(`<p class="q__promise">${fillCopy(s.lead)}</p>`));
     root.appendChild(el(`<h2 class="q__title${s.lead ? " q__title--sub" : ""}">${fillCopy(s.question)}</h2>`));
-    // s.micro = escassez com reason-why, logo abaixo da pergunta (só a P1 usa)
-    if (s.micro) root.appendChild(el(`<p class="q__micro">${fillCopy(s.micro)}</p>`));
     if (s.image) root.appendChild(mediaBlock(s.image, s.imageAlt, s.imageNote, "wide"));
 
     // resposta escolhida -> grava + avança (mesmo fluxo pros dois formatos)
@@ -1358,9 +1324,6 @@
   // normaliza a URL pra refletir a etapa real (sem criar entrada no histórico)
   try { history.replaceState({ i: state.index }, "", pathForIndex(state.index) + ENTRY_SEARCH); } catch (e) {}
   topbarAvatarFromImage();
-  // startTimer() NÃO roda no boot: quem dispara é o updateChrome, na 1ª tela que
-  // mostra a faixa vermelha (P2 em diante). Assim a contagem nasce junto com a
-  // faixa e a lead vê 03:00 cheio.
   render();
   // depois do 1º paint: se bootou na P1, arma o backredirect de teste
   syncBackTrap();
