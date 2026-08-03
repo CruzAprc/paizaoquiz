@@ -87,22 +87,25 @@ body::after {
   /* evita o conteúdo interno estourar a coluna de 520px */
   overflow: hidden;
 }
+/* linha da marca: compacta de propósito. Ela cede altura pra faixa vermelha,
+   que é o que precisa de destaque no header. */
 .topbar__row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 16px 8px;
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 14px 5px;
   min-width: 0; width: 100%; box-sizing: border-box;
 }
-/* faixa de urgência — vermelho forte, uma linha só */
+/* faixa de urgência — é o elemento de MAIS peso do header. A marca (nome do
+   Carlão) fica de apoio: quem já clicou no anúncio dele não precisa ser
+   reapresentada, precisa lembrar do que perde se sair. */
 .timerbar {
   display: flex; align-items: center; justify-content: center;
-  /* padding enxuto: a faixa virou 2 linhas, então devolvo altura pro fold da P1 */
-  padding: 6px 12px 7px;
+  padding: 11px 12px 12px;
   border-top: 1px solid #ff1a1a;
   background: linear-gradient(180deg, #ff2d2d 0%, #e10600 55%, #c40000 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.22),
-    inset 0 -1px 0 rgba(0,0,0,.18),
-    0 2px 10px rgba(225,6,0,.35);
+    inset 0 1px 0 rgba(255,255,255,.26),
+    inset 0 -1px 0 rgba(0,0,0,.2),
+    0 3px 14px rgba(225,6,0,.45);
   font-family: var(--sans, "Poppins", system-ui, sans-serif);
   color: #fff;
   min-width: 0; width: 100%; box-sizing: border-box;
@@ -115,27 +118,28 @@ body::after {
   font-weight: 800;
   letter-spacing: .04em;
   text-transform: uppercase;
-  line-height: 1.2;
+  line-height: 1.25;
   text-align: center;
-  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  text-shadow: 0 1px 2px rgba(0,0,0,.3);
   min-width: 0; max-width: 100%;
+  gap: 2px;
   /* protege o caso de 1 linha só (ex.: faixa do /insta) */
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* linha 1 (a posse) discreta; linha 2 (o custo de sair) é a que puxa o olho.
+/* linha 1 = o setup; linha 2 = o custo de sair, e é ela que puxa o olho.
    A l2 é longa: em vez de cortar com reticências, ela QUEBRA em telas estreitas
    (perder o fim da frase seria pior que a faixa crescer 1 linha). */
 .timerbar__l1 {
-  font-size: 10px; letter-spacing: .05em; opacity: .92;
+  font-size: 12px; letter-spacing: .04em; opacity: .95;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
 .timerbar__l2 {
-  font-size: 11px; letter-spacing: .03em;
+  font-size: 14.5px; letter-spacing: .01em; line-height: 1.2;
   white-space: normal; max-width: 100%;
 }
 .topbar__back {
   display: grid; place-items: center;
-  width: 36px; height: 36px; flex: 0 0 auto;
+  width: 30px; height: 30px; flex: 0 0 auto;
   border: 1px solid var(--line); border-radius: 50%;
   background: var(--card); color: var(--tx);
   cursor: pointer; transition: .15s;
@@ -144,23 +148,24 @@ body::after {
 .topbar__back[disabled] { opacity: .25; pointer-events: none; }
 .topbar__brand { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; overflow: hidden; }
 .topbar__avatar {
-  width: 34px; height: 34px; flex: 0 0 auto;
+  width: 27px; height: 27px; flex: 0 0 auto;
   border-radius: 50%; display: grid; place-items: center;
-  font-weight: 800; font-size: 14px; color: #fff;
+  font-weight: 800; font-size: 11px; color: #fff;
   background: var(--neutral);
   background-size: cover; background-position: center;
 }
 .topbar__name { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; overflow: hidden; }
 .topbar__namerow {
   display: block;
-  font-family: var(--display); font-weight: 700; font-size: 13.5px;
+  font-family: var(--display); font-weight: 700; font-size: 11.5px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .topbar__namerow .verified {
-  display: inline-block; vertical-align: -2px; margin-left: 4px;
+  display: inline-block; vertical-align: -1px; margin-left: 3px;
+  width: 12px; height: 12px;
 }
 .topbar__name em {
-  font-style: normal; color: var(--tx-mute); font-weight: 500; font-size: 11.5px;
+  font-style: normal; color: var(--tx-mute); font-weight: 500; font-size: 10px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .verified { flex: 0 0 auto; filter: drop-shadow(0 1px 2px rgba(56,151,240,.5)); }
