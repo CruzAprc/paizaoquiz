@@ -137,12 +137,55 @@
   const STATE_KEY = "paizao_quiz_state";
   function persist() {
     try { sessionStorage.setItem(STATE_KEY, JSON.stringify({ index: state.index, answers: state.answers })); } catch (e) {}
+    // espelha respostas no localStorage (GTM / tags / recovery)
+    saveAnswersToLocalStorage();
   }
   function loadPersisted() {
     try { return JSON.parse(sessionStorage.getItem(STATE_KEY) || "null"); } catch (e) { return null; }
   }
 
-  // hook de analytics — dispara um "pageview" por etapa (pronto pra pixel/GA)
+  /* ---- dataLayer + localStorage (GTM / tags) ----------------------------
+     - A cada etapa: dataLayer.push({ event: "quiz_step", ... })
+     - A cada resposta: dataLayer.push({ event: "quiz_answer", ... })
+     - Cada resposta em localStorage como chave isolada: paizao_<id>
+       + blob completo em paizao_quiz_answers
+  ----------------------------------------------------------------------- */
+  const LS_ANSWER_PREFIX = "paizao_";
+  const LS_ANSWERS_BLOB = "paizao_quiz_answers";
+
+  function pushDataLayer(payload) {
+    try {
+      (window.dataLayer = window.dataLayer || []).push(payload);
+    } catch (e) {}
+  }
+
+  function saveAnswersToLocalStorage() {
+    try {
+      const a = state.answers || {};
+      localStorage.setItem(LS_ANSWERS_BLOB, JSON.stringify(a));
+      Object.keys(a).forEach(function (k) {
+        const v = a[k];
+        if (v == null || v === "") return;
+        localStorage.setItem(LS_ANSWER_PREFIX + k, String(v));
+      });
+      localStorage.setItem(LS_ANSWER_PREFIX + "last_step", String(state.index));
+      localStorage.setItem(LS_ANSWER_PREFIX + "last_slug", slugFor(state.index) || "");
+      localStorage.setItem(LS_ANSWER_PREFIX + "last_label", labelFor(state.index) || "");
+    } catch (e) {}
+  }
+
+  // flatten answers → answer_q1_idade, answer_q2_foco… (variáveis GTM)
+  function answersAsDataLayerFields() {
+    const out = {};
+    const a = state.answers || {};
+    Object.keys(a).forEach(function (k) {
+      if (a[k] == null) return;
+      out["answer_" + k] = a[k];
+    });
+    return out;
+  }
+
+  // hook de analytics — dispara um "pageview" por etapa (pronto pra pixel/GA/GTM)
   function trackRoute(i) {
     const path = pathForIndex(i), label = labelFor(i), s = QUIZ[i];
     try {
@@ -153,7 +196,36 @@
         else if (s && s.type === "offer") window.fbq("track", "ViewContent", { content_name: "oferta" });
       }
     } catch (e) {}
-    try { (window.dataLayer = window.dataLayer || []).push({ event: "quiz_step", step: i, path: path, label: label }); } catch (e) {}
+    // GTM: 1 evento por etapa avançada + respostas atuais como campos soltos
+    const dl = Object.assign({
+      event: "quiz_step",
+      quiz_step: i,
+      quiz_slug: slugFor(i),
+      quiz_label: label,
+      quiz_type: (s && s.type) || "",
+      quiz_path: path,
+      step: i,
+      path: path,
+      label: label,
+      answers: Object.assign({}, state.answers)
+    }, answersAsDataLayerFields());
+    pushDataLayer(dl);
+    saveAnswersToLocalStorage();
+  }
+
+  // GTM: dispara quando a lead responde uma pergunta (antes de avançar a tela)
+  function trackAnswer(questionId, value) {
+    const dl = Object.assign({
+      event: "quiz_answer",
+      quiz_question_id: questionId,
+      quiz_answer: value,
+      quiz_step: state.index,
+      quiz_slug: slugFor(state.index),
+      quiz_label: labelFor(state.index),
+      answers: Object.assign({}, state.answers)
+    }, answersAsDataLayerFields());
+    pushDataLayer(dl);
+    saveAnswersToLocalStorage();
   }
 
   // prefetch de assets (vídeo da próxima tela) — baixa em baixa prioridade e cacheia,
@@ -604,6 +676,7 @@
     function pick(text, container, btn) {
       state.answers[s.id] = text;
       if (window.PaizaoDB) PaizaoDB.recordAnswer(s.id, text, state.answers);
+      trackAnswer(s.id, text);
       container.querySelectorAll(".is-selected").forEach(o => o.classList.remove("is-selected"));
       btn.classList.add("is-selected");
       const up = QUIZ[state.index + 1];
@@ -1099,6 +1172,21 @@
       const info = imcInfo();
       if (info) state.answers.imc = info.imc;
       if (window.PaizaoDB) PaizaoDB.recordMeasure(state.answers);
+      // 1 evento de medidas (altura/peso/imc) + localStorage por campo
+      pushDataLayer(Object.assign({
+        event: "quiz_answer",
+        quiz_question_id: "medidas",
+        quiz_answer: {
+          altura_cm: state.answers.altura_cm,
+          peso_kg: state.answers.peso_kg,
+          imc: state.answers.imc
+        },
+        quiz_step: state.index,
+        quiz_slug: slugFor(state.index),
+        quiz_label: labelFor(state.index),
+        answers: Object.assign({}, state.answers)
+      }, answersAsDataLayerFields()));
+      saveAnswersToLocalStorage();
       next();
     };
 
