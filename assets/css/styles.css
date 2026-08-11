@@ -523,13 +523,15 @@ body::after {
 .qcard__imgwrap {
   display: flex; align-items: flex-end; justify-content: center;
   /* FOLD-SAFE: altura em dvh -> título + 2 linhas de cards cabem SEM rolar
-     em qualquer celular (a imagem é o elemento que encolhe) */
-  height: clamp(92px, 17dvh, 220px);
+     em qualquer celular (a imagem é o elemento que encolhe).
+     + um pouco maior p/ fotos reais de corpo (P6). */
+  height: clamp(108px, 20dvh, 260px);
   overflow: hidden;
 }
 .qcard__img {
   width: 100%; height: 100%;
-  object-fit: contain; object-position: center bottom; /* pessoa INTEIRA visível, apoiada na faixa */
+  /* cover: preenche o card sem bandas; bottom foca torso/perna */
+  object-fit: cover; object-position: center 20%;
 }
 .qcard__bar {
   display: flex; align-items: center; justify-content: center; gap: 6px;
