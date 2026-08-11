@@ -68,7 +68,7 @@ const QUIZ = [
     block: "Sobre você",
     // Sem hideTimer: o cronômetro nasce na landing e corre SEM interrupção daqui
     // em diante. Faixa que some e volta quebra a credibilidade da contagem.
-    question: "Pra gente começar, quantos anos você tem?",
+    question: "Quantos anos você tem?",
     // estilo BetterMe: grade 2x2 de cards com foto + faixa "Idade: X" (ver renderQuestion)
     grid: true,
     optionPrefix: "Idade:",
