@@ -474,6 +474,110 @@
     return res.count || 0;
   }
 
+  // slugs depois da Mini VSL 1 (avançou o vídeo do meio)
+  var AFTER_VSL1 = [
+    "pergunta-8", "pergunta-9", "pergunta-10", "pergunta-11", "pergunta-12", "pergunta-13",
+    "medidas", "montando", "diagnostico", "mini-vsl-2"
+  ];
+
+  async function loadAbVsl1Stats() {
+    // A/B Mini VSL 1 — answers->>'ab_vsl1'
+    async function arm(letter) {
+      var tag = await countLeads(function (q) {
+        return q.filter("answers->>ab_vsl1", "eq", letter);
+      });
+      var stop = await countLeads(function (q) {
+        return q.filter("answers->>ab_vsl1", "eq", letter).eq("last_step_slug", "mini-vsl-1");
+      });
+      var past = await countLeads(function (q) {
+        return q.filter("answers->>ab_vsl1", "eq", letter).in("last_step_slug", AFTER_VSL1);
+      });
+      var offer = await countLeads(function (q) {
+        return q.filter("answers->>ab_vsl1", "eq", letter).eq("last_step_slug", "mini-vsl-2");
+      });
+      var done = await countLeads(function (q) {
+        return q.filter("answers->>ab_vsl1", "eq", letter).eq("completed", true);
+      });
+      return {
+        tagged: tag || 0,
+        stopVideo: stop || 0,
+        past: past || 0,
+        offer: offer || 0,
+        completed: done || 0
+      };
+    }
+    var A = await arm("A");
+    var B = await arm("B");
+    if (A.tagged == null && B.tagged == null) return { error: "sem permissão ou falha ao contar" };
+    return { A: A, B: B };
+  }
+
+  function renderAbVsl1(stats) {
+    var el = $("abVsl1");
+    if (!el) return;
+    if (!stats) { el.innerHTML = '<p class="muted">carregando…</p>'; return; }
+    if (stats.error) {
+      el.innerHTML = '<p class="muted">Não deu pra calcular: ' + esc(stats.error) + "</p>";
+      return;
+    }
+    var pageviews = (overview && overview._pageviews) || (overview && overview.pageviews) || 0;
+    var a = stats.A || {};
+    var b = stats.B || {};
+    var tot = (a.tagged || 0) + (b.tagged || 0);
+    var aShare = tot > 0 ? pct(a.tagged, tot) : 0;
+    var bShare = tot > 0 ? pct(b.tagged, tot) : 0;
+
+    function dropPct(s) {
+      var reached = (s.stopVideo || 0) + (s.past || 0);
+      return reached > 0 ? pct(s.stopVideo, reached) : 0;
+    }
+    function card(kind, title, sub, s, share) {
+      var reached = (s.stopVideo || 0) + (s.past || 0);
+      var drop = dropPct(s);
+      var adv = reached > 0 ? pct(s.past, reached) : 0;
+      return (
+        '<div class="branchp6__card branchp6__card--' + kind + '">' +
+          '<p class="branchp6__h">' + esc(title) + "</p>" +
+          '<p class="branchp6__sub">' + esc(sub) + "</p>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Viraram esta variante (tag)</span>' +
+            '<span class="branchp6__v">' + (s.tagged || 0) + " <span class=\"muted\">(" + share + "%)</span></span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam em <code>/mini-vsl-1</code></span>' +
+            '<span class="branchp6__v branchp6__v--drop">' + (s.stopVideo || 0) + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Passaram do vídeo (P8+)</span>' +
+            '<span class="branchp6__v branchp6__v--ok">' + (s.past || 0) + "</span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Completed</span>' +
+            '<span class="branchp6__v">' + (s.completed || 0) +
+            " <span class=\"muted\">(" + cvr(s.completed, s.tagged) + " da tag)</span></span></div>" +
+          '<div class="branchp6__row"><span class="branchp6__k">Pararam na oferta</span>' +
+            '<span class="branchp6__v">' + (s.offer || 0) +
+            " <span class=\"muted\">(" + cvr(s.offer, s.tagged) + ")</span></span></div>" +
+          '<div class="branchp6__foot">' +
+            "Drop no vídeo: <b class=\"branchp6__v--drop\">" + drop + "%</b> · " +
+            "Avanço: <b class=\"branchp6__v--ok\">" + adv + "%</b> · " +
+            "Alcançaram bloco: <b>" + reached + "</b> · vs pageview: <b>" + cvr(s.tagged, pageviews) + "</b>" +
+          "</div>" +
+        "</div>"
+      );
+    }
+
+    el.innerHTML =
+      '<div class="kpis" style="margin-bottom:12px">' +
+        kpi("PageViews (quiz)", pageviews, "entrada na janela") +
+        kpi("Tag A (controle)", a.tagged || 0, aShare + "% do A/B · drop " + dropPct(a) + "%") +
+        kpi("Tag B (teste nova)", b.tagged || 0, bShare + "% do A/B · drop " + dropPct(b) + "%") +
+        kpi("Share B no A/B", bShare + "%", (b.tagged || 0) + " de " + tot + " com tag · ideal ~50%") +
+      "</div>" +
+      '<div class="branchp6__grid">' +
+        card("liz", "A · controle", "vid-6a43a1d5… (~2m46) — Mini VSL 1 antiga", a, aShare) +
+        card("niic", "B · teste", "vid-6a7a37fd… (~1m43) — Mini VSL 1 nova", b, bShare) +
+      "</div>" +
+      '<p class="muted" style="font-size:12px;margin:8px 0 0">' +
+        "Tag = lead que <b>renderizou</b> a Mini VSL 1 com <code>answers.ab_vsl1</code>. " +
+        "Drop = pararam no vídeo ÷ (pararam + passaram). " +
+        "50/50 sticky; teste com <code>?vsl1=A</code> / <code>?vsl1=B</code>." +
+      "</p>";
+  }
+
   async function loadAbVsl2Stats() {
     // PostgREST: answers->>'ab_vsl2'
     var aAll = await countLeads(function (q) {
@@ -703,6 +807,9 @@
           loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
             renderBranchP6({ error: (e && e.message) || String(e) });
           });
+          loadAbVsl1Stats().then(renderAbVsl1).catch(function (e) {
+            renderAbVsl1({ error: (e && e.message) || String(e) });
+          });
           loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
             renderAbVsl2({ error: (e && e.message) || String(e) });
           });
@@ -744,6 +851,9 @@
       render();
       loadBranchP6Stats().then(renderBranchP6).catch(function (e) {
         renderBranchP6({ error: (e && e.message) || String(e) });
+      });
+      loadAbVsl1Stats().then(renderAbVsl1).catch(function (e) {
+        renderAbVsl1({ error: (e && e.message) || String(e) });
       });
       loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
         renderAbVsl2({ error: (e && e.message) || String(e) });
@@ -1112,6 +1222,16 @@
     $("answers").innerHTML = out.join("") || '<p class="muted">Sem respostas no filtro atual.</p>';
   }
 
+  function abVsl1Of(l) {
+    if (!l) return null;
+    if (l.answers && l.answers.ab_vsl1) return String(l.answers.ab_vsl1).toUpperCase();
+    var lab = String(l.last_step_label || "");
+    // label grava "Mini VSL 1 · A" quando renderiza a etapa
+    if (/mini\s*vsl\s*1/i.test(lab) && /\bA\b/.test(lab)) return "A";
+    if (/mini\s*vsl\s*1/i.test(lab) && /\bB\b/.test(lab)) return "B";
+    return null;
+  }
+
   function abVsl2Of(l) {
     if (!l) return null;
     if (l.answers && l.answers.ab_vsl2) return String(l.answers.ab_vsl2).toUpperCase();
@@ -1140,6 +1260,10 @@
       } else {
         etapa = "—";
       }
+      var ab1 = abVsl1Of(l);
+      var ab1Cell = ab1
+        ? '<span class="ok" title="answers.ab_vsl1">VSL1 · ' + esc(ab1) + "</span>"
+        : '<span class="muted">—</span>';
       var ab = abVsl2Of(l);
       var abCell = ab
         ? '<span class="ok" title="answers.ab_vsl2">VSL2 · ' + esc(ab) + "</span>"
@@ -1149,13 +1273,14 @@
         "<td>" + esc(l.q1_idade || "—") + "</td>" +
         "<td>" + esc(l.q2_foco || "—") + "</td>" +
         "<td>" + esc(l.imc != null ? l.imc : "—") + "</td>" +
+        "<td>" + ab1Cell + "</td>" +
         "<td>" + abCell + "</td>" +
         "<td>" + esc(etapa) + "</td>" +
         "<td>" + (l.completed ? '<span class="ok">✓</span>' : '<span class="muted">—</span>') + "</td>" +
         "<td>" + esc(origem(l)) + "</td>" +
         "</tr>";
     }).join("");
-    $("leadsBody").innerHTML = rows || '<tr><td colspan="8" class="muted">Nenhum lead no filtro.</td></tr>';
+    $("leadsBody").innerHTML = rows || '<tr><td colspan="9" class="muted">Nenhum lead no filtro.</td></tr>';
   }
 
   boot();
