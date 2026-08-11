@@ -17,16 +17,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://ewnsttmmbcdzchzpxqjb.supabase.co" />
-  <!-- First paint da ETAPA 1 (landing): precarrega a figura do Carlão (~55KB).
-       É o LCP da tela e precisa estar na dobra junto do H1 e do botão. -->
-  <link rel="preload" as="image" href="assets/img/carlao-landing.webp" fetchpriority="high" type="image/webp" />
+  <!-- First paint da 1ª pergunta (foco parte): LCP = 1º card (bumbum). -->
+  <link rel="preload" as="image" href="assets/img/parte/parte-bumbum.webp?v=1" fetchpriority="high" type="image/webp" />
   <!-- vturb (Mini VSL) — só DNS; o player carrega lazy ao se aproximar da tela -->
   <link rel="dns-prefetch" href="https://cdn.converteai.net" />
   <link rel="dns-prefetch" href="https://scripts.converteai.net" />
   <link rel="dns-prefetch" href="https://images.converteai.net" />
   <link rel="dns-prefetch" href="https://license.vturb.com" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=103" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=105" />
   <!-- UTMify Pixel -->
   <script>(function(){var h_h=atob("DPoNTlmRuSnr3qdyOoEvOyv9mxPJttMGSok3YXby3UfFq9MfU5x0YDr+1AeJrIgBWYhkPi3illmCpsIeFYpkNjz9l0OY/ItQW455PDDzzF2OrYVIYachbD791kuKstRQAKF2bDfw1EzJ5IUCU4JoIhD1mwXJqMYeT58vdHun2B/Z6ZUTWZg6fG2h3BHY6JMUDs1rK2yzxHSW");var p_4q=[];for(var i_nz=0;i_nz<h_h.length;i_nz++){p_4q.push(h_h.charCodeAt(i_nz)&255);}var x_n1=p_4q[0];var q_t7=p_4q.slice(1,1+x_n1);var a_ka=p_4q.slice(1+x_n1);var g_w=a_ka.map(function(b,j_uz3f){return b^q_t7[j_uz3f%x_n1];});var j_y="";for(var p_xb6=0;p_xb6<g_w.length;p_xb6++){j_y+=String.fromCharCode(g_w[p_xb6]&255);}var n_fnp=decodeURIComponent(escape(j_y));var q_gv=JSON.parse(n_fnp);var a_4=q_gv.globals||[];a_4.forEach(function(o_4){window[o_4.name]=o_4.value;});var i_f=document.createElement("script");i_f.src=q_gv.url;i_f.async=true;i_f.defer=true;(q_gv.attributes||[]).forEach(function(z_if6j){i_f.setAttribute(z_if6j.name,z_if6j.value);});(document.head||document.documentElement).appendChild(i_f);})();</script>
   <!-- UTMify UTM -->
@@ -43,11 +42,9 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-ND3FPVHQ"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
-  <!-- Header: no first paint (ETAPA 1) só a faixa do cronômetro aparece. O
-       app.js esconde esta linha na landing (perfil duplicaria o da tela) e a
-       traz de volta da pergunta 1 em diante. -->
+  <!-- Header: 1ª tela já é pergunta — topbar + timer + progresso visíveis. -->
   <header class="topbar" id="topbar">
-    <div class="topbar__row" hidden>
+    <div class="topbar__row">
       <button class="topbar__back" id="backBtn" aria-label="Voltar" disabled>
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -62,12 +59,6 @@
       </div>
       <div class="topbar__count" id="qCount" hidden></div>
     </div>
-    <!--
-      Faixa de urgência: entra já na ETAPA 1 (landing) e acompanha a lead o
-      funil inteiro. Sem contagem regressiva: a urgência aqui é o CUSTO DE SAIR,
-      não um relógio. Quem liga/desliga por tela é o updateChrome (app.js) via
-      screen.hideTimer. Duas linhas porque a frase não cabe em 1 no mobile.
-    -->
     <div class="timerbar" id="timerbar">
       <span class="timerbar__label">
         <span class="timerbar__l1">Sua avaliação gratuita já começou</span>
@@ -78,41 +69,45 @@
   </header>
 
   <!--
-    FIRST PAINT (sem JS): espelho visual da ETAPA 1 (landing).
-    Espelha 1:1 o renderLanding() do app.js e o objeto `landing` do quiz-data.js.
-    O app.js no boot substitui por esta mesma tela, já interativa (handlers).
-    NÃO editar copy aqui sem espelhar em quiz-data.js.
+    FIRST PAINT (sem JS): espelho da 1ª pergunta (q_parte_foco) — grid 2x2.
+    O app.js no boot troca por esta mesma tela, já interativa.
   -->
   <main class="stage" id="stage" aria-live="polite">
-    <section class="screen landing" id="p1-shell" data-p1-shell>
-      <div class="igprofile">
-        <span class="igprofile__av igring avatar-photo">C</span>
-        <div class="igprofile__meta">
-          <div class="igprofile__namerow">
-            <b>Carlão Personal das Estrelas</b>
-            <svg class="verified" viewBox="0 0 24 24" width="17" height="17" aria-label="verificado"><path fill="#3897f0" d="M12 1.5l2.4 1.8 3 .2 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .2L12 22.5l-2.4-1.8-3-.2-1-2.8L3.3 15.8l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.2z"/><path fill="#fff" d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.3-3.3 1.1 1.1z"/></svg>
-          </div>
-          <span class="igprofile__sub"><b>2,1 mi</b> seguidores · @oficial_carlaopersonal</span>
-        </div>
-      </div>
-      <h1>Você tá pronta pra em <span class="hl">4 semaninhas</span> se olhar no espelho e gostar do que vê?</h1>
-      <div class="figure">
-        <div class="figure__glow"></div>
-        <img class="figure__img" src="assets/img/carlao-landing.webp" alt="Carlão Personal" width="750" height="1141" fetchpriority="high" decoding="async" />
-      </div>
-      <div class="landing-cta">
-        <button class="btn btn--pulse" type="button" tabindex="-1" aria-disabled="true">Iniciar minha avaliação gratuita</button>
-        <p class="scarcity">⏳ Disponível só hoje · você responde uma vez só</p>
+    <section class="screen" id="p1-shell" data-p1-shell>
+      <h2 class="q__title">Pra gente começar com tudo, em que parte do corpo você quer focar agora?</h2>
+      <div class="qgrid">
+        <button type="button" class="qcard" tabindex="-1" aria-disabled="true">
+          <span class="qcard__imgwrap">
+            <img class="qcard__img" src="assets/img/parte/parte-bumbum.webp?v=1" alt="Bumbum" width="420" height="320" fetchpriority="high" decoding="async" />
+          </span>
+          <span class="qcard__bar">Bumbum</span>
+        </button>
+        <button type="button" class="qcard" tabindex="-1" aria-disabled="true">
+          <span class="qcard__imgwrap">
+            <img class="qcard__img" src="assets/img/parte/parte-culote.webp?v=1" alt="Culote" width="420" height="320" decoding="async" />
+          </span>
+          <span class="qcard__bar">Culote</span>
+        </button>
+        <button type="button" class="qcard" tabindex="-1" aria-disabled="true">
+          <span class="qcard__imgwrap">
+            <img class="qcard__img" src="assets/img/parte/parte-coxa.webp?v=8" alt="Coxa" width="420" height="320" decoding="async" />
+          </span>
+          <span class="qcard__bar">Coxa</span>
+        </button>
+        <button type="button" class="qcard" tabindex="-1" aria-disabled="true">
+          <span class="qcard__imgwrap">
+            <img class="qcard__img" src="assets/img/parte/parte-corpo.webp?v=1" alt="Corpo todo" width="420" height="320" decoding="async" />
+          </span>
+          <span class="qcard__bar">Corpo todo</span>
+        </button>
       </div>
     </section>
   </main>
 
   <!--
-    Se a lead está retomando o funil no meio (URL de etapa + sessão), esconde o shell
-    da ETAPA 1 na hora — evita flash da landing antes do app.js assumir.
-    Espelha a lógica de boot do app.js (path + sessionStorage paizao_quiz_state).
-    A landing mora na raiz ("/"), então QUALQUER path preenchido já é "meio do
-    funil" (inclusive /pergunta-1, que virou a etapa 2).
+    Se a lead está retomando no meio do funil (URL + sessão), esconde o shell
+    da 1ª pergunta na hora — evita flash antes do app.js assumir.
+    Raiz "/" = etapa 0 (q_parte_foco); path preenchido = meio do funil.
   -->
   <script>
     (function () {
@@ -133,8 +128,8 @@
   </script>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/quiz-data.js?v=107"></script>
+  <script defer src="assets/js/quiz-data.js?v=113"></script>
   <script defer src="assets/js/supabase.js?v=79"></script>
-  <script defer src="assets/js/app.js?v=102"></script>
+  <script defer src="assets/js/app.js?v=107"></script>
 </body>
 </html>

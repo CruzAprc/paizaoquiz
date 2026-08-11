@@ -21,30 +21,44 @@
 const QUIZ = [
 
   /* ---------------------------------------------------------------- LANDING
-     ETAPA 1 — o 80/20 do funil (Aula 03 §5). Anatomia obrigatória, nesta ordem
-     e toda acima da dobra: headline de promessa + imagem + botão + escassez.
-     A pergunta de idade só entra na ETAPA 2 (§5.6) — abrir com pergunta é o
-     erro fatal nº 1 da aula ("ela não está pronta").
-
-     H1: desafio de prontidão + future pacing com prazo (Hooks Library #14 +
-     #10). "Se olhar no espelho e gostar do que vê" é reaproveitado de propósito
-     da q7b_nostalgia lá na frente: a etapa 1 planta, a pergunta 7b cobra.
-     Serve as 3 trilhas (secar / curvas / os dois) sem prometer kg.
-
-     Sem h2: "etapa 1 com mais informação converteu menos" (§15, A/B validado).
-     O botão responde a pergunta do H1 — é ali que nasce o primeiro sim. */
+     DESLIGADA: a lead entra direto na pergunta de parte do corpo (q_parte_foco).
+     Pra reativar a etapa com CTA do Carlão, descomente o bloco abaixo. */
+  /*
   {
     type: "landing",
     h1: "Você tá pronta pra em <span class=\"hl\">4 semaninhas</span> se olhar no espelho e gostar do que vê?",
     image: "assets/img/carlao-landing.webp",
-    transparent: true, // figura recortada (sem fundo) -> renderiza sem moldura, integrada ao botão
+    transparent: true,
     imageAlt: "Carlão Personal",
     imageNote: "Carlão apontando pro botão (autoridade do paizão)",
     cta: "Iniciar minha avaliação gratuita",
-    // A frase do custo de sair migrou pro header (faixa vermelha), onde acompanha
-    // a lead o funil inteiro. Aqui fica a escassez curta da Aula 03 §5.4 — repetir
-    // a mesma frase nos dois lugares, na mesma dobra, só enfraquece as duas.
     scarcity: "⏳ Disponível só hoje · você responde uma vez só"
+  },
+  */
+
+  /* --------------- FOCO DE PARTE — ENTRADA DO QUIZ (sem CTA prévio).
+     Cards: bumbum / culote / coxa / corpo todo. Resposta só no jsonb answers.
+     Não altera a trilha q2_foco. */
+  {
+    type: "question",
+    id: "q_parte_foco",
+    block: "Sobre você",
+    question: "Pra gente começar com tudo, em que parte do corpo você quer focar agora?",
+    grid: true,
+    // highlight no meio/baixo do corpo (bumbum, culote, coxa)
+    imagePosition: "center 35%",
+    options: [
+      "Bumbum",
+      "Culote",
+      "Coxa",
+      "Corpo todo"
+    ],
+    images: [
+      "assets/img/parte/parte-bumbum.webp?v=1",
+      "assets/img/parte/parte-culote.webp?v=1",
+      "assets/img/parte/parte-coxa.webp?v=8",
+      "assets/img/parte/parte-corpo.webp?v=1"
+    ]
   },
 
   /* ============================ S — SITUAÇÃO (acumula \"sins\" fáceis) ====== */
@@ -116,6 +130,11 @@ const QUIZ = [
       "Me sinto perdida e sozinha na academia"
     ]
   },
+  /* >>> REMOVIDA (compensação da nova 1ª pergunta q_parte_foco):
+     "E o que mais te trava na hora de manter o treino?" (q5_trava / pergunta-5).
+     {empatia} no loading usa q5_trava || q6_sozinha — com q5 fora, cai no fallback.
+     Pra reativar, descomente o bloco. <<< */
+  /*
   {
     type: "question",
     id: "q5_trava",
@@ -128,6 +147,7 @@ const QUIZ = [
       "Tempo some no dia e o treino fica por último"
     ]
   },
+  */
 
   /* --------------- FOCO (cards estilo BetterMe) — logo ANTES do depoimento Niic.
      Valores das options EXATOS — o PERSONA.foco e o diagnóstico dependem deles. */
@@ -138,15 +158,17 @@ const QUIZ = [
     // Trilha do plano (secar / massa / os dois) — tom oral do paizão, sem “entregasse UMA coisa”
     question: "Me fala a real o que você mais quer pro seu corpo nessas 4 semaninhas?",
     grid: true,
+    gridClass: "qgrid--face", // selfies rosto+torso — crop no topo
+    imagePosition: "center 8%",
     options: [
       "Quero me olhar no espelho e secar de verdade",
       "Quero curvas e corpo firme",
       "Quero secar e firmar junto"
     ],
     images: [
-      "assets/img/foco/foco-emagrecer.webp",
-      "assets/img/foco/foco-ganhar-massa.webp",
-      "assets/img/foco/foco-dois-juntos.webp"
+      "assets/img/foco/foco-emagrecer.webp?v=109",   // secar
+      "assets/img/foco/foco-ganhar-massa.webp?v=109", // curvas / ganho de massa
+      "assets/img/foco/foco-dois-juntos.webp?v=109"   // secar e crescer
     ]
   },
 

@@ -49,12 +49,11 @@
 
     <section class="kpis" id="kpis"></section>
     <p class="muted" style="font-size:12px;margin:-12px 0 18px">
-      <strong>PageView</strong> = 1 lead/sessão que abriu o quiz (entrada <code>/</code> = Etapa 1 / landing).
+      <strong>PageView</strong> = 1 lead/sessão que abriu o quiz (entrada <code>/</code> = 1ª pergunta · foco parte).
       <strong>CVR</strong> = compras ÷ pageviews e compras ÷ quem chegou na oferta.
       Funil espelha o <code>quiz-data.js</code> atual (foco novo, <code>/nostalgia</code>, P12 Barriga/Bumbum/Coxas/Tudo, VSL2 force B).
-      <strong>⚠️ Corte de série:</strong> a Etapa 1 (landing) voltou. Leads antigos entravam por <code>/pergunta-1</code>;
-      os novos entram por <code>/</code> e só chegam em <code>/pergunta-1</code> depois de clicar no botão.
-      A passagem <strong>Etapa 1 → Idade</strong> é a métrica nova a acompanhar (benchmark: ≥50%, 70%+ é excelente).
+      <strong>⚠️ Corte de série:</strong> landing desligada. Entrada = <code>/</code> (foco parte: bumbum/culote/coxa/corpo).
+      Idade virou a 2ª etapa (<code>/pergunta-1</code>). Acompanhar <strong>/ → Idade</strong> e distribuição do foco parte.
     </p>
 
     <section class="panel">
@@ -109,7 +108,7 @@
       <div id="funnel" class="funnel"></div>
       <p class="muted" style="font-size:12px;margin:12px 0 0">
         Retenção pela URL alcançada (<code>last_step_slug</code>), ordem do QUIZ atual.
-        Entrada = <strong>PageView · /</strong> (Etapa 1 / landing); a 2ª linha é <code>/pergunta-1</code> (idade).
+        Entrada = <strong>PageView · /</strong> (foco parte); a 2ª linha é <code>/pergunta-1</code> (idade).
         Ordem real do meio: … → foco → <strong>Niic (todos)</strong> → P6 corpo → <strong>/nostalgia</strong> → 1 ano → Mini VSL 1 → … → P12 (Barriga/Bumbum/Coxas/Tudo) → … → oferta.
         Use "Chegaram na oferta" como fundo de funil (flag Completaram subconta).
       </p>
@@ -139,7 +138,7 @@
 
   <!-- quiz-data = MESMA fonte do funil (ordem/labels/options). Bump junto com o quiz. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/quiz-data.js?v=107"></script>
-  <script src="assets/js/admin.js?v=95"></script>
+  <script src="assets/js/quiz-data.js?v=113"></script>
+  <script src="assets/js/admin.js?v=98"></script>
 </body>
 </html>

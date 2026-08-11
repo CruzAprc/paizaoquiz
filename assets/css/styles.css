@@ -544,8 +544,27 @@ body::after {
 }
 .qcard__arrow { display: inline-flex; }
 .qcard__arrow svg { width: 16px; height: 16px; }
-/* nº ímpar de cards: o último ocupa a linha inteira (mesma altura fold-safe) */
-.qgrid .qcard:nth-child(odd):last-child { grid-column: 1 / -1; }
+/* nº ímpar de cards: o último fica na linha de baixo, metade da largura e centrado
+   (antes esticava 100% e as fotos de corpo/rosto ficavam “esticadas” e estranhas). */
+.qgrid .qcard:nth-child(odd):last-child {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: calc((100% - 12px) / 2);
+  justify-self: center;
+}
+
+/* Grade de selfies/rosto+torso (ex.: /pergunta-2 foco): enquadra o rosto e o tronco */
+.qgrid--face .qcard__img {
+  object-position: center 8%;
+}
+.qgrid--face .qcard__imgwrap {
+  height: clamp(120px, 22dvh, 280px);
+}
+.qgrid--face .qcard__bar {
+  font-size: 12.5px;
+  padding: 9px 7px;
+  line-height: 1.18;
+}
 
 /* ---- MOCKUPS DECORATIVOS (espaço vazio abaixo das opções) ----
    Ocupam SÓ a sobra vertical da tela (flex:1 + min-height:0): em celular curto

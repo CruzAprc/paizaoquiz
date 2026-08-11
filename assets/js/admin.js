@@ -19,6 +19,8 @@
   // Retenção SEMPRE por last_step_slug (URL), na ordem real do QUIZ atual.
   // Espelha app.js ROUTE_BY_QID (inclui q7b_nostalgia + slugs atuais)
   var ROUTE_BY_QID = {
+    // raiz "/" = 1ª pergunta (landing desligada)
+    q_parte_foco: "",
     q1_idade: "pergunta-1", q2_foco: "pergunta-2", q3_rotina: "pergunta-3",
     q4_porque: "pergunta-4", q5_trava: "pergunta-5", q6_sozinha: "pergunta-6",
     q7_deixou: "pergunta-6", q7b_nostalgia: "nostalgia", q8_um_ano: "pergunta-7",
@@ -33,6 +35,7 @@
   };
   // Labels curtos pra etapas com slug fora de pergunta-N (funil atual)
   var LABEL_BY_QID = {
+    q_parte_foco: "Foco parte",
     q1_idade: "Idade",
     q2_foco: "Foco",
     q3_rotina: "Rotina",

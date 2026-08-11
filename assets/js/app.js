@@ -52,6 +52,8 @@
      botão voltar do navegador, drop-off). Mapa por IDENTIDADE da tela (id da pergunta
      ou type), robusto a reordenação. Hospedagem com SPA fallback (vercel.json). */
   const ROUTE_BY_QID = {
+    // raiz "/" = 1ª pergunta (landing desligada)
+    q_parte_foco: "",
     q1_idade: "pergunta-1", q2_foco: "pergunta-2", q3_rotina: "pergunta-3",
     q4_porque: "pergunta-4", q5_trava: "pergunta-5", q6_sozinha: "pergunta-6",
     q7_deixou: "pergunta-6", q7b_nostalgia: "nostalgia", q8_um_ano: "pergunta-7",
@@ -686,16 +688,21 @@
 
     // formato GRADE (estilo BetterMe): cards 2x2 com foto + faixa de rótulo
     if (s.grid && s.images && s.images.length === s.options.length) {
-      const grid = el('<div class="qgrid"></div>');
+      const gridMods = ["qgrid"];
+      if (s.gridClass) gridMods.push(s.gridClass);
+      // 3 cards: evita o 3º esticar full-width sem controle
+      if (s.options.length === 3) gridMods.push("qgrid--3");
+      const grid = el(`<div class="${gridMods.join(" ")}"></div>`);
       s.options.forEach((text, i) => {
         const selected = state.answers[s.id] === text;
         // P1 (e grids): 1ª imagem = LCP (high); demais lazy se não forem as 2 primeiras
         // (idade/foco cabem na dobra — eager nas 2 de cima, lazy nas de baixo).
         const load = i < 2 ? "eager" : "lazy";
         const prio = i === 0 ? ' fetchpriority="high"' : "";
+        const pos = s.imagePosition ? ` style="object-position:${s.imagePosition}"` : "";
         const card = el(`
           <button type="button" class="qcard ${selected ? "is-selected" : ""}">
-            <span class="qcard__imgwrap"><img class="qcard__img" src="${s.images[i]}" alt="${text}" width="420" height="320" loading="${load}" decoding="async"${prio} /></span>
+            <span class="qcard__imgwrap"><img class="qcard__img" src="${s.images[i]}" alt="${text}" width="420" height="320" loading="${load}" decoding="async"${prio}${pos} /></span>
             <span class="qcard__bar">${s.optionPrefix ? s.optionPrefix + " " : ""}${text}<span class="qcard__arrow">${ic.arrow}</span></span>
           </button>`);
         card.addEventListener("click", () => pick(text, grid, card));
