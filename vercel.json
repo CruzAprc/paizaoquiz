@@ -9,6 +9,7 @@
     { "source": "/insta", "destination": "/insta.html" },
     { "source": "/insta/(.*)", "destination": "/insta.html" },
     { "source": "/upsell", "destination": "/upsell.html" },
+    { "source": "/5meses", "destination": "/5meses.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
