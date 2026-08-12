@@ -262,15 +262,15 @@ const QUIZ = [
     ]
   },
 
-  /* --------------------------- MINI VSL 1 — A/B silencioso ----------------
-     Layout STORIES full-screen. 50/50 sticky (paizao_ab_vsl1).
-     A = controle (vid-6a43a1d5… ~2m46) · B = teste (vid-6a7a37fd… ~1m43).
-     Forçar no teste: ?vsl1=A ou ?vsl1=B. Grava answers.ab_vsl1 = "A"|"B".
-     Painel /pedro: bloco "A/B Mini VSL 1". */
+  /* --------------------------- MINI VSL 1 ---------------------------------
+     Layout STORIES full-screen.
+     HOJE: 100% B = vid-6a7a37fd67cad23d9c328707 (~1m43). force: "B".
+     A fica no mapa só pra reabrir A/B depois (remove force → 50/50).
+     Grava answers.ab_vsl1 = "A"|"B". Painel /pedro: bloco "A/B Mini VSL 1". */
   {
     type: "vsl",
     story: true,
-    // fallback = B (nova) se abTest falhar; videoLen default B
+    // 100% no player pedido (B)
     videoLen: 102.8,
     author: "Carlão Personal das Estrelas",
     handle: "Método do Paizão",
@@ -282,7 +282,7 @@ const QUIZ = [
     ],
     abTest: {
       key: "vsl1",
-      // 50/50 ativo — sem force. Pra 100% B: force: "B"
+      force: "B",
       variants: {
         A: {
           label: "controle",
@@ -295,7 +295,7 @@ const QUIZ = [
           ]
         },
         B: {
-          label: "teste",
+          label: "oficial",
           videoLen: 102.8,
           embed: `<vturb-smartplayer id="vid-6a7a37fd67cad23d9c328707" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/00d6163e-e250-4c92-8e51-37b324f30ce8/players/6a7a37fd67cad23d9c328707/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`,
           preload: [
