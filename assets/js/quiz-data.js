@@ -158,17 +158,17 @@ const QUIZ = [
     // Trilha do plano (secar / massa / os dois) — tom oral do paizão, sem “entregasse UMA coisa”
     question: "Me fala a real o que você mais quer pro seu corpo nessas 4 semaninhas?",
     grid: true,
-    gridClass: "qgrid--face", // selfies rosto+torso — crop no topo
-    imagePosition: "center 8%",
+    gridClass: "qgrid--face", // selfies: um pouco mais “longe” (rosto + tronco)
+    imagePosition: "center 32%",
     options: [
       "Quero me olhar no espelho e secar de verdade",
       "Quero curvas e corpo firme",
       "Quero secar e firmar junto"
     ],
     images: [
-      "assets/img/foco/foco-emagrecer.webp?v=109",   // secar
-      "assets/img/foco/foco-ganhar-massa.webp?v=109", // curvas / ganho de massa
-      "assets/img/foco/foco-dois-juntos.webp?v=109"   // secar e crescer
+      "assets/img/foco/foco-emagrecer.webp?v=110",   // secar
+      "assets/img/foco/foco-ganhar-massa.webp?v=110", // curvas / ganho de massa
+      "assets/img/foco/foco-dois-juntos.webp?v=110"   // secar e crescer
     ]
   },
 

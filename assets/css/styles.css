@@ -553,12 +553,13 @@ body::after {
   justify-self: center;
 }
 
-/* Grade de selfies/rosto+torso (ex.: /pergunta-2 foco): enquadra o rosto e o tronco */
+/* Grade de selfies (ex.: /pergunta-2 foco): afasta um pouco o crop
+   (center ~32% mostra rosto + tronco, não close no rosto). */
 .qgrid--face .qcard__img {
-  object-position: center 8%;
+  object-position: center 32%;
 }
 .qgrid--face .qcard__imgwrap {
-  height: clamp(120px, 22dvh, 280px);
+  height: clamp(128px, 24dvh, 300px);
 }
 .qgrid--face .qcard__bar {
   font-size: 12.5px;
