@@ -129,6 +129,11 @@ begin
       union all select 'q12_alimentacao', q12_alimentacao::text from base where q12_alimentacao is not null and q12_alimentacao::text <> ''
       union all select 'q13_primeiro', q13_primeiro::text from base where q13_primeiro is not null and q13_primeiro::text <> ''
       union all select 'q14_compromisso', q14_compromisso::text from base where q14_compromisso is not null and q14_compromisso::text <> ''
+      -- jsonb-only keys (1ª pergunta atual + nostalgia)
+      union all select 'q_parte_foco', answers->>'q_parte_foco' from base
+        where answers ? 'q_parte_foco' and nullif(answers->>'q_parte_foco','') is not null
+      union all select 'q7b_nostalgia', answers->>'q7b_nostalgia' from base
+        where answers ? 'q7b_nostalgia' and nullif(answers->>'q7b_nostalgia','') is not null
     ) x
     group by 1, 2
   ),
@@ -138,7 +143,8 @@ begin
       utm_source, landing_path, referrer, user_agent, imc, origem,
       q1_idade, q2_foco, q3_rotina, q4_porque, q5_trava, q6_sozinha,
       q7_deixou, q8_um_ano, q9_plano, q10_cobrando, q11_comunidade,
-      q12_alimentacao, q13_primeiro, q14_compromisso
+      q12_alimentacao, q13_primeiro, q14_compromisso,
+      answers
     from base
     order by created_at desc
     limit 200

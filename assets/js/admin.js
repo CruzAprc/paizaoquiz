@@ -273,7 +273,7 @@
 
   // Fallback: puxa leads em fatias de 1h em paralelo (bem mais rápido que keyset sequencial)
   var LEAD_COLS = "id,created_at,completed,last_step,last_step_slug,last_step_label," +
-    "utm_source,landing_path,referrer,user_agent,imc," +
+    "utm_source,landing_path,referrer,user_agent,imc,answers," +
     "q1_idade,q2_foco,q3_rotina,q4_porque,q5_trava,q6_sozinha,q7_deixou,q8_um_ano," +
     "q9_plano,q10_cobrando,q11_comunidade,q12_alimentacao,q13_primeiro,q14_compromisso";
   var PAGE = 1000;
@@ -366,10 +366,18 @@
       "q7_deixou","q8_um_ano","q9_plano","q10_cobrando","q11_comunidade",
       "q12_alimentacao","q13_primeiro","q14_compromisso"
     ];
+    // keys só no jsonb answers (sem coluna dedicada)
+    var JSONB_Q = ["q_parte_foco", "q7b_nostalgia"];
+
+    function bumpAnswer(q, v) {
+      if (v == null || v === "") return;
+      if (!answersMap[q]) answersMap[q] = {};
+      answersMap[q][v] = (answersMap[q][v] || 0) + 1;
+    }
 
     filtered.forEach(function (l) {
       if (l.completed) completed++;
-      // "iniciou" = tem slug de URL (chegou em alguma etapa; entrada = /pergunta-1)
+      // "iniciou" = tem slug de URL (chegou em alguma etapa; entrada = /)
       var slug = (l.last_step_slug != null && l.last_step_slug !== "")
         ? l.last_step_slug
         : (l.last_step_slug === "" ? "" : null);
@@ -378,12 +386,12 @@
       bySlug[slug] = (bySlug[slug] || 0) + 1;
       var o = origem(l);
       originsMap[o] = (originsMap[o] || 0) + 1;
-      QCOLS.forEach(function (c) {
-        var v = l[c];
-        if (v == null || v === "") return;
-        if (!answersMap[c]) answersMap[c] = {};
-        answersMap[c][v] = (answersMap[c][v] || 0) + 1;
-      });
+      QCOLS.forEach(function (c) { bumpAnswer(c, l[c]); });
+      // jsonb answers: q_parte_foco, nostalgia, ab tags, etc.
+      var ans = l.answers;
+      if (ans && typeof ans === "object") {
+        JSONB_Q.forEach(function (k) { bumpAnswer(k, ans[k]); });
+      }
     });
 
     var funnel = Object.keys(bySlug).map(function (slug) { return { slug: slug, n: bySlug[slug] }; });
@@ -468,6 +476,9 @@
     var q = client.from("paizao_quiz_leads").select("id", { count: "exact", head: true });
     if (w.fromISO) q = q.gte("created_at", w.fromISO);
     if (w.toISO) q = q.lt("created_at", w.toISO);
+    // filtro de UTM do painel (quando setado)
+    var origin = ($("utmFilter") && $("utmFilter").value) || null;
+    if (origin) q = q.eq("utm_source", origin);
     if (applyFilters) q = applyFilters(q);
     var res = await q;
     if (res.error) {
@@ -475,6 +486,88 @@
       return null;
     }
     return res.count || 0;
+  }
+
+  /* ---- 1ª pergunta (q_parte_foco) — só no jsonb answers ---------------
+     Contagens exactas via head:count (RPC overview ainda não agrega isso). */
+  var PARTE_OPTS = ["Bumbum", "Culote", "Coxa", "Corpo todo"];
+
+  async function loadParteFocoStats() {
+    var total = await countLeads(function (q) {
+      return q.not("answers->>q_parte_foco", "is", null)
+        .neq("answers->>q_parte_foco", "");
+    });
+    if (total == null) return { error: "sem permissão ou falha ao contar" };
+    var byOpt = {};
+    var i;
+    for (i = 0; i < PARTE_OPTS.length; i++) {
+      (function (opt) {
+        // sequential below — assign after loop via Promise.all
+      })(PARTE_OPTS[i]);
+    }
+    var counts = await Promise.all(PARTE_OPTS.map(function (opt) {
+      return countLeads(function (q) {
+        return q.filter("answers->>q_parte_foco", "eq", opt);
+      }).then(function (n) { return { opt: opt, n: n == null ? 0 : n }; });
+    }));
+    counts.forEach(function (c) { byOpt[c.opt] = c.n; });
+    // outras strings legadas / fora da lista
+    var known = 0;
+    PARTE_OPTS.forEach(function (o) { known += byOpt[o] || 0; });
+    var other = Math.max(0, (total || 0) - known);
+    return { total: total || 0, byOpt: byOpt, other: other };
+  }
+
+  function renderParteFoco(stats) {
+    var el = $("parteFoco");
+    if (!el) return;
+    if (!stats) { el.innerHTML = '<p class="muted">carregando…</p>'; return; }
+    if (stats.error) {
+      el.innerHTML = '<p class="muted">Não deu pra calcular: ' + esc(stats.error) + "</p>";
+      return;
+    }
+    var pageviews = (overview && overview._pageviews) || (overview && overview.pageviews) || 0;
+    var pastEntry = (overview && overview._pastEntry) || 0;
+    var total = stats.total || 0;
+    var byOpt = stats.byOpt || {};
+    var rows = PARTE_OPTS.map(function (opt) {
+      var c = byOpt[opt] || 0;
+      var w = pct(c, total);
+      return '<div class="ans__row"><div class="ans__opt">' + esc(opt) + '</div>' +
+        '<div class="ans__barwrap"><div class="ans__bar" style="width:' + w + '%"></div></div>' +
+        '<div class="ans__num">' + c + ' <span class="muted">' + w + '%</span></div></div>';
+    }).join("");
+    if (stats.other > 0) {
+      rows += '<div class="ans__row"><div class="ans__opt muted">(outras)</div>' +
+        '<div class="ans__barwrap"><div class="ans__bar" style="width:' + pct(stats.other, total) + '%"></div></div>' +
+        '<div class="ans__num">' + stats.other + '</div></div>';
+    }
+    el.innerHTML =
+      '<div class="kpis" style="margin-bottom:12px">' +
+        kpi("Responderam a 1ª", total, cvrSub(total, pageviews, "do pageview")) +
+        kpi("Taxa de resposta", cvr(total, pageviews), total + " / " + pageviews + " PV") +
+        kpi("Foram pra idade", pastEntry, cvrSub(pastEntry, pageviews, "do pageview · / → /pergunta-1")) +
+        kpi("Drop na 1ª", Math.max(0, pageviews - pastEntry), cvrSub(Math.max(0, pageviews - pastEntry), pageviews, "pararam em /")) +
+      "</div>" +
+      '<div class="ans"><div class="ans__q">Foco parte · Pra gente começar com tudo, em que parte do corpo você quer focar agora?</div>' +
+        (total ? rows : '<p class="muted" style="margin:0">Nenhuma resposta <code>q_parte_foco</code> na janela (jsonb answers).</p>') +
+      "</div>" +
+      '<p class="muted" style="font-size:12px;margin:8px 0 0">' +
+        "Contagem via <code>answers->>q_parte_foco</code> (não tem coluna SQL). " +
+        "Taxa = quem respondeu a 1ª ÷ PageViews. Drop na 1ª = PV − quem chegou em <code>/pergunta-1</code>." +
+      "</p>";
+
+    // injeta no bloco "Respostas por pergunta" se a agregação principal ainda não trouxe
+    if (overview && Array.isArray(overview.answers) && total > 0) {
+      var has = overview.answers.some(function (r) { return r.question === "q_parte_foco"; });
+      if (!has) {
+        PARTE_OPTS.forEach(function (opt) {
+          var n = byOpt[opt] || 0;
+          if (n > 0) overview.answers.push({ question: "q_parte_foco", answer: opt, n: n });
+        });
+        renderAnswers(overview.answers);
+      }
+    }
   }
 
   // slugs depois da Mini VSL 1 (avançou o vídeo do meio)
@@ -816,6 +909,9 @@
           loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
             renderAbVsl2({ error: (e && e.message) || String(e) });
           });
+          loadParteFocoStats().then(renderParteFoco).catch(function (e) {
+            renderParteFoco({ error: (e && e.message) || String(e) });
+          });
           var ms = Math.round(performance.now() - t0);
           // render() já montou o resumo (pageviews + oferta + CVR); só anexa o tempo
           $("dashSub").textContent = ($("dashSub").textContent || "") + " · servidor " + ms + "ms";
@@ -860,6 +956,9 @@
       });
       loadAbVsl2Stats().then(renderAbVsl2).catch(function (e) {
         renderAbVsl2({ error: (e && e.message) || String(e) });
+      });
+      loadParteFocoStats().then(renderParteFoco).catch(function (e) {
+        renderParteFoco({ error: (e && e.message) || String(e) });
       });
       var ms2 = Math.round(performance.now() - t0);
       $("dashSub").textContent = ($("dashSub").textContent || "") +
@@ -1271,8 +1370,14 @@
       var abCell = ab
         ? '<span class="ok" title="answers.ab_vsl2">VSL2 · ' + esc(ab) + "</span>"
         : '<span class="muted">—</span>';
+      var parte = (l.answers && l.answers.q_parte_foco) ? l.answers.q_parte_foco : "—";
+      // last_step_slug "" = parou na 1ª (entrada /)
+      if (l.last_step_slug === "" || l.last_step_slug === null) {
+        if (l.last_step_slug === "") etapa = "Foco parte · /";
+      }
       return "<tr>" +
         "<td>" + esc(when) + "</td>" +
+        "<td>" + esc(parte) + "</td>" +
         "<td>" + esc(l.q1_idade || "—") + "</td>" +
         "<td>" + esc(l.q2_foco || "—") + "</td>" +
         "<td>" + esc(l.imc != null ? l.imc : "—") + "</td>" +
@@ -1283,7 +1388,7 @@
         "<td>" + esc(origem(l)) + "</td>" +
         "</tr>";
     }).join("");
-    $("leadsBody").innerHTML = rows || '<tr><td colspan="9" class="muted">Nenhum lead no filtro.</td></tr>';
+    $("leadsBody").innerHTML = rows || '<tr><td colspan="10" class="muted">Nenhum lead no filtro.</td></tr>';
   }
 
   boot();

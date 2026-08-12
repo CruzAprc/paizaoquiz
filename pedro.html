@@ -51,9 +51,9 @@
     <p class="muted" style="font-size:12px;margin:-12px 0 18px">
       <strong>PageView</strong> = 1 lead/sessão que abriu o quiz (entrada <code>/</code> = 1ª pergunta · foco parte).
       <strong>CVR</strong> = compras ÷ pageviews e compras ÷ quem chegou na oferta.
-      Funil espelha o <code>quiz-data.js</code> atual (foco novo, <code>/nostalgia</code>, P12 Barriga/Bumbum/Coxas/Tudo, VSL2 force B).
-      <strong>⚠️ Corte de série:</strong> landing desligada. Entrada = <code>/</code> (foco parte: bumbum/culote/coxa/corpo).
-      Idade virou a 2ª etapa (<code>/pergunta-1</code>). Acompanhar <strong>/ → Idade</strong> e distribuição do foco parte.
+      Funil espelha o <code>quiz-data.js</code> atual. VSL1+VSL2 em <code>force: "B"</code>.
+      <strong>⚠️ Corte de série:</strong> landing off · entrada <code>/</code> = foco parte.
+      Acompanhar painel <strong>1ª pergunta · Foco parte</strong> (taxa + distribuição).
     </p>
 
     <section class="panel">
@@ -109,16 +109,25 @@
       <p class="muted" style="font-size:12px;margin:12px 0 0">
         Retenção pela URL alcançada (<code>last_step_slug</code>), ordem do QUIZ atual.
         Entrada = <strong>PageView · /</strong> (foco parte); a 2ª linha é <code>/pergunta-1</code> (idade).
-        Ordem real do meio: … → foco → <strong>Niic (todos)</strong> → P6 corpo → <strong>/nostalgia</strong> → 1 ano → Mini VSL 1 → … → P12 (Barriga/Bumbum/Coxas/Tudo) → … → oferta.
+        Ordem: parte → idade → … → <code>/pergunta-2</code> (secar/massa) → Niic → P6 → nostalgia → Mini VSL 1 → … → oferta.
         Use "Chegaram na oferta" como fundo de funil (flag Completaram subconta).
       </p>
     </section>
 
     <section class="panel">
+      <h2 class="panel__h">1ª pergunta · Foco parte <span class="muted">· bumbum / culote / coxa / corpo</span></h2>
+      <p class="muted" style="font-size:12.5px;margin:0 0 12px">
+        Entrada do quiz (<code>/</code>). Resposta em <code>answers.q_parte_foco</code> (jsonb — sem coluna SQL).
+        Taxa de resposta = quem escolheu uma opção ÷ PageViews. Drop na 1ª = PV − quem chegou em <code>/pergunta-1</code> (idade).
+      </p>
+      <div id="parteFoco" class="branchp6">carregando…</div>
+    </section>
+
+    <section class="panel">
       <h2 class="panel__h">Respostas por pergunta</h2>
       <p class="muted" style="font-size:12px;margin:0 0 12px">
-        Options novas (foco, trava, corpo, plano, primeiro no espelho) + strings legadas se ainda aparecerem em leads antigos.
-        <code>q7b_nostalgia</code> grava só no jsonb <code>answers</code> (sem coluna SQL) — pode não entrar nesta agregação RPC até o overview ser estendido.
+        Colunas SQL + jsonb (<code>q_parte_foco</code>, <code>q7b_nostalgia</code>).
+        A 1ª pergunta também tem o painel dedicado acima (mais confiável no modo RPC).
       </p>
       <div id="answers" class="answers"></div>
     </section>
@@ -128,7 +137,7 @@
       <div class="tablewrap">
         <table class="leads">
           <thead><tr>
-            <th>Quando</th><th>Idade</th><th>Foco</th><th>IMC</th><th>A/B VSL1</th><th>A/B VSL2</th><th>Etapa atingida</th><th>Completou?</th><th>Origem</th>
+            <th>Quando</th><th>Parte</th><th>Idade</th><th>Foco</th><th>IMC</th><th>A/B VSL1</th><th>A/B VSL2</th><th>Etapa atingida</th><th>Completou?</th><th>Origem</th>
           </tr></thead>
           <tbody id="leadsBody"></tbody>
         </table>
@@ -139,6 +148,6 @@
   <!-- quiz-data = MESMA fonte do funil (ordem/labels/options). Bump junto com o quiz. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/quiz-data.js?v=118"></script>
-  <script src="assets/js/admin.js?v=98"></script>
+  <script src="assets/js/admin.js?v=99"></script>
 </body>
 </html>
