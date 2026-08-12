@@ -444,7 +444,7 @@
     const dataPlano = spDateLabel(planMetaDays(), false);
     return str
       .replace("{foco}", persoVal("foco", state.answers.q2_foco, "mudar de corpo"))
-      .replace("{primeiro}", persoVal("primeiro", state.answers.q13_primeiro, "o resultado que você quer"))
+      .replace("{primeiro}", persoVal("primeiro", state.answers.q_parte_foco || state.answers.q13_primeiro, "o resultado que você quer"))
       .replace("{empatia}", persoVal("empatia", state.answers.q5_trava || state.answers.q6_sozinha, ""))
       .replace("{data4semanas}", `<span class="q__date">${dataPlano}</span>`)
       .replace(/\{(q\d+_[a-z]+)\}/g, (_, id) => state.answers[id] || "");

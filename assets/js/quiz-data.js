@@ -359,13 +359,15 @@ const QUIZ = [
       "Não sei nem por onde começar"
     ]
   },
+  /* >>> REMOVIDA: q13_primeiro (“o que quer notar primeiro no espelho”).
+     Redundante com a 1ª pergunta (q_parte_foco: bumbum/culote/coxa/corpo).
+     {primeiro} no loading/compromisso usa q_parte_foco (fallback q13 legado).
+     Pra reativar, descomente o bloco. <<< */
+  /*
   {
     type: "question",
     id: "q13_primeiro",
     block: "O que muda o jogo",
-    // {data4semanas} = MESMA data do diagnóstico pós-loading (chart gold dateOffset: 28)
-    // fillCopy → <span class="q__date">13 de agosto</span> em vermelho
-    // grid 2x2 = mesmo formato da P1 (idade). Imagens em assets/img/primeiro/
     question: "No plano que o paizão vai montar pra você, no dia {data4semanas}, o que você quer notar primeiro no espelho?",
     grid: true,
     options: [
@@ -381,6 +383,7 @@ const QUIZ = [
       "assets/img/primeiro/primeiro-tudo.webp?v=2"
     ]
   },
+  */
 
   /* --------------- MEDIDAS (altura + peso -> IMC no diagnóstico) --------- */
   {
@@ -517,13 +520,18 @@ const PERSONA = {
     "Ganhar massa": "ganhar massa",
     _default: "mudar de corpo"
   },
-  // {primeiro} — q13_primeiro -> o que ela quer ver primeiro (loading / chart / compromisso)
+  // {primeiro} — q_parte_foco (1ª pergunta) → loading / compromisso
+  // + legado q13_primeiro se ainda existir em sessão/leads antigos
   primeiro: {
-    "Barriga": "a barriga",
+    // q_parte_foco (atual)
     "Bumbum": "o bumbum",
+    "Culote": "o culote",
+    "Coxa": "a coxa",
+    "Corpo todo": "o corpo todo",
+    // legado q13_primeiro
+    "Barriga": "a barriga",
     "Coxas": "as coxas",
     "Tudo junto": "tudo junto",
-    // legado (respostas antigas no Supabase / sessão)
     "Barriga mais seca": "a barriga",
     "Corpo mais durinho e tonificado": "o corpo mais durinho",
     "Mais disposição e energia": "mais disposição e energia",
