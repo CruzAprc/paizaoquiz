@@ -499,12 +499,6 @@
     });
     if (total == null) return { error: "sem permissão ou falha ao contar" };
     var byOpt = {};
-    var i;
-    for (i = 0; i < PARTE_OPTS.length; i++) {
-      (function (opt) {
-        // sequential below — assign after loop via Promise.all
-      })(PARTE_OPTS[i]);
-    }
     var counts = await Promise.all(PARTE_OPTS.map(function (opt) {
       return countLeads(function (q) {
         return q.filter("answers->>q_parte_foco", "eq", opt);
