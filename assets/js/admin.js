@@ -130,8 +130,11 @@
   function stepTitle(step, isFirst) {
     if (!step) return "—";
     var url = step.path || ("/" + (step.slug || ""));
-    // Entrada do quiz = PageView (hoje = /pergunta-1)
-    if (isFirst) return "PageView · " + url;
+    // Entrada = 1ª pergunta (foco parte) em "/" = PageView
+    if (isFirst) {
+      var lab = step.label || step.qid || "Entrada";
+      return lab + " · PageView · " + url;
+    }
     if (step.type === "question") return step.label + " · " + url;
     return step.label + " · " + url;
   }
@@ -493,23 +496,24 @@
   var PARTE_OPTS = ["Bumbum", "Culote", "Coxa", "Corpo todo"];
 
   async function loadParteFocoStats() {
-    var total = await countLeads(function (q) {
-      return q.not("answers->>q_parte_foco", "is", null)
-        .neq("answers->>q_parte_foco", "");
-    });
-    if (total == null) return { error: "sem permissão ou falha ao contar" };
+    // Conta cada option (mesmo padrão do A/B: answers->>chave). Total = soma.
     var byOpt = {};
     var counts = await Promise.all(PARTE_OPTS.map(function (opt) {
       return countLeads(function (q) {
         return q.filter("answers->>q_parte_foco", "eq", opt);
-      }).then(function (n) { return { opt: opt, n: n == null ? 0 : n }; });
+      }).then(function (n) { return { opt: opt, n: n }; });
     }));
-    counts.forEach(function (c) { byOpt[c.opt] = c.n; });
-    // outras strings legadas / fora da lista
+    var failed = 0;
     var known = 0;
-    PARTE_OPTS.forEach(function (o) { known += byOpt[o] || 0; });
-    var other = Math.max(0, (total || 0) - known);
-    return { total: total || 0, byOpt: byOpt, other: other };
+    counts.forEach(function (c) {
+      if (c.n == null) { failed++; byOpt[c.opt] = 0; return; }
+      byOpt[c.opt] = c.n;
+      known += c.n;
+    });
+    if (failed === PARTE_OPTS.length) {
+      return { error: "falha ao contar answers->>q_parte_foco (RLS/permissão?)" };
+    }
+    return { total: known, byOpt: byOpt, other: 0 };
   }
 
   function renderParteFoco(stats) {
@@ -1267,9 +1271,12 @@
         (i + 1 <= iOffer && FUNNEL_STEPS[i + 1] && FUNNEL_STEPS[i + 1].depth === st.depth)
       ));
       // barras: nome curto (slug) pra caber; title tem o completo
-      var shortName = i === 0 ? "P1 · PV" : (st.type === "question"
-        ? ("P" + String(st.slug || "").replace("pergunta-", ""))
-        : (st.slug === "video-niic" ? "Niic" : st.slug === "video-liz" ? "Liz" : (st.label || st.slug)));
+      var shortName = i === 0
+        ? "Parte · PV"
+        : (st.id === "q_parte_foco" ? "Parte"
+          : (st.type === "question"
+            ? (st.label || ("P" + String(st.slug || "").replace("pergunta-", "")))
+            : (st.slug === "video-niic" ? "Niic" : st.slug === "video-liz" ? "Liz" : (st.label || st.slug))));
       var fullName = stepTitle(st, i === 0);
       if (st.handle) fullName = (st.label || "") + " " + st.handle + " · " + st.path;
       var stopped = byStep[i] || 0;

@@ -49,12 +49,20 @@
 
     <section class="kpis" id="kpis"></section>
     <p class="muted" style="font-size:12px;margin:-12px 0 18px">
-      <strong>PageView</strong> = 1 lead/sessão que abriu o quiz (entrada <code>/</code> = 1ª pergunta · foco parte).
+      <strong>PageView</strong> = 1 lead/sessão que abriu o quiz (entrada <code>/</code> = <strong>Foco parte</strong>).
       <strong>CVR</strong> = compras ÷ pageviews e compras ÷ quem chegou na oferta.
-      Funil espelha o <code>quiz-data.js</code> atual. VSL1+VSL2 em <code>force: "B"</code>.
-      <strong>⚠️ Corte de série:</strong> landing off · entrada <code>/</code> = foco parte.
-      Acompanhar painel <strong>1ª pergunta · Foco parte</strong> (taxa + distribuição).
+      Funil espelha o <code>quiz-data.js</code>. VSL1+VSL2 em <code>force: "B"</code>.
     </p>
+
+    <!-- Logo abaixo dos KPIs: taxa da 1ª pergunta (não fica enterrada no fim) -->
+    <section class="panel" id="parteFocoPanel">
+      <h2 class="panel__h">1ª pergunta · Foco parte <span class="muted">· bumbum / culote / coxa / corpo</span></h2>
+      <p class="muted" style="font-size:12.5px;margin:0 0 12px">
+        Entrada (<code>/</code>). Resposta em <code>answers.q_parte_foco</code> (jsonb).
+        Taxa = quem escolheu ÷ PageViews · Drop = PV − quem chegou em <code>/pergunta-1</code> (idade).
+      </p>
+      <div id="parteFoco" class="branchp6">carregando…</div>
+    </section>
 
     <section class="panel">
       <h2 class="panel__h">Vendas (Kirvano) <span id="salesSub" class="muted"></span></h2>
@@ -108,26 +116,16 @@
       <div id="funnel" class="funnel"></div>
       <p class="muted" style="font-size:12px;margin:12px 0 0">
         Retenção pela URL alcançada (<code>last_step_slug</code>), ordem do QUIZ atual.
-        Entrada = <strong>PageView · /</strong> (foco parte); a 2ª linha é <code>/pergunta-1</code> (idade).
-        Ordem: parte → idade → … → <code>/pergunta-2</code> (secar/massa) → Niic → P6 → nostalgia → Mini VSL 1 → … → oferta.
-        Use "Chegaram na oferta" como fundo de funil (flag Completaram subconta).
+        Entrada = <strong>Foco parte · PageView · /</strong>; a 2ª linha é <code>/pergunta-1</code> (idade).
+        O drop grande PV→idade é o bounce na 1ª. Distribuição Bumbum/Culote/Coxa/Corpo = painel no topo.
+        Ordem: parte → idade → … → <code>/pergunta-2</code> (secar/massa) → Niic → P6 → nostalgia → Mini VSL 1 → oferta.
       </p>
-    </section>
-
-    <section class="panel">
-      <h2 class="panel__h">1ª pergunta · Foco parte <span class="muted">· bumbum / culote / coxa / corpo</span></h2>
-      <p class="muted" style="font-size:12.5px;margin:0 0 12px">
-        Entrada do quiz (<code>/</code>). Resposta em <code>answers.q_parte_foco</code> (jsonb — sem coluna SQL).
-        Taxa de resposta = quem escolheu uma opção ÷ PageViews. Drop na 1ª = PV − quem chegou em <code>/pergunta-1</code> (idade).
-      </p>
-      <div id="parteFoco" class="branchp6">carregando…</div>
     </section>
 
     <section class="panel">
       <h2 class="panel__h">Respostas por pergunta</h2>
       <p class="muted" style="font-size:12px;margin:0 0 12px">
-        Colunas SQL + jsonb (<code>q_parte_foco</code>, <code>q7b_nostalgia</code>).
-        A 1ª pergunta também tem o painel dedicado acima (mais confiável no modo RPC).
+        Colunas SQL + jsonb. A 1ª pergunta tem o painel dedicado no topo (mais confiável).
       </p>
       <div id="answers" class="answers"></div>
     </section>
@@ -147,7 +145,7 @@
 
   <!-- quiz-data = MESMA fonte do funil (ordem/labels/options). Bump junto com o quiz. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/quiz-data.js?v=118"></script>
-  <script src="assets/js/admin.js?v=99"></script>
+  <script src="assets/js/quiz-data.js?v=119"></script>
+  <script src="assets/js/admin.js?v=101"></script>
 </body>
 </html>
