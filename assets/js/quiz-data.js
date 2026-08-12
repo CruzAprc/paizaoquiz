@@ -627,15 +627,15 @@ const PERSONA = {
     }
   },
 
-  // foto "depois" (Seu objetivo) no before/after — por trilha q2_foco
+  // foto "depois" (Seu objetivo) no before/after — mesmas fotos novas do /pergunta-2
   metaImg: {
-    "Quero me olhar no espelho e secar de verdade": "assets/img/meta/meta-secar.jpg",
-    "Emagrecer e secar": "assets/img/meta/meta-secar.jpg",
-    "Quero curvas e corpo firme": "assets/img/meta/meta-massa.jpg",
-    "Ganhar massa": "assets/img/meta/meta-massa.jpg",
-    "Quero secar e firmar junto": "assets/img/meta/meta-dois.jpg",
-    "Os dois juntos": "assets/img/meta/meta-dois.jpg",
-    _default: "assets/img/meta/meta-secar.jpg"
+    "Quero me olhar no espelho e secar de verdade": "assets/img/foco/foco-emagrecer.webp?v=110",
+    "Emagrecer e secar": "assets/img/foco/foco-emagrecer.webp?v=110",
+    "Quero curvas e corpo firme": "assets/img/foco/foco-ganhar-massa.webp?v=110",
+    "Ganhar massa": "assets/img/foco/foco-ganhar-massa.webp?v=110",
+    "Quero secar e firmar junto": "assets/img/foco/foco-dois-juntos.webp?v=110",
+    "Os dois juntos": "assets/img/foco/foco-dois-juntos.webp?v=110",
+    _default: "assets/img/foco/foco-emagrecer.webp?v=110"
   },
 
   // foto "Agora" no before/after — pelo corpo atual (q7_deixou)
